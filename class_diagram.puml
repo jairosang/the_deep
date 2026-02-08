@@ -1,8 +1,8 @@
 @startuml the_deep
 ' === Styling ===
 skinparam classAttributeIconSize 0
-skinparam Nodesep 75
-skinparam Ranksep 100
+skinparam Nodesep 50
+skinparam Ranksep 50
 skinparam Linetype ortho
 skinparam shadowing false
 skinparam BackgroundColor transparent
@@ -416,11 +416,13 @@ HomebaseState o-- StoreMenu
 PhysicsService ..> TileMap : checks
 PhysicsService ..> Entity : checks
 
-' --- Layout Hints ---
+' --- Layout ---
 states -[hidden]down-> entities
 states -[hidden]down-> utilities
 states -[hidden]down-> ui
 
-enter -[hidden]right-> utilities
-ui -[hidden]left-> utilities
+entities -[hidden]left-> utilities
+ui -[hidden]right-> utilities
+
+HUD -[hidden]left-> Menu
 @enduml
