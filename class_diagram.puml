@@ -1,0 +1,426 @@
+@startuml the_deep
+' === Styling ===
+skinparam classAttributeIconSize 0
+skinparam Nodesep 75
+skinparam Ranksep 100
+skinparam Linetype ortho
+skinparam shadowing false
+skinparam BackgroundColor transparent
+skinparam package<<states>> {
+    BackgroundColor PaleGreen
+    BorderColor DarkGreen
+}
+skinparam package<<entities>> {
+    BackgroundColor LightYellow
+    BorderColor Yellow
+}
+skinparam package<<UI>> {
+    BackgroundColor LightCoral
+    BorderColor Coral
+}
+skinparam package<<utilities>> {
+    BackgroundColor LightBlue
+    BorderColor Blue
+}
+top to bottom direction
+
+' === Core Game Controller (Top Level) ===
+class GameController {
+    - screen: pygame.Surface
+    - clock: pygame.time.Clock
+    - current_state: State
+    + run(): void
+}
+
+class DataManager {
+    - {static} instance: DataManager
+    - data: dict
+    - player_currency: int
+    - global_inventory: List[Item]
+    - research_data: dict
+    - upgrades: dict
+    + {static} get_instance(): DataManager
+    + get_inventory(): List[Item]
+    + set_inventory(inventory: List[Item]): void
+    + get_currency(): int
+    + add_currency(amount: int): void
+    + spend_currency(amount: int): bool
+    + get_research_progress(species_id: int): float
+    + update_research_progress(species_id: int, progress: float): void
+    + get_upgrades(): dict
+    + apply_upgrade(upgrade_name: str): void
+    + load_save_file(path: str): dict
+    + write_save_file(data: dict): void
+}
+
+' === State Pattern (Middle Level) ===
+package states <<states>> {
+    abstract class State {
+        + {abstract} enter(): void
+        + {abstract} handle_events(event: Event): void
+        + {abstract} update(dt: float): void
+        + {abstract} draw(surface: Surface): void
+        + {abstract} exit(): void
+    }
+
+    class DiveState {
+        - player: Player
+        - fish_group: List[Creature]
+        - camera: Camera
+        - hud: HUD
+        - tilemap: TileMap
+        - temporal_inventory_menu: TemporalInventoryMenu
+        - return_access_points: List[Rect]
+        - current_depth: float
+        - species_spawn_rate: int
+        - is_paused: bool
+        __
+        + enter(): void
+        + handle_events(event: Event): void
+        + update(dt: float): void
+        + draw(surface: Surface): void
+        + exit(): void
+        + pause_game(): void
+        + resume_game(): void
+        + spawn_creatures(): void
+        + check_return_point(): bool
+        + update_depth(): void
+        + trigger_game_over(): void
+    }
+
+    class HomebaseState {
+        - player: Player
+        - camera: Camera
+        - tilemap: TileMap
+        - full_inventory_menu: FullInventoryMenu
+        - research_menu: ResearchObservationMenu
+        - upgrade_menu: UpgradeMenu
+        - store_menu: StoreMenu
+        - dive_access_point: Rect
+        __
+        + enter(): void
+        + handle_events(event: Event): void
+        + update(dt: float): void
+        + draw(surface: Surface): void
+        + exit(): void
+        + transfer_items_from_buffer(): void
+        + sell_items(): void
+        + save_game(): void
+        + initiate_dive(): void
+    }
+}
+
+' --- Entities ---
+package entities <<entities>> {
+abstract class Entity {
+    - image: pygame.Surface
+    - rect: pygame.Rect
+    - pos: pygame.math.Vector2
+    __
+    + {abstract} update(dt: float): void
+    + draw(surface: Surface): void
+}
+
+class Player {
+    - health: int
+    - max_health: int
+    - oxygen: float
+    - max_oxygen: float
+    - oxygen_depletion_rate: float
+    - depth: float
+    - max_depth_limit: float
+    - is_sprinting: bool
+    - sprint_multiplier: float
+    - movement_speed: float
+    - buffer_inventory: List[Item]
+    - buffer_inventory_capacity: int
+    - research_gun: ResearchGun
+    - harpoon: Harpoon
+    - active_weapon: Weapon
+    __
+    + move(input: dict, dt: float): void
+    + sprint(enabled: bool): void
+    + update_oxygen(dt: float): void
+    + update_depth_damage(dt: float): void
+    + heal(amount: int): void
+    + consume_item(item: Item): void
+    + interact(): void
+    + switch_weapon(): void
+    + use_weapon(): void
+    + add_to_buffer_inventory(item: Item): bool
+    + is_alive(): bool
+}
+
+abstract class Creature {
+    - species_id: int
+    - species_name: str
+    - health: int
+    - max_health: int
+    - is_neutralized: bool
+    - is_alive: bool
+    - ai_state: AIBehavior
+    - research_progress: float
+    - max_research_progress: float
+    - monetary_value: int
+    - damage_amount: int
+    - movement_speed: float
+    __
+    + take_damage(amount: int): void
+    + update_research(scan_time: float, is_alive: bool): void
+    + get_research_progress(): float
+    + attack_player(player: Player): void
+    + move(): void
+    + die(): void
+}
+
+class CreaturePassive {
+    - flee_radius: float
+    __
+    + flee_from_player(player: Player): void
+}
+
+class CreatureAggressive {
+    - aggro_radius: float
+    __
+    + chase_player(player: Player): void
+    + attack_player(player: Player): void
+}
+
+class Item {
+    - item_id: int
+    - item_name: str
+    - monetary_value: int
+    - item_type: str
+    __
+    + get_value(): int
+    + use(player: Player): void
+}
+}
+
+' --- Weapons System ---
+abstract class Weapon {
+    - damage: int
+    - cooldown: float
+    - is_active: bool
+    __
+    + {abstract} use(target: Entity): void
+    + {abstract} update(dt: float): void
+    + can_use(): bool
+}
+
+class ResearchGun {
+    - scan_range: float
+    - scan_duration: float
+    - total_scan_time: float
+    - current_scan_time: float
+    - current_target: Creature
+    - max_progress_dead: float
+    - max_progress_alive: float
+    __
+    + use(target: Creature): void
+    + update(dt: float): void
+    + start_scan(creature: Creature): void
+    + stop_scan(): void
+    + scan_creature(creature: Creature, dt: float): void
+    + neutralize(creature: Creature): void
+}
+
+class Harpoon {
+    - attack_damage: int
+    - attack_range: float
+    __
+    + use(target: Creature): void
+    + update(dt: float): void
+    + attack(creature: Creature): void
+    + harvest(creature: Creature): Item
+    + can_harvest(creature: Creature): bool
+}
+
+package utilities <<utilities>> {
+
+    class TileMap {
+        - visual_layer: pygame.Surface
+        - collision_layer: List[List[int]]
+        - tile_width: int
+        - tile_height: int
+        - map_width: int
+        - map_height: int
+        __
+        + load_from_file(path: str): void
+        + get_visual_layer(): pygame.Surface
+        + is_tile_solid(x: int, y: int): bool
+        + get_tile_at_position(world_x: float, world_y: float): tuple
+    }
+
+    ' --- Logic ---
+    class PhysicsService {
+        - {static} instance: PhysicsService
+        + {static} get_instance(): PhysicsService
+        + check_tile_collision(entity: Entity, tilemap: TileMap): bool
+        + resolve_tile_movement(entity: Entity, tilemap: TileMap): void
+        + get_colliding_tiles(rect: Rect, tilemap: TileMap): List[tuple]
+    }
+
+    ' --- System Components ---
+    class Camera {
+        - offset: pygame.math.Vector2
+        - world_size: Rect
+        - map_boundaries: Rect
+        __
+        + follow(target_rect: Rect): void
+        + apply(target_rect: Rect): Rect
+        + clamp_to_boundaries(): void
+    }
+}
+
+' --- UI Menu Components ---
+package ui <<UI>> {
+
+abstract class Menu {
+    - is_open: bool
+    - font: pygame.font.Font
+    + {abstract} open(): void
+    + {abstract} close(): void
+    + {abstract} handle_input(event: Event): void
+    + {abstract} draw(surface: Surface): void
+}
+
+class FullInventoryMenu {
+    - inventory_items: List[Item]
+    + open(): void
+    + close(): void
+    + handle_input(event: Event): void
+    + draw(surface: Surface): void
+    + display_all_items(): void
+}
+
+class TemporalInventoryMenu {
+    - temp_items: List[Item]
+    - max_capacity: int
+    - current_capacity: int
+    + open(): void
+    + close(): void
+    + handle_input(event: Event): void
+    + draw(surface: Surface): void
+    + add_item(item: Item): bool
+    + remove_item(item: Item): void
+    + is_full(): bool
+    + get_remaining_capacity(): int
+}
+
+class ResearchObservationMenu {
+    - scanned_creatures: dict
+    - research_data: dict
+    + open(): void
+    + close(): void
+    + handle_input(event: Event): void
+    + draw(surface: Surface): void
+    + display_creature_info(creature: Creature): void
+    + display_research_progress(species_id: int): void
+}
+
+class UpgradeMenu {
+    - available_upgrades: List[Upgrade]
+    - player_currency: int
+    + open(): void
+    + close(): void
+    + handle_input(event: Event): void
+    + draw(surface: Surface): void
+    + purchase_upgrade(upgrade: Upgrade): bool
+    + apply_upgrade(upgrade: Upgrade): void
+    + can_afford(upgrade: Upgrade): bool
+}
+
+class StoreMenu {
+    - available_items: List[Item]
+    - player_currency: int
+    + open(): void
+    + close(): void
+    + handle_input(event: Event): void
+    + draw(surface: Surface): void
+    + sell_item(item: Item): void
+    + purchase_item(item: Item): bool
+    + can_afford(item: Item): bool
+}
+
+class HUD {
+    - font: pygame.font.Font
+    - debug_mode: bool
+    __
+    + draw(screen: Surface, player_stats: dict): void
+    + draw_health(screen: Surface, health: int): void
+    + draw_oxygen(screen: Surface, oxygen: float): void
+    + draw_depth(screen: Surface, depth: float): void
+    + draw_debug_info(screen: Surface, fps: int, coords: tuple): void
+}
+
+}
+
+' === Relationships ===
+
+' --- Core ---
+GameController *-down- "1" State : manages
+GameController ..> DataManager : uses
+
+' --- State Inheritance ---
+State <|-- DiveState
+State <|-- HomebaseState
+
+' --- Entity ---
+Entity <|-- Player
+Entity <|-- Creature 
+Entity <|-- Item
+
+Creature <|-- CreaturePassive
+Creature <|-- CreatureAggressive
+
+' --- Weapon System ---
+Weapon <|-- ResearchGun
+Weapon <|-- Harpoon
+
+Player o-- ResearchGun
+Player o-- Harpoon
+Player --> Weapon : active
+
+' --- Menu Inheritance ---
+Menu <|-- FullInventoryMenu
+Menu <|-- TemporalInventoryMenu
+Menu <|-- ResearchObservationMenu
+Menu <|-- UpgradeMenu
+Menu <|-- StoreMenu
+
+'--- StateWide Rlations ---
+State .up.> DataManager : uses 
+State ..> PhysicsService : uses
+
+
+
+' --- DiveState ---
+DiveState o-- Player
+DiveState o-- Camera
+DiveState o-- HUD
+DiveState o-- TileMap
+DiveState o-- TemporalInventoryMenu
+DiveState o-- "0..*" Creature : spawns
+
+' --- HomebaseState ---
+HomebaseState o-- Player
+HomebaseState o-- Camera
+HomebaseState o-- TileMap
+HomebaseState o-- FullInventoryMenu
+HomebaseState o-- ResearchObservationMenu
+HomebaseState o-- UpgradeMenu
+HomebaseState o-- StoreMenu
+
+' --- Service Dependencies ---
+PhysicsService ..> TileMap : checks
+PhysicsService ..> Entity : checks
+
+' --- Layout Hints ---
+states -[hidden]down-> entities
+states -[hidden]down-> utilities
+states -[hidden]down-> ui
+
+enter -[hidden]right-> utilities
+ui -[hidden]left-> utilities
+@enduml
