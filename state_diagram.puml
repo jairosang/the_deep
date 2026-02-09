@@ -1,0 +1,123 @@
+@startuml the_deep_state_diagram
+
+skinparam state {
+    BackgroundColor<<states>> LightBlue
+    BackgroundColor<<menu>> LightYellow
+    BackgroundColor<<end>> LightCoral
+    BorderColor Black
+    FontSize 12
+}
+
+skinparam BackgroundColor transparent
+
+' === States ===
+[*] --> MainMenu
+
+state MainMenu <<menu>> {
+    state "Display Title" as title
+    state "Show Buttons" as options
+    [*] --> title
+    title --> options
+}
+
+state HomebaseState <<states>> {
+    state "Transfer Items from Buffer" as transfer
+    state "Move around homebase" as homebase
+    state "Open Full Inventory Menu" as inventory
+    state "Open Research Menu" as research
+    state "Open Upgrades Menu" as upgrades
+    state "Open Store Menu" as store
+    state "Save Game" as save
+    
+    [*] --> transfer
+    transfer --> homebase
+    homebase --> inventory
+    homebase --> research
+    homebase --> store
+    homebase --> upgrades
+    homebase --> save
+    inventory --> homebase
+    research --> homebase
+    store --> homebase
+    upgrades --> homebase
+    save --> homebase
+}
+
+state DiveState <<active>> {
+    state "Spawn Creatures" as spawn
+    state "View Temporal Inventory" as tempInv
+    
+    [*] --> spawn
+    spawn --> gameplay
+    
+    state gameplay {
+        state "Exploration" as explore {
+            state "Moving" as moving
+            state "Combat/Research/Harvesting" as combat
+            state "Collect Items" as collect
+            
+            [*] --> moving
+            moving --> combat
+            moving --> collect
+            combat --> moving
+            collect --> moving
+        }
+        --
+        state "Update Depth" as depth
+        state "show HUD" as hud
+        depth -right-> hud
+        hud -left-> depth
+    }
+    
+    gameplay --> tempInv
+    tempInv --> gameplay
+
+}
+
+state Paused <<menu>> {
+    state "Display Pause Menu" as pauseMenu
+    [*] --> pauseMenu
+}
+
+state GameOver <<end>> {
+    state "Display Death Message" as death
+    state "Lose Temporal Inventory & Money" as lose
+    [*] --> death
+    death --> lose
+}
+
+' === Main Transitions ===
+
+MainMenu --> HomebaseState : Load Game
+MainMenu --> [*] : Quit
+
+HomebaseState --> DiveState : Start dive from door
+HomebaseState --> MainMenu : Return to Menu
+HomebaseState --> Paused : ESC key
+
+DiveState --> Paused : ESC key
+DiveState --> HomebaseState : Interact with access point\n(Return)
+DiveState --> GameOver : Player Death\n(health = 0 or\noxygen = 0)
+
+
+Paused --> DiveState : Resume Game\n(if paused from dive)
+Paused --> HomebaseState : Resume Game\n(if paused from homebase)
+Paused --> [*] : Quit\n(Would be nice ask for confirmation\nif user is on dive State.)
+
+GameOver --> HomebaseState : Restart
+
+
+' === Notes ===
+note right of MainMenu
+    Entry point
+    Options: Load Game, Quit
+end note
+
+note right of GameOver
+    Happens when:
+    - Health is 0
+    - Oxygen is 0
+        
+end note
+
+@enduml
