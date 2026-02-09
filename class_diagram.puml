@@ -74,7 +74,6 @@ package states <<states>> {
         - current_depth: float
         - species_spawn_rate: int
         - is_paused: bool
-        __
         + enter(): void
         + handle_events(event: Event): void
         + update(dt: float): void
@@ -97,7 +96,6 @@ package states <<states>> {
         - upgrade_menu: UpgradeMenu
         - store_menu: StoreMenu
         - dive_access_point: Rect
-        __
         + enter(): void
         + handle_events(event: Event): void
         + update(dt: float): void
@@ -115,8 +113,7 @@ package entities <<entities>> {
 abstract class Entity {
     - image: pygame.Surface
     - rect: pygame.Rect
-    - pos: pygame.math.Vector2
-    __
+    - pos: pygame.math.Vector
     + {abstract} update(dt: float): void
     + draw(surface: Surface): void
 }
@@ -137,7 +134,6 @@ class Player {
     - research_gun: ResearchGun
     - harpoon: Harpoon
     - active_weapon: Weapon
-    __
     + move(input: dict, dt: float): void
     + sprint(enabled: bool): void
     + update_oxygen(dt: float): void
@@ -156,15 +152,12 @@ abstract class Creature {
     - species_name: str
     - health: int
     - max_health: int
-    - is_neutralized: bool
     - is_alive: bool
-    - ai_state: AIBehavior
     - research_progress: float
     - max_research_progress: float
     - monetary_value: int
     - damage_amount: int
     - movement_speed: float
-    __
     + take_damage(amount: int): void
     + update_research(scan_time: float, is_alive: bool): void
     + get_research_progress(): float
@@ -175,24 +168,20 @@ abstract class Creature {
 
 class CreaturePassive {
     - flee_radius: float
-    __
     + flee_from_player(player: Player): void
 }
 
 class CreatureAggressive {
-    - aggro_radius: float
-    __
+    - attack_radius: float
     + chase_player(player: Player): void
-    + attack_player(player: Player): void
 }
 
 class Item {
     - item_id: int
     - item_name: str
-    - monetary_value: int
+    - price: int
     - item_type: str
-    __
-    + get_value(): int
+    + get_price(): int
     + use(player: Player): void
 }
 }
@@ -202,7 +191,6 @@ abstract class Weapon {
     - damage: int
     - cooldown: float
     - is_active: bool
-    __
     + {abstract} use(target: Entity): void
     + {abstract} update(dt: float): void
     + can_use(): bool
@@ -216,7 +204,6 @@ class ResearchGun {
     - current_target: Creature
     - max_progress_dead: float
     - max_progress_alive: float
-    __
     + use(target: Creature): void
     + update(dt: float): void
     + start_scan(creature: Creature): void
@@ -228,7 +215,6 @@ class ResearchGun {
 class Harpoon {
     - attack_damage: int
     - attack_range: float
-    __
     + use(target: Creature): void
     + update(dt: float): void
     + attack(creature: Creature): void
@@ -245,35 +231,30 @@ package utilities <<utilities>> {
         - tile_height: int
         - map_width: int
         - map_height: int
-        __
         + load_from_file(path: str): void
         + get_visual_layer(): pygame.Surface
         + is_tile_solid(x: int, y: int): bool
         + get_tile_at_position(world_x: float, world_y: float): tuple
     }
 
-    ' --- Logic ---
     class PhysicsService {
         - {static} instance: PhysicsService
         + {static} get_instance(): PhysicsService
         + check_tile_collision(entity: Entity, tilemap: TileMap): bool
-        + resolve_tile_movement(entity: Entity, tilemap: TileMap): void
-        + get_colliding_tiles(rect: Rect, tilemap: TileMap): List[tuple]
+        + solve_collision_movement(entity: Entity, tilemap: TileMap): void
     }
 
-    ' --- System Components ---
     class Camera {
         - offset: pygame.math.Vector2
         - world_size: Rect
         - map_boundaries: Rect
-        __
         + follow(target_rect: Rect): void
         + apply(target_rect: Rect): Rect
         + clamp_to_boundaries(): void
     }
 }
 
-' --- UI Menu Components ---
+' --- UI Components ---
 package ui <<UI>> {
 
 abstract class Menu {
@@ -346,7 +327,6 @@ class StoreMenu {
 class HUD {
     - font: pygame.font.Font
     - debug_mode: bool
-    __
     + draw(screen: Surface, player_stats: dict): void
     + draw_health(screen: Surface, health: int): void
     + draw_oxygen(screen: Surface, oxygen: float): void
@@ -358,7 +338,6 @@ class HUD {
 
 ' === Relationships ===
 
-' --- Core ---
 GameController *-down- "1" State : manages
 GameController ..> DataManager : uses
 
@@ -389,11 +368,9 @@ Menu <|-- ResearchObservationMenu
 Menu <|-- UpgradeMenu
 Menu <|-- StoreMenu
 
-'--- StateWide Rlations ---
+'--- State Rlations ---
 State .up.> DataManager : uses 
 State ..> PhysicsService : uses
-
-
 
 ' --- DiveState ---
 DiveState o-- Player
@@ -412,7 +389,7 @@ HomebaseState o-- ResearchObservationMenu
 HomebaseState o-- UpgradeMenu
 HomebaseState o-- StoreMenu
 
-' --- Service Dependencies ---
+' --- Dependencies ---
 PhysicsService ..> TileMap : checks
 PhysicsService ..> Entity : checks
 
