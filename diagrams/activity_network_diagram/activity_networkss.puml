@@ -1,0 +1,176 @@
+@startuml the_deep_activity_network_left_to_right
+
+skinparam BackgroundColor transparent
+skinparam DefaultFontSize 10
+skinparam rectangleBorderColor #888888
+skinparam rectangleFontSize 10
+left to right direction
+
+title Activity Network Diagram — The Deep
+
+legend right
+  |= Color |= Phase |
+  |<#C8E6C9> | Content Design |
+  |<#BBDEFB> | Programming |
+  |<#FFE0B2> | Graphics Design |
+  |<#E1BEE7> | Sound Design |
+  |<#CFD8DC> | Integration & Testing |
+  |= Milestone |= Week |
+  | S1: Core systems complete | W18 |
+  | S2: Content design complete | W20 |
+  | S3: Main mechanics complete | W22 |
+  | S4: Final system complete | W24 |
+  **Critical Path:**
+  P1 ~> P2 ~> P6 ~> P8 ~> P9 ~> P13 ~> Testing
+endlegend
+
+rectangle "Project Start" as Start #White
+
+' === CONTENT DESIGN ===
+rectangle "C1: Define creature species [W16]" as C1 #C8E6C9
+rectangle "C2: Define depth zones [W16]" as C2 #C8E6C9
+rectangle "C3: Define research progression [W16]" as C3 #C8E6C9
+rectangle "C4: Define economy & upgrade costs [W17]" as C4 #C8E6C9
+
+' === GRAPHICS DESIGN ===
+rectangle "G1: GUI placeholder assets [W17]" as G1 #FFE0B2
+rectangle "G2: Player sprite & animations [W19]" as G2 #FFE0B2
+rectangle "G3: Passive creature sprites [W18]" as G3 #FFE0B2
+rectangle "G4: Hostile creature sprites [W18]" as G4 #FFE0B2
+rectangle "G5: Environment assets [W18]" as G5 #FFE0B2
+rectangle "G6: HUD assets [W19]" as G6 #FFE0B2
+
+' === PROGRAMMING ===
+rectangle "P1: Underwater state & game loop [W16]" as P1 #BBDEFB
+rectangle "P2: Core player functionality [W17]" as P2 #BBDEFB
+rectangle "P3: Camera system [W18]" as P3 #BBDEFB
+rectangle "P4: Oxygen system [W18]" as P4 #BBDEFB
+rectangle "P5: Health system [W18]" as P5 #BBDEFB
+rectangle "P6: Depth tracking system [W19]" as P6 #BBDEFB
+rectangle "P7: Passive creature functionality [W19]" as P7 #BBDEFB
+rectangle "P8: Hostile creature functionality [W20]" as P8 #BBDEFB
+rectangle "P9: Creature health & neutralization [W21]" as P9 #BBDEFB
+rectangle "P10: Research scanning [W20]" as P10 #BBDEFB
+rectangle "P11: Research persistence [W21]" as P11 #BBDEFB
+rectangle "P12: Harpoon functionality [W22]" as P12 #BBDEFB
+rectangle "P13: Combat weapon functionality [W22]" as P13 #BBDEFB
+rectangle "P14: Inventory system [W18]" as P14 #BBDEFB
+rectangle "P15: Economy system [W19]" as P15 #BBDEFB
+rectangle "P16: Homebase state [W19]" as P16 #BBDEFB
+rectangle "P17: Upgrade system [W20]" as P17 #BBDEFB
+rectangle "P19: Save/Load functionality [W22]" as P19 #BBDEFB
+rectangle "P20: Integrate UI functionality [W20]" as P20 #BBDEFB
+rectangle "P21: Integrate audio functionality [W26]" as P21 #BBDEFB
+
+' === SOUND DESIGN ===
+rectangle "S1: Underwater ambient soundtrack [W24]" as S1 #E1BEE7
+rectangle "S2: Tool sound effects [W25]" as S2 #E1BEE7
+rectangle "S3: Creature sound effects [W24]" as S3 #E1BEE7
+rectangle "S4: UI sound effects [W25]" as S4 #E1BEE7
+
+' === INTEGRATION / TESTING ===
+rectangle "Testing & Bug Fixes" as Testing #CFD8DC
+
+' === CONNECTIONS FROM START ===
+Start -[#FF0000,bold]-> P1
+Start --> C1
+Start --> C2
+Start --> G1
+
+' === CONTENT DESIGN CONNECTIONS ===
+C1 --> C3
+C3 --> C4
+
+' === GRAPHICS DESIGN CONNECTIONS ===
+C1 --> G3
+C1 --> G4
+C2 --> G5
+G1 --> G2
+G5 --> G6
+
+' === PROGRAMMING: Foundation ===
+P1 -[#FF0000,bold]-> P2
+
+' === PROGRAMMING: Core Systems ===
+P2 --> P3
+P2 --> P4
+P2 --> P14
+P2 --> P5
+P2 -[#FF0000,bold]-> P6
+P6 --> P5
+
+' === PROGRAMMING: Creatures / Economy ===
+P2 --> P7
+C1 --> P7
+
+P14 --> P15
+
+P1 --> P16
+P14 --> P16
+
+P7 -[#FF0000,bold]-> P8
+C1 --> P8
+
+P7 --> P10
+P8 --> P10
+
+P15 --> P17
+C3 --> P17
+
+P4 --> P20
+P5 --> P20
+P6 --> P20
+
+' === PROGRAMMING: Combat / Research ===
+P8 -[#FF0000,bold]-> P9
+
+P10 --> P11
+
+P9 -[#FF0000,bold]-> P12
+P14 --> P12
+
+P9 -[#FF0000,bold]-> P13
+
+P11 --> P19
+P14 --> P19
+P15 --> P19
+P17 --> P19
+
+' === SOUND DESIGN ===
+P12 --> S1
+P12 --> S3
+S1 --> S2
+S1 --> S4
+S4 --> P21
+
+' === ENDING ===
+P13 -[#FF0000,bold]-> Testing
+P19 --> Testing
+P20 --> Testing
+P21 --> Testing
+
+' === MILESTONE ===
+note right of P2
+  **Milestone S1: Core Systems (W18)**
+  Basic game runs, player moves,
+  state transitions work.
+end note
+
+note right of P16
+  **Milestone S2: Content Design (W20)**
+  Design docs finalized, homebase
+  explorable, camera follows player.
+end note
+
+note right of P13
+  **Milestone S3: Main Mechanics (W22)**
+  Full gameplay loop functional.
+end note
+
+note right of Testing
+  **Milestone S4: Final System (W24)**
+  Fully playable, all features,
+  ready for submission.
+end note
+
+@enduml
