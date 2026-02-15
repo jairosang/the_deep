@@ -15,7 +15,7 @@ legend right
   |<#E1BEE7> | Sound Design |
   |<#CFD8DC> | Integration & Testing |
   **Critical Path:**
-  P1 → P2 → P6 → P8 → P9 → P13 → Testing
+  Start → P1 → P2 → P6 → P8 → P9 → P13 → Testing → M4
 endlegend
 
 ' === Start ===
@@ -46,34 +46,28 @@ rectangle "P7: Passive creatures [W19]" as P7 #BBDEFB
 rectangle "P8: Hostile creatures [W20]" as P8 #BBDEFB
 rectangle "P9: Creature combat [W21]" as P9 #BBDEFB
 rectangle "P10: Research scan [W20]" as P10 #BBDEFB
-rectangle "P11: Research save [W21]" as P11 #BBDEFB
-rectangle "P12: Harpoon [W22]" as P12 #BBDEFB
-rectangle "P13: Combat weapons [W22]" as P13 #BBDEFB
+rectangle "P11: Research save [LV1]" as P11 #BBDEFB
+rectangle "P12: Harpoon [LV1]" as P12 #BBDEFB
+rectangle "P13: Combat weapons [LV1]" as P13 #BBDEFB
 rectangle "P14: Inventory [W18]" as P14 #BBDEFB
 rectangle "P15: Economy [W19]" as P15 #BBDEFB
 rectangle "P16: Homebase [W19]" as P16 #BBDEFB
 rectangle "P17: Upgrades [W20]" as P17 #BBDEFB
-rectangle "P19: Save/Load [W22]" as P19 #BBDEFB
+rectangle "P19: Save/Load [LV2]" as P19 #BBDEFB
 rectangle "P20: UI integration [W20]" as P20 #BBDEFB
 rectangle "P21: Audio integration [W26]" as P21 #BBDEFB
 
 ' === SOUND DESIGN ===
-rectangle "S1: Ambient [W24]" as S1 #E1BEE7
-rectangle "S2: Tool SFX [W25]" as S2 #E1BEE7
-rectangle "S3: Creature SFX [W24]" as S3 #E1BEE7
-rectangle "S4: UI SFX [W25]" as S4 #E1BEE7
+rectangle "S1: Ambient [LV3]" as S1 #E1BEE7
+rectangle "S2: Tool SFX [LV4]" as S2 #E1BEE7
+rectangle "S3: Creature SFX [LV3]" as S3 #E1BEE7
+rectangle "S4: UI SFX [LV4]" as S4 #E1BEE7
 
 ' === INTEGRATION ===
 rectangle "Testing [W24]" as Testing #CFD8DC
 
-' === MILESTONES ===
-rectangle "S1: Core (W18)" as M1 #FFFFFF
-rectangle "S2: Content (W20)" as M2 #FFFFFF
-rectangle "S3: Mechanics (W22)" as M3 #FFFFFF
-rectangle "S4: Final (W24)" as M4 #FFFFFF
-
 ' === START CONNECTIONS ===
-Start --> P1
+Start -[#FF0000,bold]-> P1
 Start --> C1
 Start --> C2
 Start --> G1
@@ -96,7 +90,6 @@ P6 -[#FF0000,bold]-> P8
 P8 -[#FF0000,bold]-> P9
 P9 -[#FF0000,bold]-> P13
 P13 -[#FF0000,bold]-> Testing
-
 ' === PROGRAMMING DEPENDENCIES ===
 P2 --> P3
 P2 --> P4
@@ -153,10 +146,5 @@ C4 --> Testing
 S2 --> Testing
 S3 --> Testing
 
-' === MILESTONE CONNECTIONS ===
-P2 --> M1
-P16 --> M2
-P13 --> M3
-Testing --> M4
 
 @enduml
