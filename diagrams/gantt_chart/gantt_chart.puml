@@ -4,132 +4,180 @@ printscale daily
 Project starts 2026-02-17
 
 ' Milestones
-[Milestone 1: Core Systems] happens at 2026-03-03
-[Milestone 2: Content Complete] happens at 2026-03-17
-[Milestone 3: Main Mechanics Complete] happens at 2026-04-07
-[Milestone 4: System Complete] happens at 2026-04-28
-[Final Deadline] happens at 2026-05-04
+[M1: Foundation Complete] happens at 2026-03-03
+[M2: Main Systems Complete] happens at 2026-03-17
+[M3: Economy & States Complete] happens at 2026-03-24
+[M4: Creatures & Research Complete] happens at 2026-04-07
+[M5: Combat Complete] happens at 2026-04-14
+[M6: Integration & Submission] happens at 2026-05-04
 
 
-' Content Design
+' Content Design - All parallel at start
 [C1: Define creature species] starts 2026-02-17
 [C1: Define creature species] lasts 1 weeks
-[C2: Define depth progression difficulty] starts at [C1: Define creature species]'s end
+[C2: Define depth progression difficulty] starts 2026-02-17
 [C2: Define depth progression difficulty] lasts 1 weeks
+[C3: Define research progression] starts 2026-02-17
+[C3: Define research progression] lasts 1 weeks
 
-' Programming
-[P1: Core state and game loop] starts 2026-02-17
-[P1: Core state and game loop] lasts 1 weeks
-[P2: Core player functionality] starts at [P1: Core state and game loop]'s end
+' Core Programming Foundation
+[P1: Underwater state and game loop] starts 2026-02-17
+[P1: Underwater state and game loop] lasts 1 weeks
+
+
+
+
+
+
+' Content Design Completion
+[C4: Define economy and upgrade costs] starts at [C3: Define research progression]'s end
+[C4: Define economy and upgrade costs] lasts 1 weeks
+
+' Core Player Foundation
+[P2: Core player functionality] starts at [P1: Underwater state and game loop]'s end
 [P2: Core player functionality] lasts 1 weeks
 
-' Graphics 
+' Graphics Foundation
 [G1: GUI placeholder assets] starts 2026-02-17
 [G1: GUI placeholder assets] lasts 2 weeks
 
 
-' Content 
-[C3: Define research progression] starts at [C2: Define depth progression difficulty]'s end
-[C3: Define research progression] lasts 1 weeks
-[C4: Define economy and upgrade costs] starts at [C3: Define research progression]'s end
-[C4: Define economy and upgrade costs] lasts 1 weeks
 
-' Programming 
-[P16: Homebase state] starts at [P2: Core player functionality]'s end
-[P16: Homebase state] lasts 1 weeks
-[P3: Camera system] starts at [P16: Homebase state]'s end
+
+
+
+
+
+' Core Player Systems - Parallel after P2
+[P3: Camera system] starts at [P2: Core player functionality]'s end
 [P3: Camera system] lasts 1 weeks
-
-' Graphics
-[G2: Player sprite & animations] starts at [G1: GUI placeholder assets]'s end
-[G2: Player sprite & animations] lasts 2 weeks
-
-
-' Player Programming
-[P4: Oxygen system] starts at [C4: Define economy and upgrade costs]'s end
+[P4: Oxygen system] starts at [P2: Core player functionality]'s end
 [P4: Oxygen system] lasts 1 weeks
-[P6: Depth tracking system] starts at [P4: Oxygen system]'s end
+[P6: Depth tracking system] starts at [P2: Core player functionality]'s end
 [P6: Depth tracking system] lasts 1 weeks
-
-' Creature Programming
-[P5: Health system] starts at [P3: Camera system]'s end
-[P5: Health system] lasts 1 weeks
-[P7: Passive creature functionality] starts at [P5: Health system]'s end
-[P7: Passive creature functionality] lasts 1 weeks
-
-' Creature Graphics
-[G3: Passive creature sprites] starts at [C1: Define creature species]'s end
-[G3: Passive creature sprites] lasts 2 weeks
-
-
-' Hostile Creatures Programming
-[P8: Hostile creature functionality] starts at [P6: Depth tracking system]'s end
-[P8: Hostile creature functionality] lasts 1 weeks
-[P9: Creature health and elimination] starts at [P8: Hostile creature functionality]'s end
-[P9: Creature health and elimination] lasts 1 weeks
-
-' Research Programming
-[P10: Research scanning functionality] starts at [P7: Passive creature functionality]'s end
-[P10: Research scanning functionality] lasts 1 weeks
-[P11: Research persistence] starts at [P10: Research scanning functionality]'s end
-[P11: Research persistence] lasts 1 weeks
-
-' Hostile Creature Graphics
-[G4: Hostile creature sprites] starts at [C1: Define creature species]'s end
-[G4: Hostile creature sprites] lasts 2 weeks
-
-
-' Combat Tools Programming
-[P12: Harpoon functionality] starts at [P9: Creature health and elimination]'s end
-[P12: Harpoon functionality] lasts 1 weeks
-
-' Economy Programming
-[P14: Inventory system] starts at [P11: Research persistence]'s end
+[P14: Inventory system] starts at [P2: Core player functionality]'s end
 [P14: Inventory system] lasts 1 weeks
 
-' Environment Graphics
+' Creature Graphics - Depend on C1
+[G3: Passive creature sprites] starts at [C1: Define creature species]'s end
+[G3: Passive creature sprites] lasts 1 weeks
+[G4: Hostile creature sprites] starts at [C1: Define creature species]'s end
+[G4: Hostile creature sprites] lasts 1 weeks
+
+' Environment Graphics - Depend on C2
 [G5: Environment assets] starts at [C2: Define depth progression difficulty]'s end
-[G5: Environment assets] lasts 2 weeks
+[G5: Environment assets] lasts 1 weeks
 
 
-' Combat & Economy Programming
-[P13: Combat weapon functionality] starts at [P9: Creature health and elimination]'s end
-[P13: Combat weapon functionality] lasts 1 weeks
 
-' Upgrade System Programming
-[P15: Economy system] starts at [P9: Creature health and elimination]'s end
+
+
+
+' Health System - Depends on P2 and P6
+[P5: Health system] starts at [P6: Depth tracking system]'s end
+[P5: Health system] lasts 1 weeks
+
+' Economy & Homebase - Depend on P14
+[P15: Economy system] starts at [P14: Inventory system]'s end
 [P15: Economy system] lasts 1 weeks
+[P16: Homebase state] starts at [P14: Inventory system]'s end
+[P16: Homebase state] lasts 1 weeks
 
-' HUD Graphics
+' Passive Creatures - Depend on P2 and C1
+[P7: Passive creature functionality] starts at [P2: Core player functionality]'s end
+[P7: Passive creature functionality] lasts 1 weeks
+
+' Player & HUD Graphics
+[G2: Player sprite & animations] starts at [G1: GUI placeholder assets]'s end
+[G2: Player sprite & animations] lasts 1 weeks
 [G6: HUD assets] starts at [G5: Environment assets]'s end
 [G6: HUD assets] lasts 1 weeks
 
--- Final Integration --
 
-' Final Integration
+
+
+
+
+
+' Hostile Creatures - Depend on P7 and C1
+[P8: Hostile creature functionality] starts at [P7: Passive creature functionality]'s end
+[P8: Hostile creature functionality] lasts 1 weeks
+
+' Research Scanning - Depends on P7 and P8
+[P10: Research scanning functionality] starts at [P8: Hostile creature functionality]'s end
+[P10: Research scanning functionality] lasts 1 weeks
+
+' Upgrades - Depend on P15 and C3
 [P17: Upgrade system] starts at [P15: Economy system]'s end
 [P17: Upgrade system] lasts 1 weeks
-[P19: Save/load functionality] starts at [P15: Economy system]'s end
-[P19: Save/load functionality] lasts 1 weeks
-[P20: Integrate UI functionality] starts at [P15: Economy system]'s end
+
+' UI Integration - Depends on P4, P5, P6
+[P20: Integrate UI functionality] starts at [P5: Health system]'s end
 [P20: Integrate UI functionality] lasts 1 weeks
 
--- Sound Design (Parallel) --
 
-' Will be done in parallel with the rest of the process and will begin in the last few weeks as it is non crucial
-[S1: Underwater ambient soundtrack] starts at [P7: Passive creature functionality]'s end
+
+
+
+
+' Creature Combat - Depends on P8
+[P9: Creature health and elimination] starts at [P8: Hostile creature functionality]'s end
+[P9: Creature health and elimination] lasts 1 weeks
+
+' Research Persistence - Depends on P10
+[P11: Research persistence] starts at [P10: Research scanning functionality]'s end
+[P11: Research persistence] lasts 1 weeks
+
+
+
+
+
+
+' Combat Tools - Depend on P9 and P14
+[P12: Harpoon functionality] starts at [P9: Creature health and elimination]'s end
+[P12: Harpoon functionality] lasts 1 weeks
+[P13: Combat weapon functionality] starts at [P9: Creature health and elimination]'s end
+[P13: Combat weapon functionality] lasts 1 weeks
+
+' Save/Load - Depends on P11, P14, P15, P17
+[P19: Save/load functionality] starts at [P11: Research persistence]'s end
+[P19: Save/load functionality] lasts 1 weeks
+
+
+
+
+
+
+
+' Sound Design - Depends on P12
+[S1: Underwater ambient soundtrack] starts at [P12: Harpoon functionality]'s end
 [S1: Underwater ambient soundtrack] lasts 2 weeks
-[S3: Creature sound effects] starts at [P7: Passive creature functionality]'s end
+[S3: Creature sound effects] starts at [P12: Harpoon functionality]'s end
 [S3: Creature sound effects] lasts 2 weeks
+
+' Additional Sound - Depends on S1
 [S2: Tool sound effects] starts at [S1: Underwater ambient soundtrack]'s end
 [S2: Tool sound effects] lasts 1 weeks
-[S4: UI sound effects] starts at [S2: Tool sound effects]'s end
+[S4: UI sound effects] starts at [S1: Underwater ambient soundtrack]'s end
 [S4: UI sound effects] lasts 1 weeks
 
--- Buffer Week --
 
-' Final week for testing, bug fixes, and polish before deadline
-[Testing & Bug Fixes] starts at [P17: Upgrade system]'s end
+
+
+
+
+
+' Audio Integration - Depends on S4
+[P21: Integrate Sound functionality] starts at [S4: UI sound effects]'s end
+[P21: Integrate Sound functionality] lasts 1 weeks
+
+
+
+
+
+
+' Testing starts when all development is complete (April 28) and continues until Final Deadline
+[Testing & Bug Fixes] starts 2026-04-28
 [Testing & Bug Fixes] lasts 1 weeks and is colored in LightGray
 
 @endgantt
