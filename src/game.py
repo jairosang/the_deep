@@ -41,7 +41,7 @@ class GameManager():
     # MAIN LOOP OF THE GAME
     def run(self):
         while self.is_running:
-            dt = self.clock.tick(self.fps)
+            dt = self.clock.tick(self.fps) / 1000
 
             self.get_events()
             self.update(dt)
