@@ -2,6 +2,7 @@ from src.game import GameManager
 from src.states.homebase import HomebaseState
 from src.states.underwater import UnderwaterState
 from src.states.start_screen import StartScreen
+from src.entities.player import Player
 import pygame
 
 def initialize():
@@ -10,10 +11,11 @@ def initialize():
     screen = pygame.display.set_mode((pygame_info.current_w, pygame_info.current_h), pygame.FULLSCREEN)
     pygame.display.set_caption("The Deep")
 
+    player = Player()
     states = {
         "START_SCREEN": StartScreen((pygame_info.current_w, pygame_info.current_h)),
-        "UNDERWATER": UnderwaterState((pygame_info.current_w, pygame_info.current_h)),
-        "HOMEBASE": HomebaseState((pygame_info.current_w, pygame_info.current_h)),
+        "UNDERWATER": UnderwaterState((pygame_info.current_w, pygame_info.current_h), player),
+        "HOMEBASE": HomebaseState((pygame_info.current_w, pygame_info.current_h), player),
     }
 
     return screen, states
