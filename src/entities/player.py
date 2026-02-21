@@ -1,31 +1,31 @@
 from src.entities.base_entity import Entity
 from src.entities.item import Item
+from config import player
 import pygame
 
 class Player(Entity):
     def __init__(self) -> None:
-        super().__init__(pygame.Surface((20, 20)), (30, 30))
+        super().__init__(pygame.Surface(player["SIZE"]), player["START_POS"])
         # THIS IS TEMPORARY
         self.image.fill((255,255,255))
 
         # Movement
-        self.speed = 200
+        self.speed = player["SPEED"]
         self.velocity = pygame.math.Vector2(0,0)
         self.is_sprinting = False
-        self.sprint_multiplier: float = 1.5
+        self.sprint_multiplier = player["SPRINT_MULTIPLIER"]
         self.movement_axis = pygame.math.Vector2(1, 1)  # (x, y) 1 allows the player to move on that axis
 
-        # Stats
-        self.health = 50
-        self.max_health = 50
-        self.oxygen = 50
-        self.max_oxygen = 50
-        self.oxygen_depletion_rate = 1
-        self.depth: float
-        self.max_depth_limit = 100
-
+        # Stats (FOR NOW PULLS BASE DATA FROM CONFIG, WHEN THERE IS PERSISTANCE THIS SHOULD BE PULLED FROM THE DATA MANAGER WHICH WILL DETERMINE IF TO USE BASE STATS OR LOADED STATS)
+        self.health = player["BASE_STATS"]["MAX_HEALTH"]
+        self.max_health = player["BASE_STATS"]["MAX_HEALTH"]
+        self.oxygen = player["BASE_STATS"]["MAX_OXYGEN"]
+        self.max_oxygen = player["BASE_STATS"]["MAX_OXYGEN"]
+        self.oxygen_depletion_rate = player["BASE_STATS"]["OXYGEN_DEPLETION_RATE"]
+        self.depth: float = 0.0
+        self.max_depth_limit = player["BASE_STATS"]["MAX_DEPTH_LIMIT"]
         self.buffer_inventory:list[Item] = []
-        self.buffer_inventory_capacity = 5
+        self.buffer_inventory_capacity = player["BASE_STATS"]["INVENTORY_CAPACITY"]
         # Missing harpoon, weapon and research gun
 
 
