@@ -1,21 +1,22 @@
 from src.states.base_state import BaseState
+from src.entities.player import Player
 
 class HomebaseState(BaseState):
-    def __init__(self, ss) -> None:
+    def __init__(self, ss, player: Player) -> None:
         super().__init__(ss)
-        pass
+        self.player = player
 
     def enter(self, data: dict = {}):
-        pass
+        self.player.movement_axis.y = 0  # Horizontal movement only
 
     def handle_event(self, e):
         pass
         
     def update(self, dt):
-        pass
+        self.player.update(dt)
 
     def draw(self, screen):
-        pass
+        self.player.draw(screen)
 
     def exit(self):
-        pass
+        self.player.movement_axis.y = 1  # Return full movement

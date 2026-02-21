@@ -35,6 +35,8 @@ class StartScreen(BaseState):
     def exit(self):
         self.is_done = (True, "UNDERWATER")
     
+
+    #==== Own Methods ====
     def quit_game(self):
         self.is_quitting = True
 
