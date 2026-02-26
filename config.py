@@ -16,7 +16,7 @@ player = {
     "BASE_STATS": {
         "MAX_HEALTH": 50,
         "MAX_OXYGEN": 50,
-        "OXYGEN_DEPLETION_RATE": 1.0,
+        "OXYGEN_DEPLETION_RATE": 0.5,
         "MAX_DEPTH_LIMIT": 100,
         "INVENTORY_CAPACITY": 5,
     },

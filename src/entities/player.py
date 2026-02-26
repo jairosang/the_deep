@@ -1,6 +1,6 @@
 from src.entities.base_entity import Entity
 from src.entities.item import Item
-from config import player
+from config import player, FPS
 import pygame
 
 class Player(Entity):
@@ -30,6 +30,7 @@ class Player(Entity):
 
 
     def update(self, dt):
+        self.update_oxygen()
         self.get_input()
         self.move(dt)
 
@@ -66,7 +67,17 @@ class Player(Entity):
 
 
     def update_oxygen(self):
-        pass
+        # This thing will have implemented the game over thing when the oxygen is 0
+        if self.oxygen <= 0:
+            pass
+
+        # This is the thing that checks how to update the oxygen thing if you are sprinting or not
+        if self.oxygen > 0:
+            if self.is_sprinting == False:
+                self.oxygen -= self.oxygen_depletion_rate/FPS
+            if self.is_sprinting == True:
+                self.oxygen -= self.oxygen_depletion_rate*2/FPS
+        # You have to divide the thing by the FPS to not have it go crazy ofc
 
     def update_depth_damage(self):
         pass

@@ -17,13 +17,19 @@ class UnderwaterState(BaseState):
             self.button.call_back()
 
     def update(self, dt):
+        # Just telling the guys to update themselves now
         self.player.update(dt)
         pygame.display.flip()
 
     def draw(self, screen: pygame.Surface):
         screen.fill((80, 128, 173))
+        # Just telling the guys to draw themselves
         self.player.draw(screen)
         self.button.draw(screen)
+
+        # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
+        oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))
+        screen.blit(oxygen_text, (10, self.screen_size[1] - 50))
 
     def exit(self):
         self.player.revert()
