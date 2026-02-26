@@ -1,35 +1,47 @@
 import pygame
+import random
 from src.ui.components.button import Button
 from src.states.base_state import BaseState
 from src.entities.player import Player
+from src.entities.creatures.base_creature import Creature
+from src.entities.creatures.creature_passive import PassiveCreature
+from src.entities.creatures.creature_aggressive import AggressiveCreature
 
 class UnderwaterState(BaseState):
     def __init__(self, ss, player: Player) -> None:
         super().__init__(ss)
         self.player = player
+        self.creatures: list[Creature] = []
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
         self.button = Button((self.screen_size[0]/16,20),(self.screen_size[0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit)
+        self.spawn_creatures()
 
     def handle_event(self, e: pygame.event.Event):
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
 
     def update(self, dt):
-        # Just telling the guys to update themselves now
         self.player.update(dt)
+        bounds = pygame.Rect(
+            0,
+            0,
+            int(self.screen_size[0]),
+            int(self.screen_size[1]) # make creatures stay within bounds
+        )
+        
+        for c in self.creatures:
+            c.update(dt, self.player, bounds)
         pygame.display.flip()
 
     def draw(self, screen: pygame.Surface):
         screen.fill((80, 128, 173))
         # Just telling the guys to draw themselves
+        for c in self.creatures:
+            c.draw(screen)
         self.player.draw(screen)
         self.button.draw(screen)
-
-        # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
-        oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))
-        screen.blit(oxygen_text, (10, self.screen_size[1] - 50))
 
     def exit(self):
         self.player.revert()
@@ -38,7 +50,18 @@ class UnderwaterState(BaseState):
 
     # ==== Own Methods ====
     def spawn_creatures(self):
-        pass
+        self.creatures.clear()
+        w, h = self.screen_size
+
+        for _ in range(6):
+            x = random.randint(40, int(w) - 40)
+            y = random.randint(80, int(h) - 40)
+            self.creatures.append(PassiveCreature((x, y), size=18, speed=140, fear_radius=160))
+
+        for _ in range(2):
+            x = random.randint(40, int(w) - 40)
+            y = random.randint(80, int(h) - 40)
+            self.creatures.append(AggressiveCreature((x, y), size=18, speed=140, chase_radius=160))
 
     def check_return_point(self):
         pass
