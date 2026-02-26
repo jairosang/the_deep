@@ -1,32 +1,31 @@
 # Changelog
 
 [v0.1.0] - M1: Foundation Complete 
-[X]-[C1] Define creature species
-[X]-[C2] Define depth progression difficulty
-[X]-[C3] Define research progression
-[ ]-[C4] Define economy and upgrade costs
-[X]-[P1] Underwater state and game loop
-[ ]-[P2] Core player functionality {
-        [X] - Player can move
-        [X] - Player can sprint
-        [] - Player has holdables (weapon, research gun, harpoon)
-        [] - Player can switch between holdables
-        [] - Holdables can do things
+[X]-[C1] Define creature species (David)
+[X]-[C2] Define depth progression difficulty (David)
+[X]-[C3] Define upgrade progression (Jairo)
+[X]-[C4] Define economy and upgrade costs (Daniel)
+[X]-[P1] Underwater state and game loop (Jairo)
+[X]-[P2] Core player functionality {
+        [X] - Player can move (Jairo)
+        [X] - Player can sprint (Jairo)
 }
-[ ]-[G1] GUI placeholder assets
+[ ]-[G1] GUI placeholder assets (Daniel)
+[ ]-[G5] Environment assets (Jairo)
 [] - Fix: entity abstract class is weird. better call it a thing from which items, player and creatures inherit. Then also have an abstract class called MovingThings from which only player and creatures inherit and get their movement from there.
 [] - Fix: Class diagram architecture is not reflecting codebase, as expected, would be nice if we fix it to avoid confusions and include the definitive methods and attributes that are already there. 
+[] - Fix: Tasks and their timelines are poorly designed (Some are short and multiple could be combined into 1 but take "1 week"), others are a big part of the project but apparently are missing (Physics Service Hello??), would be good to fix this before continuing with the project. 
 
 
 
 [v0.2.0] - M2: Main Systems Complete 
+[ ]-[NONE] Tilemap loading system
 [ ]-[P3] Camera system
-[ ]-[P4] Oxygen system
+[X]-[P4] Oxygen system (Jairo)
 [ ]-[P6] Depth tracking system
 [ ]-[P14] Inventory system
 [ ]-[G3] Passive creature sprites
 [ ]-[G4] Hostile creature sprites
-[ ]-[G5] Environment assets
 [ ]-[P7] Passive creature functionality
 [ ]-[G2] Player sprite & animations
 
