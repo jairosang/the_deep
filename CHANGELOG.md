@@ -24,8 +24,8 @@
 [X]-[P4] Oxygen system (Jairo)
 [ ]-[P6] Depth tracking system
 [ ]-[P14] Inventory system
-[ ]-[G3] Passive creature sprites
-[ ]-[G4] Hostile creature sprites
+[X]-[G3] Passive creature sprites
+[X]-[G4] Hostile creature sprites
 [ ]-[P7] Passive creature functionality
 [ ]-[G2] Player sprite & animations
 
