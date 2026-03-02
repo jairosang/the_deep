@@ -9,6 +9,8 @@ class Player(Entity):
         # THIS IS TEMPORARY
         self.image.fill((255,255,255))
 
+        self.rect = self.image.get_rect(topleft=(int(self.pos.x), int(self.pos.y)))
+
         # Movement
         self.speed = player["SPEED"]
         self.velocity = pygame.math.Vector2(0,0)
@@ -33,6 +35,8 @@ class Player(Entity):
         self.update_oxygen()
         self.get_input()
         self.move(dt)
+
+        self.rect.topleft = (int(self.pos.x), int(self.pos.y)) # sincronize the position after moving
 
     def draw(self, surface: pygame.Surface):
         surface.blit(self.image, self.pos)
