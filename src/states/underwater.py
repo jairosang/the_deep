@@ -7,12 +7,14 @@ from src.entities.creatures.base_creature import Creature
 from src.entities.creatures.creature_passive import PassiveCreature
 from src.entities.creatures.creature_aggressive import AggressiveCreature
 from config import game as g_config
+from src.utils.tile_map import TileMap
 
 class UnderwaterState(BaseState):
     def __init__(self, player: Player) -> None:
         super().__init__()
         self.player = player
         self.creatures: list[Creature] = []
+        self.tile_map = TileMap(g_config["TILEMAP_PATH"])
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
@@ -36,8 +38,12 @@ class UnderwaterState(BaseState):
             c.update(dt, self.player, bounds)
         pygame.display.flip()
 
+        if self.player.oxygen <= 0:
+            self.is_done = (True, "GAME_OVER")
+
     def draw(self, screen: pygame.Surface):
         screen.fill((80, 128, 173))
+        self.tile_map.draw(screen)
         # Just telling the guys to draw themselves
         for c in self.creatures:
             c.draw(screen)

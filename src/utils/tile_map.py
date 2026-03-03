@@ -1,6 +1,14 @@
-from pygame import Surface
-from pathlib import Path
 import json
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+import pygame
+
+# https://doc.mapeditor.org/en/latest/reference/global-tile-ids/ * mic drop *
+FLIPPED_HORIZONTALLY_FLAG = 0x80000000
+FLIPPED_VERTICALLY_FLAG = 0x40000000
+FLIPPED_DIAGONALLY_FLAG = 0x20000000
+ALL_FLIP_FLAGS = (FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG)
 
 class Layer:
     def __init__(self, layer_data: dict) -> None:
@@ -27,20 +35,16 @@ class TileLayer(Layer):
         grid = [[0 for _ in range(self.width)] for _ in range(self.height)]
 
         for chunk in chunks:
-            # The position is not starting from zero which is not nice because an index cant be negative in an array yk so I fixed it
             norm_x = chunk["x"] - self.start_x
             norm_y = chunk["y"] - self.start_y
             
             # This guy just transferst the i horizontal movement accross the chunk array into 2d array for the grid and assigns the corresponding chunk_data 
             chunk_data = chunk["data"]
             for i, el in enumerate(chunk_data):
-                grid[norm_y + (i // chunk["height"])][norm_x + (i % chunk["width"])] = chunk_data[i]
+                grid[norm_y + (i // chunk["width"])][norm_x + (i % chunk["width"])] = chunk_data[i]
 
         return grid
-
-
-
-
+    
 
 class ImageLayer(Layer):
     def __init__(self, layer_data: dict) -> None:
@@ -53,54 +57,111 @@ class ImageLayer(Layer):
         self.parallax_x: float = layer_data.get("parallaxx", 1.0)
         self.parallax_y: float = layer_data.get("parallaxy", 1.0)
 
-
-
-
-
-
-
-
-
 class TileMap:
     def __init__(self, path: Path) -> None:
-        self.visual_layer: Surface
-        self.collision_layer: list[list[int]]
-        self.tile_size: tuple[int,int]
-        self.map_size: tuple[int,int]
+        self.visual_layer: pygame.Surface | None = None
+        self.tile_size: tuple[int, int] = (0, 0)
+        self.map_size: tuple[int, int] = (0, 0)
+        self.mid_layer: TileLayer
+        self.first_gid = 1
 
-    # Not done
+        self.parse_from_path(path)
+
     def parse_from_path(self, path: Path):
-
-        path = Path("./assets/tilemap/underwater_tilemap.tmj")
         with path.open("r", encoding="utf-8") as f:
             tile_map = json.load(f)
         
         # Someone pls change this latter im begging you it would be nice to have proper errors pls pls pls thanks.
-        if tile_map == None:
+        if tile_map is None:
             return "I like ice cream and the path you gave is wrong womp womp"
         
-
         # Get em facts from the tiled json file
         self.tile_size = (tile_map["tilewidth"], tile_map["tileheight"])
 
-        # Missing error handling if name midground is not there
-        mid_layer = [l for l in tile_map["layers"] if l.get("name") == "Midground"][0]
+        mid_layer = next((layer for layer in tile_map["layers"] if layer.get("name") == "Midground"), None)
+        if mid_layer is None:
+            return "I see another error which need to be raised over here"
+
         self.mid_layer = TileLayer(mid_layer)
-        
+        self.map_size = (
+            self.mid_layer.width * self.tile_size[0],
+            self.mid_layer.height * self.tile_size[1],
+        )
+
+        tileset_data = tile_map["tilesets"][0]
+        self.first_gid = int(tileset_data["firstgid"])
+
+        tsx_path = (path.parent / tileset_data["source"]).resolve()
+        atlas_surface, column_count = self._load_tileset_surface_and_columns(tsx_path)
+        self.visual_layer = self._build_visual_layer(atlas_surface, column_count)
 
 
-    
+    def draw(self, target: pygame.Surface, position: tuple[int, int] = (0, 0)) -> None:
+        if self.visual_layer is not None:
+            target.blit(self.visual_layer, position)
 
 
-    
-    # Not done
-    def get_visual_layer(self) -> Surface:
-        return self.visual_layer
-
-    # Not done
     def is_tile_solid(self, x, y) -> bool:
+        gid = self.get_tile_at_position(x, y)
+        # Not implemented because its not my thing. Yet....
         return True
+
+
+    def get_tile_at_position(self, x, y) -> int:
+        # Not implemented because its not my thing. Yet....
+        return 1 # It should return the ID, NOT GID of the tile in the middle layer ig
     
-    # Not done
-    def get_tile_at_position(self, x, y):
-        pass
+    # Gets the tileset and number of columns in the tileset
+    def _load_tileset_surface_and_columns(self, tsx_path: Path) -> tuple[pygame.Surface, int]:
+        tsx_root = ET.parse(tsx_path).getroot()
+        column_count = int(tsx_root.attrib["columns"])
+
+        image_element = tsx_root.find("image")
+        if image_element is None:
+            raise ValueError(f"Tileset image missing in {tsx_path}")
+
+        atlas_path = (tsx_path.parent / image_element.attrib["source"]).resolve()
+        atlas_surface = pygame.image.load(str(atlas_path)).convert_alpha()
+        return atlas_surface, column_count
+
+    # Just takes the info from the gid
+    def _normalize_gid(self, encoded_gid: int) -> tuple[int, bool, bool]:
+        base_gid = encoded_gid & ~ALL_FLIP_FLAGS
+        flip_h = bool(encoded_gid & FLIPPED_HORIZONTALLY_FLAG)
+        flip_v = bool(encoded_gid & FLIPPED_VERTICALLY_FLAG)
+        return base_gid, flip_h, flip_v
+
+    # We need to change this later prob, rn the whole map is rebuilding always. Would make more sense for only the part inside the camera to be built
+    def _build_visual_layer(self, atlas_surface: pygame.Surface, column_count: int) -> pygame.Surface:
+        # Create a transparent surface to draw tiles on top of
+        tile_width, tile_height = self.tile_size
+        visual_layer = pygame.Surface(self.map_size, pygame.SRCALPHA)
+
+        # for every tile in the grid
+        for i, row in enumerate(self.mid_layer.grid):
+            for j, gid in enumerate(row):
+                # Get the tile ID and flip da flags
+                base_gid, flip_h, flip_v = self._normalize_gid(gid)
+                if base_gid == 0:
+                    continue
+
+                # Calculate the local tile ID from the tileset (first_gid tells you where the numbers from each tileset start)
+                local_tile_id = base_gid - self.first_gid
+                if local_tile_id < 0:
+                    continue
+
+                # Get the tile image from the atlas
+                source_x = (local_tile_id % column_count) * tile_width              # Same thingies as before, moving through the 2d environment of the atlas using a 1 dimensional number.
+                source_y = (local_tile_id // column_count) * tile_height            # Column_count can be seen as the width.
+                source_rect = pygame.Rect(source_x, source_y, tile_width, tile_height)
+                tile_surface = atlas_surface.subsurface(source_rect)
+
+                # Flip the tiles if they were fliped in Tiled
+                if flip_h or flip_v:
+                    tile_surface = pygame.transform.flip(tile_surface, flip_h, flip_v)
+
+                # Blit the tile at the right place
+                destination = (j * tile_width, i * tile_height)
+                visual_layer.blit(tile_surface, destination)
+
+        return visual_layer

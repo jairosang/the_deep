@@ -1,9 +1,11 @@
+from pathlib import Path
 import pygame
 
 # === WINDOW & DISPLAY ===
 game = {
     "GAME_TITLE" : "The Deep",
-    "FPS" : 30
+    "FPS" : 30,
+    "TILEMAP_PATH" : Path("assets/tilemap/underwater_tilemap.tmj")
 }
 
 # Player initialization constants
