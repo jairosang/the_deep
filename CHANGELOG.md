@@ -11,7 +11,7 @@
         [X] - Player can sprint (Jairo)
 }
 [ ]-[G1] GUI placeholder assets (Daniel)
-[ ]-[G5] Environment assets (Jairo)
+[X]-[G5] Environment assets (Jairo)
 [X] - Fix: entity abstract class is weird. better call it a thing from which items, player and creatures inherit. Then also have an abstract class called MovingThings from which only player and creatures inherit and get their movement from there. (Jairo)
 [] - Fix: Class diagram architecture is not reflecting codebase, as expected, would be nice if we fix it to avoid confusions and include the definitive methods and attributes that are already there. 
 [X] - (Will actively work on it every week) Fix: Tasks and their timelines are poorly designed (Some are short and multiple could be combined into 1 but take "1 week"), others are a big part of the project but apparently are missing (Physics Service Hello??), would be good to fix this before continuing with the project. (Everyone)
@@ -19,14 +19,30 @@
 
 
 [v0.2.0] - M2: Main Systems Complete 
-[ ]-[NONE] Tilemap loading system
+[ ]-[NONE] Tilemap loading system {
+        [] - Program adding static map without collisions. (Jairo)
+        [] - Implement collision checking with the physics service(Jairo)
+}
+[ ]- [NONE] Collision handling {
+        [] - Creating physics service
+        [] - Handling player collisions with map
+        [] - Handling creature collisions with map
+        [] - Handling player-creature collision
+}
+
 [ ]-[P3] Camera system
 [X]-[P4] Oxygen system (Jairo)
 [ ]-[P6] Depth tracking system
 [ ]-[P14] Inventory system
-[X]-[G3] Passive creature sprites
-[X]-[G4] Hostile creature sprites
-[ ]-[P7] Passive creature functionality
+[]-[G3] Passive creature sprites {
+        [X] - Standstill image (David)
+        [] - Animations
+}
+[]-[G4] Hostile creature sprites {
+        [X] - Standstill image (David)
+        [] - Animations
+}
+[ ]-[P7] Passive creature functionality 
 [ ]-[G2] Player sprite & animations
 
 
