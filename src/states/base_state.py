@@ -2,8 +2,7 @@ from abc import ABC,abstractmethod
 import pygame
 
 class BaseState(ABC):
-    def __init__(self, screen_size) -> None:
-        self.screen_size = screen_size
+    def __init__(self) -> None:
         self.is_done: tuple[bool, None|str] = (False, None)
         self.is_quitting = False
 

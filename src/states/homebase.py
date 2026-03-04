@@ -2,8 +2,8 @@ from src.states.base_state import BaseState
 from src.entities.player import Player
 
 class HomebaseState(BaseState):
-    def __init__(self, ss, player: Player) -> None:
-        super().__init__(ss)
+    def __init__(self, player: Player) -> None:
+        super().__init__()
         self.player = player
 
     def enter(self, data: dict = {}):

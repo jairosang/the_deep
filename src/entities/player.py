@@ -1,6 +1,6 @@
 from src.entities.base_entity import Entity
 from src.entities.item import Item
-from config import FPS, player as p_config
+from config import game as g_config, player as p_config
 import pygame
 
 class Player(Entity):
@@ -103,9 +103,9 @@ class Player(Entity):
         # This is the thing that checks how to update the oxygen thing if you are sprinting or not
         if self.oxygen > 0:
             if self.is_sprinting == False:
-                self.oxygen -= self.oxygen_depletion_rate/FPS
+                self.oxygen -= self.oxygen_depletion_rate/g_config["FPS"]
             if self.is_sprinting == True:
-                self.oxygen -= self.oxygen_depletion_rate*2/FPS
+                self.oxygen -= self.oxygen_depletion_rate*2/g_config["FPS"]
         # You have to divide the thing by the FPS to not have it go crazy ofc
 
     def update_depth_damage(self):

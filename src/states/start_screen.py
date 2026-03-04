@@ -1,10 +1,11 @@
 import pygame
 from src.ui.components.button import Button
 from src.states.base_state import BaseState
+from config import game as g_config
 
 class StartScreen(BaseState):
-    def __init__(self, ss) -> None:
-        super().__init__(ss)
+    def __init__(self) -> None:
+        super().__init__()
         self.buttons: list[Button] = []
         pass
     
@@ -12,8 +13,8 @@ class StartScreen(BaseState):
     def enter(self):
         self.buttons += [
             # Creation of play and quit buttons respectively
-            Button((self.screen_size[0]/2, self.screen_size[1]*2/3), (self.screen_size[0]/2,70), (100,100,100), (130, 130, 130), text="Play Game", font_size=30, func=self.exit),
-            Button((self.screen_size[0]/2, self.screen_size[1]*4/5), (self.screen_size[0]/2,70), (245, 96, 66), (209, 80, 54), text="QUIT", font_size=30, func=self.quit_game),
+            Button((g_config["SCREEN_SIZE"][0]/2, g_config["SCREEN_SIZE"][1]*2/3), (g_config["SCREEN_SIZE"][0]/2,70), (100,100,100), (130, 130, 130), text="Play Game", font_size=30, func=self.exit),
+            Button((g_config["SCREEN_SIZE"][0]/2, g_config["SCREEN_SIZE"][1]*4/5), (g_config["SCREEN_SIZE"][0]/2,70), (245, 96, 66), (209, 80, 54), text="QUIT", font_size=30, func=self.quit_game),
         ]
 
 

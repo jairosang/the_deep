@@ -6,16 +6,17 @@ from src.entities.player import Player
 from src.entities.creatures.base_creature import Creature
 from src.entities.creatures.creature_passive import PassiveCreature
 from src.entities.creatures.creature_aggressive import AggressiveCreature
+from config import game as g_config
 
 class UnderwaterState(BaseState):
-    def __init__(self, ss, player: Player) -> None:
-        super().__init__(ss)
+    def __init__(self, player: Player) -> None:
+        super().__init__()
         self.player = player
         self.creatures: list[Creature] = []
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
-        self.button = Button((self.screen_size[0]/16,20),(self.screen_size[0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit)
+        self.button = Button((g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit)
         self.spawn_creatures()
 
     def handle_event(self, e: pygame.event.Event):
@@ -27,8 +28,8 @@ class UnderwaterState(BaseState):
         bounds = pygame.Rect(
             0,
             0,
-            int(self.screen_size[0]),
-            int(self.screen_size[1]) # make creatures stay within bounds
+            int(g_config["SCREEN_SIZE"][0]),
+            int(g_config["SCREEN_SIZE"][1]) # make creatures stay within bounds
         )
         
         for c in self.creatures:
@@ -51,7 +52,7 @@ class UnderwaterState(BaseState):
     # ==== Own Methods ====
     def spawn_creatures(self):
         self.creatures.clear()
-        w, h = self.screen_size
+        w, h = g_config["SCREEN_SIZE"]
 
         for _ in range(6):
             x = random.randint(40, int(w) - 40)

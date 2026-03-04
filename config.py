@@ -1,10 +1,10 @@
 import pygame
 
 # === WINDOW & DISPLAY ===
-GAME_TITLE = "The Deep"
-FPS = 30
-TILE_SIZE = 32  # Standard tile size for 2D games, align with assets later
-
+game = {
+    "GAME_TITLE" : "The Deep",
+    "FPS" : 30
+}
 
 # Player initialization constants
 player = {
