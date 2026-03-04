@@ -12,6 +12,8 @@ player = {
     "START_POS": (50, 50),
     "SPEED": 400,
     "SPRINT_MULTIPLIER": 1.5,
+    "ACCELERATION": 1.4,
+    "DECELERATION": 1.3,
     
     "BASE_STATS": {
         "MAX_HEALTH": 50,
