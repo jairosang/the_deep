@@ -1,9 +1,9 @@
 import pygame
 import random
-
+from abc import ABC,abstractmethod
 Vec2 = pygame.math.Vector2
 
-class Creature:
+class Creature(ABC):
     def __init__(self, pos: tuple[float, float], size: int = 20, speed: float = 90.0) -> None:
         self.pos = Vec2(pos)
         self.vel = Vec2(0, 0)
@@ -17,8 +17,8 @@ class Creature:
         self._wander_timer = 0.0
         self._wander_interval = random.uniform(0.6, 1.4)
 
-    def update(self, dt: float, player, bounds: pygame.Rect | None = None) -> None:
-        self.think(dt, player)
+    def update(self, dt: float, player_pos, bounds: pygame.Rect | None = None) -> None:
+        self.think(dt, player_pos)
 
         self.pos += self.vel * dt
 
@@ -28,12 +28,9 @@ class Creature:
             self.pos.y = max(bounds.top,  min(self.pos.y, bounds.bottom - self.size))
 
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
-
-    def think(self, dt: float, player) -> None:
-        self.vel.update(0, 0)
-
-    def _player_pos(self, player) -> Vec2:
-        return Vec2(player.rect.center)
+    @abstractmethod
+    def think(self, dt: float, player_pos:Vec2) -> None:    #changed to an abstract class, the subclass must implement this
+        pass
 
     def distance_to_player(self, player) -> float:
         return self.pos.distance_to(self._player_pos(player))

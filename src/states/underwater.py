@@ -38,13 +38,13 @@ class UnderwaterState(BaseState):
             int(g_config["SCREEN_SIZE"][0]),
             int(g_config["SCREEN_SIZE"][1]) # make creatures stay within bounds
         )
-        
+        player_pos = pygame.math.Vector2(self.player.rect.center)
         for c in self.creatures:
-            c.update(dt, self.player, bounds)
-        self.camera.update(dt, self.player.rect)
+            c.update(dt, player_pos, bounds)
 
         if self.player.oxygen <= 0:
             self.is_done = (True, "GAME_OVER")
+        pygame.display.flip()
 
     def draw(self, screen: pygame.Surface):
         self.world_surface.fill((80, 128, 173))
