@@ -90,6 +90,7 @@ class UnderwaterState(BaseState):
         pass
 
     def trigger_game_over(self):
-        pass
+        self.player.revert()   # go back to initial stats for the next run
+        self.is_done = (True, "GAME_OVER")  #switch states
 
     

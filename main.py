@@ -2,6 +2,7 @@ from src.game import GameManager
 from src.states.homebase import HomebaseState
 from src.states.underwater import UnderwaterState
 from src.states.start_screen import StartScreen
+from src.states.game_over import GameOverState
 from src.entities.player import Player
 from config import game as g_config
 import pygame
@@ -16,9 +17,10 @@ def initialize():
 
     player = Player()
     states = {
-        "START_SCREEN": StartScreen(),
-        "UNDERWATER": UnderwaterState(player),
-        "HOMEBASE": HomebaseState(player),
+        "START_SCREEN": StartScreen(vid_info),
+        "UNDERWATER": UnderwaterState(vid_info, player),
+        "HOMEBASE": HomebaseState(vid_info, player),
+        "GAME_OVER": GameOverState(vid_info)
     }
 
     return screen, states
