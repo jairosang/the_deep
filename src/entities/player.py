@@ -35,16 +35,18 @@ class Player(Entity):
         # Missing harpoon, weapon and research gun
 
 
-    def update(self, dt):
+    def update(self, dt, bound_rect: pygame.Rect):
         self.update_oxygen()
         self.get_input()
+
+        # Movement update logic
         self._update_velocity(dt)
         self.move(dt)
-
-        self.rect.topleft = (int(self.pos.x), int(self.pos.y)) # sincronize the position after moving
+        self.rect.clamp_ip(bound_rect)              # Applying clamping
+        self.pos.update(self.rect.x, self.rect.y)   # Updating to use the clamping
 
     def draw(self, surface: pygame.Surface):
-        surface.blit(self.image, self.pos)
+        surface.blit(self.image, self.rect)
 
 
     def get_input(self):
@@ -94,6 +96,7 @@ class Player(Entity):
 
     def move(self, dt):
         self.pos += self.velocity * dt
+        self.rect.topleft = (int(self.pos.x), int(self.pos.y))  # sincronize the position after moving
 
     def update_oxygen(self):
         # This thing will have implemented the game over thing when the oxygen is 0
@@ -119,5 +122,6 @@ class Player(Entity):
 
     def revert(self):
         self.pos = pygame.math.Vector2(30, 30)
+        self.rect.topleft = (int(self.pos.x), int(self.pos.y))
         self.health = self.max_health
         self.oxygen = self.max_oxygen

@@ -8,6 +8,7 @@ from src.entities.creatures.creature_passive import PassiveCreature
 from src.entities.creatures.creature_aggressive import AggressiveCreature
 from config import game as g_config
 from src.utils.tile_map import TileMap
+from src.utils.camera import Camera
 
 class UnderwaterState(BaseState):
     def __init__(self, player: Player) -> None:
@@ -15,6 +16,10 @@ class UnderwaterState(BaseState):
         self.player = player
         self.creatures: list[Creature] = []
         self.tile_map = TileMap(g_config["TILEMAP_PATH"])
+        self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
+        
+        world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
+        self.camera = Camera(g_config["SCREEN_SIZE"], world_rect)
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
@@ -26,7 +31,7 @@ class UnderwaterState(BaseState):
             self.button.call_back()
 
     def update(self, dt):
-        self.player.update(dt)
+        self.player.update(dt, bound_rect=self.camera.rect)
         bounds = pygame.Rect(
             0,
             0,
@@ -36,19 +41,26 @@ class UnderwaterState(BaseState):
         
         for c in self.creatures:
             c.update(dt, self.player, bounds)
-        pygame.display.flip()
+        self.camera.update(dt, self.player.rect)
 
         if self.player.oxygen <= 0:
             self.is_done = (True, "GAME_OVER")
 
     def draw(self, screen: pygame.Surface):
-        screen.fill((80, 128, 173))
-        self.tile_map.draw(screen)
+        self.world_surface.fill((80, 128, 173))
+        self.tile_map.draw(self.world_surface)
+        self.player.draw(self.world_surface)
+
+        self.camera.draw(self.world_surface, screen)
         # Just telling the guys to draw themselves
         for c in self.creatures:
             c.draw(screen)
-        self.player.draw(screen)
         self.button.draw(screen)
+
+        # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
+        oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))
+        screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 50))
+        pygame.display.flip()
 
     def exit(self):
         self.player.revert()
