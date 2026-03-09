@@ -16,12 +16,37 @@ class Layer:
         self.id: int = layer_data.get("id", 0)
         self.opacity: float = layer_data.get("opacity", 1.0)
         self.visible: bool = layer_data.get("visible", True)
-        self.offset_x: float = layer_data.get("offsetx", 0)
-        self.offset_y: float = layer_data.get("offsety", 0)
         self.type: str = layer_data.get("type", "")
 
-
 class TileLayer(Layer):
+    def __init__(self, layer: dict) -> None:
+        super().__init__(layer)
+        self.width: int = layer.get("width", 0)
+        self.height: int = layer.get("height", 0)
+        self.x: int = layer.get("x", 0)
+        self.y: int = layer.get("y", 0)
+
+
+        self.grid = self.build(layer.get("data", []))
+
+    def build(self, data):
+        grid = [[0 for _ in range(self.width)] for _ in range(self.height)]
+        for i, gid in enumerate(data):
+            grid[i // self.width][i % self.width] = gid
+        return grid
+
+
+
+class InfiniteLayer(Layer):
+    def __init__(self, layer_data: dict) -> None:
+        super().__init__(layer_data)
+        self.width: int = layer_data.get("width", 0)
+        self.height: int = layer_data.get("height", 0)
+        self.offset_x: float = layer_data.get("offsetx", 0)
+        self.offset_y: float = layer_data.get("offsety", 0)
+
+
+class InfiniteTileLayer(InfiniteLayer):
     def __init__(self, layer_data: dict) -> None:
         super().__init__(layer_data)
         self.width: int = layer_data.get("width", 0)
@@ -45,8 +70,7 @@ class TileLayer(Layer):
 
         return grid
     
-
-class ImageLayer(Layer):
+class InfiniteImageLayer(InfiniteLayer):
     def __init__(self, layer_data: dict) -> None:
         super().__init__(layer_data)
         self.image: str = layer_data.get("image", "")
@@ -57,12 +81,14 @@ class ImageLayer(Layer):
         self.parallax_x: float = layer_data.get("parallaxx", 1.0)
         self.parallax_y: float = layer_data.get("parallaxy", 1.0)
 
+    
+    
 class TileMap:
     def __init__(self, path: Path) -> None:
         self.visual_layer: pygame.Surface | None = None
         self.tile_size: tuple[int, int] = (0, 0)
         self.map_size: tuple[int, int] = (0, 0)
-        self.mid_layer: TileLayer
+        self.mid_layer: InfiniteTileLayer | TileLayer
         self.first_gid = 1
 
         self.parse_from_path(path)
@@ -82,15 +108,23 @@ class TileMap:
         if mid_layer is None:
             return "I see another error which need to be raised over here"
 
-        self.mid_layer = TileLayer(mid_layer)
+        # ===== Building the mid_layer, it can be either finite or infinite
+        if tile_map["infinite"] == True:
+            self.mid_layer = InfiniteTileLayer(mid_layer)
+        else:
+            self.mid_layer = TileLayer(mid_layer)
+
+        # Extract the map size
         self.map_size = (
             self.mid_layer.width * self.tile_size[0],
             self.mid_layer.height * self.tile_size[1],
         )
 
+        # Getting the data for the tileset which is the building block for the tilemap, this is like this just for now bc there is only one tileset.
         tileset_data = tile_map["tilesets"][0]
         self.first_gid = int(tileset_data["firstgid"])
 
+        # Just getting the tileset path which is already included in the tilemap
         tsx_path = (path.parent / tileset_data["source"]).resolve()
         atlas_surface, column_count = self._load_tileset_surface_and_columns(tsx_path)
         self.visual_layer = self._build_visual_layer(atlas_surface, column_count)
