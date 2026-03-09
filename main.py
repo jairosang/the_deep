@@ -17,10 +17,10 @@ def initialize():
 
     player = Player()
     states = {
-        "START_SCREEN": StartScreen(vid_info),
-        "UNDERWATER": UnderwaterState(vid_info, player),
-        "HOMEBASE": HomebaseState(vid_info, player),
-        "GAME_OVER": GameOverState(vid_info)
+        "START_SCREEN": StartScreen(),
+        "UNDERWATER": UnderwaterState(player),
+        "HOMEBASE": HomebaseState(player),
+        #"GAME_OVER": GameOverState()
     }
 
     return screen, states
