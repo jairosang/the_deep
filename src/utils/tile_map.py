@@ -130,9 +130,9 @@ class TileMap:
         self.visual_layer = self._build_visual_layer(atlas_surface, column_count)
 
 
-    def draw(self, target: pygame.Surface, position: tuple[int, int] = (0, 0)) -> None:
+    def draw(self, world_surface: pygame.Surface, camera_rect: pygame.Rect, position: tuple[int, int] = (0, 0)) -> None:
         if self.visual_layer is not None:
-            target.blit(self.visual_layer, position)
+            world_surface.blit(self.visual_layer, camera_rect.topleft, camera_rect)
 
 
     def is_tile_solid(self, x, y) -> bool:
@@ -159,11 +159,12 @@ class TileMap:
         return atlas_surface, column_count
 
     # Just takes the info from the gid
-    def _normalize_gid(self, encoded_gid: int) -> tuple[int, bool, bool]:
+    def _normalize_gid(self, encoded_gid: int) -> tuple[int, bool, bool, bool]:
         base_gid = encoded_gid & ~ALL_FLIP_FLAGS
         flip_h = bool(encoded_gid & FLIPPED_HORIZONTALLY_FLAG)
         flip_v = bool(encoded_gid & FLIPPED_VERTICALLY_FLAG)
-        return base_gid, flip_h, flip_v
+        flip_diagonal = bool(encoded_gid & DIAGONAL_FLIP_FLAG)
+        return base_gid, flip_h, flip_v, flip_diagonal
 
     # We need to change this later prob, rn the whole map is rebuilding always. Would make more sense for only the part inside the camera to be built
     def _build_visual_layer(self, atlas_surface: pygame.Surface, column_count: int) -> pygame.Surface:
@@ -175,7 +176,7 @@ class TileMap:
         for i, row in enumerate(self.mid_layer.grid):
             for j, gid in enumerate(row):
                 # Get the tile ID and flip da flags
-                base_gid, flip_h, flip_v = self._normalize_gid(gid)
+                base_gid, flip_h, flip_v, flip_diagonal = self._normalize_gid(gid)
                 if base_gid == 0:
                     continue
 

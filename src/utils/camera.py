@@ -9,7 +9,7 @@ class Camera:
         self.size = size
         self.map_rect = map_rect
         self.rect = pygame.Rect(0,0, size[0], size[1])
-        self.zoom = 2
+        self.zoom = 1.5
 
         self.rect.clamp_ip(self.map_rect)
 

@@ -22,8 +22,7 @@
 [X]-[NONE] Tilemap loading system {
         [X] - Program adding static map without collisions. (Jairo)
         [] - Implement collision checking with the physics service(Jairo)
-
-        [] - fix: avoid rendering the whole map every second. We need to implement render distance. Performance hoooorrible with the bigger map now.
+        [X] - fix: avoid rendering the whole map every second. We need to implement render distance. Performance hoooorrible with the bigger map now. (Jairo)
 }
 [ ]- [NONE] Collision handling {
         [] - Creating physics service

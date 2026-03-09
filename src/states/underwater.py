@@ -48,7 +48,7 @@ class UnderwaterState(BaseState):
 
     def draw(self, screen: pygame.Surface):
         self.world_surface.fill((80, 128, 173))
-        self.tile_map.draw(self.world_surface)
+        self.tile_map.draw(self.world_surface, self.camera.rect)
         self.player.draw(self.world_surface)
 
         # Just telling the guys to draw themselves
