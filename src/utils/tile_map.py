@@ -8,7 +8,8 @@ import pygame
 FLIPPED_HORIZONTALLY_FLAG = 0x80000000
 FLIPPED_VERTICALLY_FLAG = 0x40000000
 FLIPPED_DIAGONALLY_FLAG = 0x20000000
-ALL_FLIP_FLAGS = (FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG)
+DIAGONAL_FLIP_FLAG = 0x20000000
+ALL_FLIP_FLAGS = (FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG | FLIPPED_DIAGONALLY_FLAG)
 
 class Layer:
     def __init__(self, layer_data: dict) -> None:
@@ -192,6 +193,9 @@ class TileMap:
                 tile_surface = atlas_surface.subsurface(source_rect)
 
                 # Flip the tiles if they were fliped in Tiled
+                if flip_diagonal:
+                    tile_surface = pygame.transform.rotate(tile_surface, 90) 
+                    tile_surface = pygame.transform.flip(tile_surface, False, True)
                 if flip_h or flip_v:
                     tile_surface = pygame.transform.flip(tile_surface, flip_h, flip_v)
 
