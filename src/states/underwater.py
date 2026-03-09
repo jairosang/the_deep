@@ -18,8 +18,8 @@ class UnderwaterState(BaseState):
         self.tile_map = TileMap(g_config["TILEMAP_PATH"])
         self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
         
-        world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
-        self.camera = Camera(g_config["SCREEN_SIZE"], world_rect)
+        self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
+        self.camera = Camera(g_config["SCREEN_SIZE"], self.world_rect)
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
@@ -31,7 +31,7 @@ class UnderwaterState(BaseState):
             self.button.call_back()
 
     def update(self, dt):
-        self.player.update(dt, bound_rect=self.camera.rect)
+        self.player.update(dt, bound_rect=self.world_rect)
         bounds = pygame.Rect(
             0,
             0,
