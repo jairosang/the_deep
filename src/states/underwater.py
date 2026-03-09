@@ -51,10 +51,11 @@ class UnderwaterState(BaseState):
         self.tile_map.draw(self.world_surface)
         self.player.draw(self.world_surface)
 
-        self.camera.draw(self.world_surface, screen)
         # Just telling the guys to draw themselves
         for c in self.creatures:
-            c.draw(screen)
+            c.draw(self.world_surface)
+        
+        self.camera.draw(self.world_surface, screen)
         self.button.draw(screen)
 
         # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
