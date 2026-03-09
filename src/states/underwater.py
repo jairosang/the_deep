@@ -32,6 +32,7 @@ class UnderwaterState(BaseState):
 
     def update(self, dt):
         self.player.update(dt, bound_rect=self.world_rect)
+        self.camera.update(dt, self.player.rect)
         bounds = pygame.Rect(
             0,
             0,
