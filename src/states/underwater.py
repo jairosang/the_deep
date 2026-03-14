@@ -9,6 +9,7 @@ from src.entities.creatures.creature_aggressive import AggressiveCreature
 from config import game as g_config
 from src.utils.tile_map import TileMap
 from src.utils.camera import Camera
+from src.ui.menus.inventory_menu import InventoryMenu
 
 class UnderwaterState(BaseState):
     def __init__(self, player: Player) -> None:
@@ -20,6 +21,7 @@ class UnderwaterState(BaseState):
         
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
         self.camera = Camera(g_config["SCREEN_SIZE"], self.world_rect)
+        self.inventory = InventoryMenu(g_config["SCREEN_SIZE"][0], g_config["SCREEN_SIZE"][1])
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
@@ -27,6 +29,14 @@ class UnderwaterState(BaseState):
         self.spawn_creatures()
 
     def handle_event(self, e: pygame.event.Event):
+        if e.type == pygame.KEYDOWN and e.key == pygame.K_e:
+            self.inventory.toggle()
+            return
+
+        if self.inventory.is_open:
+            self.inventory.handle_event(e)
+            return
+
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
 
@@ -62,6 +72,8 @@ class UnderwaterState(BaseState):
         # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
         oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))
         screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 50))
+
+        self.inventory.draw(screen)
         pygame.display.flip()
 
     def exit(self):
