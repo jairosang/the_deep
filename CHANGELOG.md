@@ -43,7 +43,13 @@
         [X] - Standstill image (David)
         [] - Animations
 }
-[ ]-[P7] Passive creature functionality 
+[X]-[P7] General creature functionality {
+        [X] - All creatures can move (David)
+        [X] - Passive and aggresive creatures work differently (David)
+        [] - Fix: Update class diagram to use a factory design pattern as it makes more sense for creature spawning in the long run.
+        [] - Fix: Implement the factory in code.
+
+}
 [ ]-[G2] Player sprite & animations
 
 
