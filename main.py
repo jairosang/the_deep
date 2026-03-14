@@ -9,10 +9,10 @@ import pygame
 
 def initialize():
     pygame.init()
-    vid_info = pygame.display.Info()
-    g_config["SCREEN_SIZE"] = (vid_info.current_w, vid_info.current_h)
-
-    screen = pygame.display.set_mode(g_config["SCREEN_SIZE"], pygame.FULLSCREEN)
+    # (0,0) lets pygame pick the native resolution, then get_size() reads the actual size.
+    # Avoids display artifacts caused by resolution mismatch when using display.Info() before set_mode.
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    g_config["SCREEN_SIZE"] = screen.get_size()
     pygame.display.set_caption(g_config["GAME_TITLE"])
 
     player = Player()
