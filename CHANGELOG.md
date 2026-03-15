@@ -9,6 +9,7 @@
 [X]-[P2] Core player functionality {
         [X] - Player can move (Jairo)
         [X] - Player can sprint (Jairo)
+        [X] - Player movement physics simulate the environment with acceleration and drag (Jairo)
 }
 [ ]-[G1] GUI placeholder assets (Daniel)
 [X]-[G5] Environment assets (Jairo)
@@ -48,12 +49,13 @@
         [X] - Passive and aggresive creatures work differently (David)
         [] - Fix: Update class diagram to use a factory design pattern as it makes more sense for creature spawning in the long run.
         [] - Fix: Implement the factory in code.
-
+        [] - Fix: Update the creature's movement to have thrust and acceleration, using the general drag flag from settings.
 }
 [ ]-[G2] Player sprite & animations
 
-
-
+[]-Fix: Current code does not reflect class diagram, please update the current entities to use Thing and MovingThing.
+[]-Fix: It's kind of wrong that the player is handling his own physics when moving, would be nice that if calculated in the PhysicsService instead of there so the player has no need to access it's drag, this will also applies to all things that move.
+[]-Bug: Edges have a little gap when the player moves. This is very easy to fix, just extend how much map is being blitted by like 5 px on all edges. This is happening because a of floating number mistmatches between the player position and the camera. Jairo left this task for anyone else who wants to take is as a test of whether someone ever reads the CHANGELOG or not.
 
 [v0.3.0] - M3: Economy & States Complete 
 [ ]-[P15] Economy system
