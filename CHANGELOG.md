@@ -55,7 +55,9 @@
 
 []-Fix: Current code does not reflect class diagram, please update the current entities to use Thing and MovingThing.
 []-Fix: It's kind of wrong that the player is handling his own physics when moving, would be nice that if calculated in the PhysicsService instead of there so the player has no need to access it's drag, this will also applies to all things that move.
-[]-Bug: Edges have a little gap when the player moves. This is very easy to fix, just extend how much map is being blitted by like 5 px on all edges. This is happening because a of floating number mistmatches between the player position and the camera. Jairo left this task for anyone else who wants to take is as a test of whether someone ever reads the CHANGELOG or not.
+[X]-Bug: Camera zoom absolutely destroys performance. Needs fixing (Jairo)
+[X]-Bug: Edges have a little gap when the player moves. This is very easy to fix, just extend how much map is being blitted by like 5 px on all edges. This is happening because a of floating number mistmatches between the player position and the camera. Jairo left this task for anyone else who wants to take is as a test of whether someone ever reads the CHANGELOG or not. (Jairo) Ok so I fixed it myself by accident while fixing the zoom in the camera. No idea as to why but if it works it works.
+
 
 [v0.3.0] - M3: Economy & States Complete 
 [ ]-[P15] Economy system
