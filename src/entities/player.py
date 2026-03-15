@@ -12,11 +12,9 @@ class Player(Entity):
         self.rect = self.image.get_rect(topleft=(int(self.pos.x), int(self.pos.y)))
 
         # Movement
-        self.speed = p_config["SPEED"]
         self.velocity = pygame.math.Vector2(0, 0)
-        self.current_speed = 0.0
-        self.acceleration = self.speed * p_config["ACCELERATION"]
-        self.deceleration = self.speed * p_config["DECELERATION"]
+        self.thrust = p_config["THRUST"]
+        self.acceleration = 0
         self.input_direction = pygame.math.Vector2(0, 0)
         self.is_sprinting = False
         self.sprint_multiplier = p_config["SPRINT_MULTIPLIER"]
@@ -36,8 +34,8 @@ class Player(Entity):
 
 
     def update(self, dt, bound_rect: pygame.Rect):
-        self.update_oxygen()
-        self.get_input()
+        self._update_oxygen()
+        self._get_input()
 
         # Movement update logic
         self._update_velocity(dt)
@@ -49,7 +47,7 @@ class Player(Entity):
         surface.blit(self.image, self.rect)
 
 
-    def get_input(self):
+    def _get_input(self):
         keys = pygame.key.get_pressed()
         self.input_direction.x = 0
         self.input_direction.y = 0
@@ -75,30 +73,22 @@ class Player(Entity):
 
 
     def _update_velocity(self, dt):
-        # Calculate how fast we wanna go
-        target_speed = self.speed * (self.sprint_multiplier if self.is_sprinting else 1)
-        target_velocity = self.input_direction * target_speed
+        # Apply extra thrust if the player is sprinting
+        current_thrust = self.thrust * (self.sprint_multiplier if self.is_sprinting else 1)
+        
+        # Adjust acceleration and velocity according to thrust and adding slowdown with the drag
+        self.acceleration = self.input_direction * current_thrust - (g_config["DRAG"] * self.velocity)
+        self.velocity += self.acceleration * dt
 
-        # Is a direction button pressed or not?
-        change_rate = self.acceleration * dt if self.input_direction.length_squared() > 0 else self.deceleration * dt
-
-        # How much do we gotta change the velocity by
-        delta_velocity = target_velocity - self.velocity
-
-        # Smooth acceleration and deceleration
-        if delta_velocity.length() <= change_rate:
-            self.velocity = target_velocity
-        else:
-            self.velocity += delta_velocity.normalize() * change_rate
-
-        self.current_speed = self.velocity.length()
-
+        # Avoid floating point numbers staying there and keeping the player moving when standing
+        if self.velocity.length_squared() < 1:
+            self.velocity = pygame.math.Vector2(0, 0)
 
     def move(self, dt):
         self.pos += self.velocity * dt
-        self.rect.topleft = (int(self.pos.x), int(self.pos.y))  # sincronize the position after moving
+        self.rect.topleft = (self.pos.x, self.pos.y)  # sincronize the position after moving
 
-    def update_oxygen(self):
+    def _update_oxygen(self):
         # This thing will have implemented the game over thing when the oxygen is 0
         if self.oxygen <= 0:
             pass
