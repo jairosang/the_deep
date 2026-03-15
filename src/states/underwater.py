@@ -19,7 +19,7 @@ class UnderwaterState(BaseState):
         self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
         
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
-        self.camera = Camera(g_config["SCREEN_SIZE"], self.world_rect)
+        self.camera = Camera(self.world_rect)
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
@@ -45,10 +45,10 @@ class UnderwaterState(BaseState):
 
         if self.player.oxygen <= 0:
             self.is_done = (True, "GAME_OVER")
-        pygame.display.flip()
 
     def draw(self, screen: pygame.Surface):
-        self.world_surface.fill((80, 128, 173))
+        # Wiping the world surface, but only the camera area! This really improved the performance.
+        self.world_surface.fill((80, 128, 173), self.camera.rect)
         self.tile_map.draw(self.world_surface, self.camera.rect)
         self.player.draw(self.world_surface)
 
@@ -62,7 +62,6 @@ class UnderwaterState(BaseState):
         # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
         oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))
         screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 50))
-        pygame.display.flip()
 
     def exit(self):
         self.player.revert()

@@ -46,5 +46,6 @@ class GameManager():
             self.get_events()
             self.update(dt)
             self.current_state.draw(self.screen)
+            pygame.display.flip()
         pygame.quit()
 

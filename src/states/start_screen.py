@@ -26,7 +26,7 @@ class StartScreen(BaseState):
                         button.func()
         
     def update(self, dt):
-        pygame.display.flip()
+        pass
 
     def draw(self, screen: pygame.Surface):
         screen.fill((0,0,0))

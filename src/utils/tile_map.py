@@ -133,6 +133,7 @@ class TileMap:
 
     def draw(self, world_surface: pygame.Surface, camera_rect: pygame.Rect, position: tuple[int, int] = (0, 0)) -> None:
         if self.visual_layer is not None:
+            # Blit the map into the world, but only the things inside the camera
             world_surface.blit(self.visual_layer, camera_rect.topleft, camera_rect)
 
 
