@@ -17,7 +17,7 @@ class GameOverState(BaseState):
     def update(self, dt):
         pass
 
-    def draw(self, screen):
+    def draw(self, screen, is_debug_on):
         screen.fill((20, 20, 30))   #fill with 1 color
 
         font = pygame.font.Font(None, 72)

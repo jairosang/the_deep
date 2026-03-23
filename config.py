@@ -5,6 +5,7 @@ import pygame
 game = {
     "GAME_TITLE" : "The Deep",
     "FPS" : 30,
+    "SCREEN_SIZE": (0,0),
     "TILEMAP_PATH" : Path("assets/tilemap/dark_underwater_map.tmj"),
     "DRAG": 0.9,
 }

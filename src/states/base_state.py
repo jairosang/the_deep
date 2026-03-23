@@ -23,7 +23,7 @@ class BaseState(ABC):
         pass
 
     @abstractmethod
-    def draw(self, screen):
+    def draw(self, screen, is_debug_on):
         pass
 
     @abstractmethod

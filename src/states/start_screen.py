@@ -34,7 +34,7 @@ class StartScreen(BaseState):
     def update(self, dt):
         pass
 
-    def draw(self, screen: pygame.Surface):
+    def draw(self, screen: pygame.Surface, is_debug_on):
         screen.fill((0,0,0))
         for button in self.buttons:
             button.draw(screen)

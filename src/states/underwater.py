@@ -23,7 +23,7 @@ class UnderwaterState(BaseState):
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
-        self.button = Button((g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit)
+        self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit)
         self.spawn_creatures()
 
     def handle_event(self, e: pygame.event.Event):
@@ -49,7 +49,7 @@ class UnderwaterState(BaseState):
         if self.player.oxygen <= 0:
             self.is_done = (True, "GAME_OVER")
 
-    def draw(self, screen: pygame.Surface):
+    def draw(self, screen: pygame.Surface, is_debug_on):
         # Wiping the world surface, but only the camera area! This really improved the performance.
         self.world_surface.fill((80, 128, 173), self.camera.rect)
         self.tile_map.draw(self.world_surface, self.camera.rect)
@@ -58,6 +58,13 @@ class UnderwaterState(BaseState):
         # Just telling the guys to draw themselves
         for c in self.creatures:
             c.draw(self.world_surface)
+
+        # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed BEFORE camera is drawn !!!!
+        if is_debug_on:
+            for c in self.creatures:
+                pygame.draw.line(self.world_surface, (0,0,255), c.rect.center, c.rect.center + c.vel)
+
+            pygame.draw.line(self.world_surface, (255,0,0), self.player.rect.center, self.player.rect.center + self.player.velocity)
         
         self.camera.draw(self.world_surface, screen)
         self.button.draw(screen)
@@ -65,6 +72,11 @@ class UnderwaterState(BaseState):
         # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
         oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))
         screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 50))
+
+        # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed AFTER camera is drawn !!!!
+        if is_debug_on:
+            player_pos_text = pygame.font.Font(None, 36).render(f"Player_pos: {self.player.pos}", True, (255,255,255), (50,50,50))
+            screen.blit(player_pos_text, (10, 5))
 
     def exit(self):
         self.player.revert()

@@ -19,7 +19,7 @@ class HomebaseState(BaseState):
     def update(self, dt):
         self.player.update(dt)
 
-    def draw(self, screen):
+    def draw(self, screen, is_debug_on):
         self.player.draw(screen)
 
     def exit(self):
