@@ -10,6 +10,9 @@ class GameOverState(BaseState):
 
     def handle_event(self, e):
         pass
+
+    def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
+        pass
         
     def update(self, dt):
         pass

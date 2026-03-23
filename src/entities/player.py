@@ -35,20 +35,13 @@ class Player(Entity):
 
     def update(self, dt, bound_rect: pygame.Rect):
         self._update_oxygen()
-        self._get_input()
-
         # Movement update logic
         self._update_velocity(dt)
         self.move(dt)
         self.rect.clamp_ip(bound_rect)              # Applying clamping
         self.pos.update(self.rect.x, self.rect.y)   # Updating to use the clamping
 
-    def draw(self, surface: pygame.Surface):
-        surface.blit(self.image, self.rect)
-
-
-    def _get_input(self):
-        keys = pygame.key.get_pressed()
+    def handle_inputs(self, keys):
         self.input_direction.x = 0
         self.input_direction.y = 0
 
@@ -61,7 +54,6 @@ class Player(Entity):
         if keys[pygame.K_d]:
             self.input_direction.x = 1
 
-
         self.is_sprinting = keys[pygame.K_SPACE]
 
         # Removes movement on axis if its turned off
@@ -71,6 +63,8 @@ class Player(Entity):
         if self.input_direction.length_squared() > 0:
             self.input_direction = self.input_direction.normalize()
 
+    def draw(self, surface: pygame.Surface):
+        surface.blit(self.image, self.rect)
 
     def _update_velocity(self, dt):
         # Apply extra thrust if the player is sprinting

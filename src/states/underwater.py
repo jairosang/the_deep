@@ -30,6 +30,9 @@ class UnderwaterState(BaseState):
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
 
+    def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
+        self.player.handle_inputs(keys)
+
     def update(self, dt):
         self.player.update(dt, bound_rect=self.world_rect)
         self.camera.update(dt, self.player.rect)

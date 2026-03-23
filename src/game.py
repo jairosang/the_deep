@@ -12,9 +12,13 @@ class GameManager():
         self.current_state.enter()
 
     # Gets events and delegates how to handle them to the state
-    def get_events(self):
+    def get_whats_going_on(self):
         for event in pygame.event.get():
             self.current_state.handle_event(event)
+        # Getting the state of the keys and passing em along, idk it seems kinda very bad to poll it every time from everything that will use a key
+        keys = pygame.key.get_pressed()
+        mouse_pos = pygame.mouse.get_pos()
+        self.current_state.handle_inputs(keys, mouse_pos)
 
     # Checks if state done or game quit signals are sent by states to handle them. Then delegates updating to state.
     def update(self,dt):
@@ -43,7 +47,7 @@ class GameManager():
         while self.is_running:
             dt = self.clock.tick(self.fps) / 1000
 
-            self.get_events()
+            self.get_whats_going_on()
             self.update(dt)
             self.current_state.draw(self.screen)
             pygame.display.flip()
