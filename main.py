@@ -12,7 +12,7 @@ def initialize():
     vid_info = pygame.display.Info()
     g_config["SCREEN_SIZE"] = (vid_info.current_w, vid_info.current_h)
 
-    screen = pygame.display.set_mode(g_config["SCREEN_SIZE"], pygame.FULLSCREEN)
+    screen = pygame.display.set_mode(g_config["SCREEN_SIZE"], pygame.SCALED + pygame.NOFRAME + pygame.FULLSCREEN, 32, vsync=1)
     pygame.display.set_caption(g_config["GAME_TITLE"])
 
     player = Player()

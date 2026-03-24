@@ -17,7 +17,11 @@ class GameManager():
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_F5:    # Toggling debug
                 self.is_debug_on = not self.is_debug_on
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_F6:    # Toggling fullscreen (Doesn't fully work, we would need to rebuild the display as not fullscreen and resizable but I got lazy)
+                pygame.display.toggle_fullscreen()
+                
             self.current_state.handle_event(event)
+
         # Getting the state of the keys and passing em along, idk it seems kinda very bad to poll it every time from everything that will use a key
         keys = pygame.key.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
