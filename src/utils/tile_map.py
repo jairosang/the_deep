@@ -138,14 +138,30 @@ class TileMap:
 
 
     def is_tile_solid(self, x, y) -> bool:
-        gid = self.get_tile_at_position(x, y)
+        if self.get_tile_at_position(x, y) != 0:
+            return True
+        return False
+    
         # Not implemented because its not my thing. Yet....
-        return True
 
 
     def get_tile_at_position(self, x, y) -> int:
+        tile_width, tile_height = self.tile_size    # cuz its a tuple
+
+        column = int(x // tile_width)  # going from pixels to tiles
+        row  = int(y // tile_height)
+
+        if row < 0 or  column < 0 or row >= self.mid_layer.height or column >= self.mid_layer.width:
+    
+            return 0  # no tile
+        
+        gID = self.mid_layer.grid[row][column]
+
+        normalized_gID, _, _, _ = self._normalize_gid(gID) # we only want the first of 4 values returned, not sure this normalizing is strictly necessary though...
+
+        return normalized_gID
         # Not implemented because its not my thing. Yet....
-        return 1 # It should return the ID, NOT GID of the tile in the middle layer ig
+        # It should return the ID, NOT GID of the tile in the middle layer ig
     
     # Gets the tileset and number of columns in the tileset
     def _load_tileset_surface_and_columns(self, tsx_path: Path) -> tuple[pygame.Surface, int]:
