@@ -9,6 +9,7 @@ from src.entities.creatures.creature_aggressive import AggressiveCreature
 from config import game as g_config
 from src.utils.tile_map import TileMap
 from src.utils.camera import Camera
+import src.utils.physics_service as phy
 
 class UnderwaterState(BaseState):
     def __init__(self, player: Player) -> None:
@@ -35,6 +36,10 @@ class UnderwaterState(BaseState):
 
     def update(self, dt):
         self.player.update(dt, bound_rect=self.world_rect)
+        area = self.tile_map.get_tiles_at_area(self.player.rect.x, self.player.rect.y, (3,3))
+        phy.check_collisions_x(self.player, area)
+        phy.check_collisions_y(self.player, area)
+
         self.camera.update(dt, self.player.rect)
         bounds = pygame.Rect(
             0,

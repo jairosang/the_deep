@@ -1,15 +1,8 @@
 import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
-
+from src.utils.utils import normalize_gid
 import pygame
-
-# https://doc.mapeditor.org/en/latest/reference/global-tile-ids/ * mic drop *
-FLIPPED_HORIZONTALLY_FLAG = 0x80000000
-FLIPPED_VERTICALLY_FLAG = 0x40000000
-FLIPPED_DIAGONALLY_FLAG = 0x20000000
-DIAGONAL_FLIP_FLAG = 0x20000000
-ALL_FLIP_FLAGS = (FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG | FLIPPED_DIAGONALLY_FLAG)
 
 class Layer:
     def __init__(self, layer_data: dict) -> None:
@@ -20,25 +13,41 @@ class Layer:
         self.type: str = layer_data.get("type", "")
 
 class TileLayer(Layer):
-    def __init__(self, layer: dict) -> None:
+    def __init__(self, layer: dict, tile_size: tuple[int, int]) -> None:
         super().__init__(layer)
         self.width: int = layer.get("width", 0)
         self.height: int = layer.get("height", 0)
         self.x: int = layer.get("x", 0)
         self.y: int = layer.get("y", 0)
+        self.tile_width: int = tile_size[0]
+        self.tile_height: int = tile_size[1]
 
 
-        self.grid = self.build(layer.get("data", []))
+        self.grid = self._build(layer.get("data", []))
+        self.collisions_grid: list[list[pygame.Rect | None]] = self._build_collisions()
 
-    def build(self, data):
+    def _build(self, data):
         grid = [[0 for _ in range(self.width)] for _ in range(self.height)]
         for i, gid in enumerate(data):
             grid[i // self.width][i % self.width] = gid
         return grid
 
-
+    def _build_collisions(self):
+        grid: list[list[pygame.Rect | None]] = [[None for _ in range(self.width)] for _ in range(self.height)]
+        for row_index, row in enumerate(self.grid):
+            for column_index, gid in enumerate(row):
+                normalized_gid, _, _, _ = normalize_gid(gid)
+                if normalized_gid != 0:
+                    grid[row_index][column_index] = pygame.Rect(
+                        self.x + column_index * self.tile_width,
+                        self.y + row_index * self.tile_height,
+                        self.tile_width,
+                        self.tile_height,
+                    )
+        return grid
 
 class InfiniteLayer(Layer):
+
     def __init__(self, layer_data: dict) -> None:
         super().__init__(layer_data)
         self.width: int = layer_data.get("width", 0)
@@ -113,7 +122,7 @@ class TileMap:
         if tile_map["infinite"] == True:
             self.mid_layer = InfiniteTileLayer(mid_layer)
         else:
-            self.mid_layer = TileLayer(mid_layer)
+            self.mid_layer = TileLayer(mid_layer, self.tile_size)
 
         # Extract the map size
         self.map_size = (
@@ -144,8 +153,41 @@ class TileMap:
     
         # Not implemented because its not my thing. Yet....
 
+    def get_tiles_at_area(self, x, y, size: tuple[int,int]):
+        tile_width, tile_height = self.tile_size
+        tiles: list[pygame.Rect] = []
 
-    def get_tile_at_position(self, x, y) -> int:
+        center_column = int(x // tile_width)
+        center_row = int(y // tile_height)
+        half_columns = size[0] // 2
+        half_rows = size[1] // 2
+
+        start_column = max(0, center_column - half_columns)
+        end_column = min(self.mid_layer.width - 1, center_column + half_columns)
+        start_row = max(0, center_row - half_rows)
+        end_row = min(self.mid_layer.height - 1, center_row + half_rows)
+
+        if start_column > end_column or start_row > end_row:
+            return tiles
+
+        for row in range(start_row, end_row + 1):
+            for column in range(start_column, end_column + 1):
+                tile_id, _, _, _ = self.get_tile_at_position(column * tile_width, row * tile_height)
+                if tile_id == 0:
+                    continue
+
+                tiles.append(
+                    pygame.Rect(
+                        column * tile_width,
+                        row * tile_height,
+                        tile_width,
+                        tile_height,
+                    )
+                )
+
+        return tiles
+
+    def get_tile_at_position(self, x, y):
         tile_width, tile_height = self.tile_size    # cuz its a tuple
 
         column = int(x // tile_width)  # going from pixels to tiles
@@ -153,13 +195,16 @@ class TileMap:
 
         if row < 0 or  column < 0 or row >= self.mid_layer.height or column >= self.mid_layer.width:
     
-            return 0  # no tile
+            return 0, None, 0, 0  # no tile
         
         gID = self.mid_layer.grid[row][column]
 
-        normalized_gID, _, _, _ = self._normalize_gid(gID) # we only want the first of 4 values returned, not sure this normalizing is strictly necessary though...
+        normalized_gID, _, _, _ = normalize_gid(gID) # we only want the first of 4 values returned, not sure this normalizing is strictly necessary though...
+        center_tile_rect = None
+        if isinstance(self.mid_layer, TileLayer):
+            center_tile_rect = self.mid_layer.collisions_grid[row][column]
 
-        return normalized_gID
+        return normalized_gID, center_tile_rect , column, row
         # Not implemented because its not my thing. Yet....
         # It should return the ID, NOT GID of the tile in the middle layer ig
     
@@ -176,14 +221,6 @@ class TileMap:
         atlas_surface = pygame.image.load(str(atlas_path)).convert_alpha()
         return atlas_surface, column_count
 
-    # Just takes the info from the gid
-    def _normalize_gid(self, encoded_gid: int) -> tuple[int, bool, bool, bool]:
-        base_gid = encoded_gid & ~ALL_FLIP_FLAGS
-        flip_h = bool(encoded_gid & FLIPPED_HORIZONTALLY_FLAG)
-        flip_v = bool(encoded_gid & FLIPPED_VERTICALLY_FLAG)
-        flip_diagonal = bool(encoded_gid & DIAGONAL_FLIP_FLAG)
-        return base_gid, flip_h, flip_v, flip_diagonal
-
     # We need to change this later prob, rn the whole map is rebuilding always. Would make more sense for only the part inside the camera to be built
     def _build_visual_layer(self, atlas_surface: pygame.Surface, column_count: int) -> pygame.Surface:
         # Create a transparent surface to draw tiles on top of
@@ -194,7 +231,7 @@ class TileMap:
         for i, row in enumerate(self.mid_layer.grid):
             for j, gid in enumerate(row):
                 # Get the tile ID and flip da flags
-                base_gid, flip_h, flip_v, flip_diagonal = self._normalize_gid(gid)
+                base_gid, flip_h, flip_v, flip_diagonal = normalize_gid(gid)
                 if base_gid == 0:
                     continue
 
