@@ -35,11 +35,9 @@ class UnderwaterState(BaseState):
         self.player.handle_inputs(keys)
 
     def update(self, dt):
-        self.player.update(dt, bound_rect=self.world_rect)
-        area = self.tile_map.get_tiles_at_area(self.player.rect.x, self.player.rect.y, (3,3))
-        phy.check_collisions_x(self.player, area)
-        phy.check_collisions_y(self.player, area)
-
+        # Get rects of tiles surrounding player for calculating collisions with environment 
+        area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
+        self.player.update(dt, self.world_rect, area_tiles)
         self.camera.update(dt, self.player.rect)
         bounds = pygame.Rect(
             0,
@@ -77,6 +75,7 @@ class UnderwaterState(BaseState):
             
             # Player velocity (with direction)
             pygame.draw.line(self.world_surface, (255,0,0), self.player.rect.center, self.player.rect.center + self.player.velocity)
+            pygame.draw.circle(self.world_surface, (0,255,0), self.player.pos, 1)
         
         self.camera.draw(self.world_surface, screen)
         self.button.draw(screen)

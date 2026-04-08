@@ -13,18 +13,22 @@ def check_collisions_x(entity: Entity, tiles):
     collisions = get_hits(tiles, entity.rect)
     for tile in collisions:
         if entity.velocity.x > 0:
-            entity.pos.x = tile.left - entity.rect.w
-            entity.rect.x = entity.pos.x
+            entity.rect.right = tile.left
+            entity.pos.x = entity.rect.x
+            break
         elif entity.velocity.x < 0: 
-            entity.pos.x = tile.right
-            entity.rect.x = entity.pos.x
+            entity.rect.left = tile.right
+            entity.pos.x = entity.rect.x
+            break
 
 def check_collisions_y(entity: Entity, tiles):
     collisions = get_hits(tiles, entity.rect)
     for tile in collisions:
-        if entity.velocity.y > 0:
-            entity.pos.y = tile.top - entity.rect.h
-            entity.rect.y = entity.pos.y
-        elif entity.velocity.y < 0: 
-            entity.pos.y = tile.bottom
-            entity.rect.y = entity.pos.y
+        if entity.velocity.y < 0:
+            entity.rect.top = tile.bottom
+            entity.pos.y = entity.rect.y
+            break
+        elif entity.velocity.y > 0: 
+            entity.rect.bottom = tile.top
+            entity.pos.y = entity.rect.y
+            break

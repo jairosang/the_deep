@@ -1,5 +1,6 @@
 from src.entities.base_entity import Entity
 from src.entities.item import Item
+from src.utils import physics_service as phy
 from config import game as g_config, player as p_config
 import pygame
 
@@ -33,11 +34,15 @@ class Player(Entity):
         # Missing harpoon, weapon and research gun
 
 
-    def update(self, dt, bound_rect: pygame.Rect):
+    def update(self, dt, bound_rect: pygame.Rect, area_tiles):
         self._update_oxygen()
-        # Movement update logic
+        # ===== Movement update logic =======
+        self._move_x(dt)                             # Player moves on one axis
+        phy.check_collisions_x(self, area_tiles)    # Physics react
+        self._move_y(dt)
+        phy.check_collisions_y(self, area_tiles)
+        # ====================================
         self._update_velocity(dt)
-        self.move(dt)
         self.rect.clamp_ip(bound_rect)              # Applying clamping
         self.pos.update(self.rect.x, self.rect.y)   # Updating to use the clamping
 
@@ -78,9 +83,15 @@ class Player(Entity):
         if self.velocity.length_squared() < 1:
             self.velocity = pygame.math.Vector2(0, 0)
 
-    def move(self, dt):
-        self.pos += self.velocity * dt
-        self.rect.topleft = (self.pos.x, self.pos.y)  # sincronize the position after moving
+    # Calculate movement on the x axis
+    def _move_x(self, dt):
+        self.pos.x += self.velocity.x * dt
+        self.rect.topleft = (int(self.pos.x), int(self.pos.y))  # sincronize the position after moving
+
+    # Calculate movement on the y axis
+    def _move_y(self, dt):
+        self.pos.y += self.velocity.y * dt
+        self.rect.topleft = (int(self.pos.x), int(self.pos.y))  # sincronize the position after moving
 
     def _update_oxygen(self):
         # This thing will have implemented the game over thing when the oxygen is 0

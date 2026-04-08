@@ -12,8 +12,8 @@ game = {
 
 # Player initialization constants
 player = {
-    "SIZE": (40, 70),
-    "START_POS": (50, 50),
+    "SIZE": (32, 64),
+    "START_POS": (70, 70),
     "SPRINT_MULTIPLIER": 1.5,
     "THRUST": 180,
     # Terminal velocity of every thing will be their thrust/drag
