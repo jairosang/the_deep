@@ -26,8 +26,8 @@
         [X] - fix: avoid rendering the whole map every second. We need to implement render distance. Performance hoooorrible with the bigger map now. (Jairo)
 }
 [ ]- [NONE] Collision handling {
-        [] - Creating physics service
-        [] - Handling player collisions with map
+        [X] - Creating physics service (Jairo)
+        [X] - Handling player collisions with map (Jairo)
         [] - Handling creature collisions with map
         [] - Handling player-creature collision
 }
