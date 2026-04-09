@@ -49,9 +49,9 @@ class UnderwaterState(BaseState):
         for c in self.creatures:
             c.update(dt, player_pos, bounds)
 
-        if self.player.oxygen <= 0:
+        if self.player.oxygen <= 0 or self.player.health <= 0:
             self.is_done = (True, "GAME_OVER")
-            
+
         phy.check_entity_collisions(self.player, self.creatures)
 
     def draw(self, screen: pygame.Surface, is_debug_on):

@@ -121,3 +121,6 @@ class Player(Entity):
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
         self.health = self.max_health
         self.oxygen = self.max_oxygen
+
+    def get_damaged(self, ammt):
+        self.health -= ammt
