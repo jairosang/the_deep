@@ -15,6 +15,7 @@ class Player(Entity):
         # Movement
         self.velocity = pygame.math.Vector2(0, 0)
         self.thrust = p_config["THRUST"]
+        self.mass = p_config["MASS"]
         self.acceleration = 0
         self.input_direction = pygame.math.Vector2(0, 0)
         self.is_sprinting = False
