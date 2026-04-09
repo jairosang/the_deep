@@ -29,7 +29,7 @@
         [X] - Creating physics service (Jairo)
         [X] - Handling player collisions with map (Jairo)
         [] - Handling creature collisions with map
-        [] - Handling player-creature collision
+        [X] - Handling player-creature collision (Jairo)
 }
 
 [X]-[P3] Camera system (Jairo)
