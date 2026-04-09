@@ -117,7 +117,9 @@ class Player(Entity):
         pass
 
     def revert(self):
-        self.pos = pygame.math.Vector2(30, 30)
+        self.pos.x = p_config["START_POS"][0]
+        self.pos.y = p_config["START_POS"][1]
+        self.velocity *= 0
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
         self.health = self.max_health
         self.oxygen = self.max_oxygen

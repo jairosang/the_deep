@@ -36,6 +36,11 @@ class StartScreen(BaseState):
 
     def draw(self, screen: pygame.Surface, is_debug_on):
         screen.fill((0,0,0))
+        font = pygame.font.Font(None, 130)
+        text = font.render("The Deep", True, (80, 80, 255))  # Blue temporary game name
+        text_rect = text.get_rect(center=(g_config["SCREEN_SIZE"][0] / 2, g_config["SCREEN_SIZE"][1] / 3)) #centered on screen
+        screen.blit(text, text_rect)
+
         for button in self.buttons:
             button.draw(screen)
 

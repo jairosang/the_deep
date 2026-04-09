@@ -24,7 +24,7 @@ class UnderwaterState(BaseState):
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
-        self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit)
+        self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit_to_main_menu)
         self.spawn_creatures()
 
     def handle_event(self, e: pygame.event.Event):
@@ -50,7 +50,7 @@ class UnderwaterState(BaseState):
             c.update(dt, player_pos, bounds)
 
         if self.player.oxygen <= 0 or self.player.health <= 0:
-            self.is_done = (True, "GAME_OVER")
+            self.trigger_game_over()
 
         phy.check_entity_collisions(self.player, self.creatures)
 
@@ -95,7 +95,6 @@ class UnderwaterState(BaseState):
 
     def exit(self):
         self.player.revert()
-        self.is_done = (True, "START_SCREEN")
 
 
     # ==== Own Methods ====
@@ -120,7 +119,11 @@ class UnderwaterState(BaseState):
         pass
 
     def trigger_game_over(self):
-        self.player.revert()   # go back to initial stats for the next run
         self.is_done = (True, "GAME_OVER")  #switch states
+        self.exit()
+
+    def exit_to_main_menu(self):
+        self.is_done = (True, "START_SCREEN")
+        self.exit()
 
     # ========= Private Methods =======

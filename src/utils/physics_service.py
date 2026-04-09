@@ -39,7 +39,7 @@ def check_entity_collisions(player: Entity, creatures: list[Creature]):
     creature_hits: list[Creature] = []
     for creature in creatures:
         if player.rect.colliderect(creature.rect):
-            player.get_damaged(1)  # The creatures should have a damage attribute that is the one taken here to damage the player
+            player.get_damaged(7)  # The creatures should have a damage attribute that is the one taken here to damage the player
             player.velocity = creature.vel * 1.5
             creature.vel *= -1
 

@@ -20,7 +20,7 @@ def initialize():
         "START_SCREEN": StartScreen(),
         "UNDERWATER": UnderwaterState(player),
         "HOMEBASE": HomebaseState(player),
-        #"GAME_OVER": GameOverState()
+        "GAME_OVER": GameOverState()
     }
 
     return screen, states
