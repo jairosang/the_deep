@@ -49,8 +49,10 @@ class UnderwaterState(BaseState):
         for c in self.creatures:
             c.update(dt, player_pos, bounds)
 
-        if self.player.oxygen <= 0:
+        if self.player.oxygen <= 0 or self.player.health <= 0:
             self.is_done = (True, "GAME_OVER")
+
+        phy.check_entity_collisions(self.player, self.creatures)
 
     def draw(self, screen: pygame.Surface, is_debug_on):
         # Wiping the world surface, but only the camera area! This really improved the performance.
@@ -82,7 +84,9 @@ class UnderwaterState(BaseState):
 
         # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
         oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))
-        screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 50))
+        health_text = pygame.font.Font(None, 36).render(f"Health: {self.player.health:.0f}", True, (255, 255, 255))
+        screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 70))
+        screen.blit(health_text, (10, g_config["SCREEN_SIZE"][1] - 40))
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed AFTER camera is drawn !!!!
         if is_debug_on:
@@ -119,4 +123,4 @@ class UnderwaterState(BaseState):
         self.player.revert()   # go back to initial stats for the next run
         self.is_done = (True, "GAME_OVER")  #switch states
 
-    
+    # ========= Private Methods =======

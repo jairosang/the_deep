@@ -16,6 +16,7 @@ player = {
     "START_POS": (70, 70),
     "SPRINT_MULTIPLIER": 1.5,
     "THRUST": 180,
+    "MASS": 100,
     # Terminal velocity of every thing will be their thrust/drag
     
     "BASE_STATS": {
@@ -25,5 +26,8 @@ player = {
         "MAX_DEPTH_LIMIT": 100,
         "INVENTORY_CAPACITY": 5,
     },
+}
 
+aggresive_creatures = {
+    "MASS": 30
 }
