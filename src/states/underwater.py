@@ -106,12 +106,12 @@ class UnderwaterState(BaseState):
         for _ in range(6):
             x = random.randint(40, int(w) - 40)
             y = random.randint(80, int(h) - 40)
-            self.creatures.append(PassiveCreature((x, y), size=18, speed=140, fear_radius=160))
+            self.creatures.append(PassiveCreature((x, y), size=18, fear_radius=160))
 
         for _ in range(2):
             x = random.randint(40, int(w) - 40)
             y = random.randint(80, int(h) - 40)
-            self.creatures.append(AggressiveCreature((x, y), size=18, speed=140, chase_radius=160))
+            self.creatures.append(AggressiveCreature((x, y), size=18, chase_radius=160))
 
     def check_return_point(self):
         pass
