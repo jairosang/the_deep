@@ -13,7 +13,7 @@ class Player(Entity):
         self.rect = self.image.get_rect(topleft=(int(self.pos.x), int(self.pos.y)))
 
         # Movement
-        self.velocity = pygame.math.Vector2(0, 0)
+        # removed self.velocity = pygame.math.Vector2(0, 0)
         self.thrust = p_config["THRUST"]
         self.mass = p_config["MASS"]
         self.acceleration = 0
