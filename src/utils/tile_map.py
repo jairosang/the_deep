@@ -137,6 +137,8 @@ class TileMap:
         # Just getting the tileset path which is already included in the tilemap
         tsx_path = (path.parent / tileset_data["source"]).resolve()
         atlas_surface, column_count = self._load_tileset_surface_and_columns(tsx_path)
+        
+        # Check if the tileset is an image collection
         self.visual_layer = self._build_visual_layer(atlas_surface, column_count)
 
 
@@ -209,20 +211,35 @@ class TileMap:
         # It should return the ID, NOT GID of the tile in the middle layer ig
     
     # Gets the tileset and number of columns in the tileset
-    def _load_tileset_surface_and_columns(self, tsx_path: Path) -> tuple[pygame.Surface, int]:
+    def _load_tileset_surface_and_columns(self, tsx_path: Path) -> tuple[pygame.Surface, int] | tuple[dict, int]:
         tsx_root = ET.parse(tsx_path).getroot()
         column_count = int(tsx_root.attrib["columns"])
+        
+        # If the tileset is an image collection I want a dictionary with col count instead of the atlas surface
+        if column_count == 0:
+            image_dict = {}
+            for tile_element in tsx_root.findall("tile"):
+                tile_id = int(tile_element.attrib["id"])
+                image_element = tile_element.find("image")
+                if image_element is not None:
+                    image_path = (tsx_path.parent / image_element.attrib["source"]).resolve()
+                    image_dict[tile_id] = str(image_path)
+            return image_dict, column_count
+        
+        # Return the atlas surface of the atlas
+        else:
+            image_element = tsx_root.find("image")
+            if image_element is None:
+                raise ValueError(f"Tileset image missing in {tsx_path}")
+            
+            atlas_path = (tsx_path.parent / image_element.attrib["source"]).resolve()
+            atlas_surface = pygame.image.load(str(atlas_path)).convert_alpha()
+            return atlas_surface, column_count
+        
 
-        image_element = tsx_root.find("image")
-        if image_element is None:
-            raise ValueError(f"Tileset image missing in {tsx_path}")
-
-        atlas_path = (tsx_path.parent / image_element.attrib["source"]).resolve()
-        atlas_surface = pygame.image.load(str(atlas_path)).convert_alpha()
-        return atlas_surface, column_count
 
     # We need to change this later prob, rn the whole map is rebuilding always. Would make more sense for only the part inside the camera to be built
-    def _build_visual_layer(self, atlas_surface: pygame.Surface, column_count: int) -> pygame.Surface:
+    def _build_visual_layer(self, atlas_surface: pygame.Surface | dict, column_count: int) -> pygame.Surface:
         # Create a transparent surface to draw tiles on top of
         tile_width, tile_height = self.tile_size
         visual_layer = pygame.Surface(self.map_size, pygame.SRCALPHA)
@@ -239,13 +256,21 @@ class TileMap:
                 local_tile_id = base_gid - self.first_gid
                 if local_tile_id < 0:
                     continue
+                
+                tile_surface = None
+                if isinstance(atlas_surface, pygame.Surface):     # The case where the tileset is an actual atlas
+                    # Get the tile image from the atlas
+                    source_x = (local_tile_id % column_count) * tile_width              # Same thingies as before, moving through the 2d environment of the atlas using a 1 dimensional number.
+                    source_y = (local_tile_id // column_count) * tile_height            # Column_count can be seen as the width.
+                    source_rect = pygame.Rect(source_x, source_y, tile_width, tile_height)
+                    tile_surface = atlas_surface.subsurface(source_rect)
+                elif isinstance(atlas_surface, dict):             # The case where the tileset is an image collection
+                    tile_image_path = Path(atlas_surface[local_tile_id])
+                    tile_surface = pygame.image.load(str(tile_image_path)).convert_alpha()
 
-                # Get the tile image from the atlas
-                source_x = (local_tile_id % column_count) * tile_width              # Same thingies as before, moving through the 2d environment of the atlas using a 1 dimensional number.
-                source_y = (local_tile_id // column_count) * tile_height            # Column_count can be seen as the width.
-                source_rect = pygame.Rect(source_x, source_y, tile_width, tile_height)
-                tile_surface = atlas_surface.subsurface(source_rect)
-
+                if tile_surface is None:
+                    raise UnboundLocalError("Something is weird with the tileset and I couldnt get a tile_surface womp womp")
+                    
                 # Flip the tiles if they were fliped in Tiled
                 if flip_diagonal:
                     tile_surface = pygame.transform.rotate(tile_surface, 90) 
