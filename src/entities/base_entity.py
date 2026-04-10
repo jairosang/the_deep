@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 import pygame
 
 class Entity(ABC):
-    def __init__(self, image: pygame.Surface) -> None:
+    def __init__(self, image: pygame.Surface, pos: tuple[int, int] = (0,0)) -> None:
         self.image = image
-        self.pos = pygame.math.Vector2(0,0)
+        self.pos = pygame.math.Vector2(pos)
         self.rect = self.image.get_rect(topleft=(int(self.pos.x), int(self.pos.y)))
 
         # the physical attributes, can be overwritten later
