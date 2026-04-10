@@ -6,14 +6,16 @@ game = {
     "GAME_TITLE" : "The Deep",
     "FPS" : 30,
     "SCREEN_SIZE": (0,0),
-    "TILEMAP_PATH" : Path("assets/tilemap/dark_underwater_map.tmj"),
+    "UNDERWATER_TILEMAP_PATH" : Path("assets/underwater/tilemap/dark_underwater_map.tmj"),
+    "HOMEBASE_TILEMAP_PATH" : Path("assets/homebase/tilemap/homebase_map.tmj"),
     "DRAG": 0.9,
 }
 
 # Player initialization constants
 player = {
     "SIZE": (32, 64),
-    "START_POS": (70, 70),
+    "UNDERWATER_START_POS": (70, 70),
+    "HOMEBASE_START_POS": (300, 200),
     "SPRINT_MULTIPLIER": 1.5,
     "THRUST": 180,
     "MASS": 100,

@@ -6,7 +6,7 @@ import pygame
 
 class Player(Entity):
     def __init__(self) -> None:
-        super().__init__(pygame.Surface(p_config["SIZE"]), p_config["START_POS"])
+        super().__init__(pygame.Surface(p_config["SIZE"]))
         # THIS IS TEMPORARY
         self.image.fill((255,255,255))
 
@@ -117,8 +117,6 @@ class Player(Entity):
         pass
 
     def revert(self):
-        self.pos.x = p_config["START_POS"][0]
-        self.pos.y = p_config["START_POS"][1]
         self.velocity *= 0
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
         self.health = self.max_health

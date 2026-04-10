@@ -45,7 +45,7 @@ class StartScreen(BaseState):
             button.draw(screen)
 
     def exit(self):
-        self.is_done = (True, "UNDERWATER")
+        self.is_done = (True, "HOMEBASE")
     
 
     #==== Own Methods ====

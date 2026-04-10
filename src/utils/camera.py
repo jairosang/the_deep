@@ -3,14 +3,14 @@ from config import game as g_config
 
 class Camera:
 
-    def __init__(self, map_rect: pygame.Rect):
+    def __init__(self, map_rect: pygame.Rect, zoom: float = 2):
 
         self.pos = pygame.math.Vector2(0,0)         # pos doesnt hold the camera position in the map, it holds the camera position in the screen from the top left. So it will always be (0,0). Might as well be able to change it just in case idk
         self.target = pygame.math.Vector2(0,0)
         self.size = g_config["SCREEN_SIZE"]
         self.map_rect = map_rect
         self.rect = pygame.Rect(0,0, self.size[0], self.size[1])
-        self.zoom = 1.5
+        self.zoom = zoom
         self.camera_surface: pygame.Surface | None = None
 
         self.rect.clamp_ip(self.map_rect)

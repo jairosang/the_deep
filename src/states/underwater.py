@@ -7,6 +7,7 @@ from src.entities.creatures.base_creature import Creature
 from src.entities.creatures.creature_passive import PassiveCreature
 from src.entities.creatures.creature_aggressive import AggressiveCreature
 from config import game as g_config
+from config import player as p_config
 from src.utils.tile_map import TileMap
 from src.utils.camera import Camera
 import src.utils.physics_service as phy
@@ -16,7 +17,7 @@ class UnderwaterState(BaseState):
         super().__init__()
         self.player = player
         self.creatures: list[Creature] = []
-        self.tile_map = TileMap(g_config["TILEMAP_PATH"])
+        self.tile_map = TileMap(g_config["UNDERWATER_TILEMAP_PATH"])
         self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
         
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
@@ -24,6 +25,7 @@ class UnderwaterState(BaseState):
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
+        self.player.pos.xy = p_config["UNDERWATER_START_POS"]
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit_to_main_menu)
         self.spawn_creatures()
 
