@@ -67,7 +67,7 @@ class UnderwaterState(BaseState):
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed BEFORE camera is drawn !!!!
         if is_debug_on:
             for c in self.creatures:
-                pygame.draw.line(self.world_surface, (0,0,255), c.rect.center, c.rect.center + c.vel)
+                pygame.draw.line(self.world_surface, (0,0,255), c.rect.center, c.rect.center + c.velocity)
             
             # Grid with tile separation
             for row_i in range(self.tile_map.mid_layer.width - 1):
@@ -105,12 +105,12 @@ class UnderwaterState(BaseState):
         for _ in range(6):
             x = random.randint(40, int(w) - 40)
             y = random.randint(80, int(h) - 40)
-            self.creatures.append(PassiveCreature((x, y), size=18, speed=140, fear_radius=160))
+            self.creatures.append(PassiveCreature((x, y), size=18, fear_radius=160))
 
         for _ in range(2):
             x = random.randint(40, int(w) - 40)
             y = random.randint(80, int(h) - 40)
-            self.creatures.append(AggressiveCreature((x, y), size=18, speed=140, chase_radius=160))
+            self.creatures.append(AggressiveCreature((x, y), size=18, chase_radius=160))
 
     def check_return_point(self):
         pass

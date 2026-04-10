@@ -1,33 +1,43 @@
 import pygame
 import random
-from abc import ABC,abstractmethod
+from abc import abstractmethod
+from src.entities.base_entity import Entity
+from config import game as g_config
 Vec2 = pygame.math.Vector2
 
-class Creature(ABC):
-    def __init__(self, pos: tuple[float, float], size: int = 20, speed: float = 90.0) -> None:
-        self.pos = Vec2(pos)
-        self.vel = Vec2(0, 0)
+class Creature(Entity):
+    def __init__(self, pos, size=20, thrust=90.0):
+        image = pygame.Surface((size, size))
+        image.fill((30, 30, 30))
+        super().__init__(image, pos)
 
         self.size = size
-        self.speed = speed
-        self.rect = pygame.Rect(int(self.pos.x), int(self.pos.y), size, size)
+        self.thrust = thrust
+        self.mass = 0
 
         # wander behaviour
         self._wander_dir = Vec2(1, 0)
         self._wander_timer = 0.0
         self._wander_interval = random.uniform(0.6, 1.4)
 
-    def update(self, dt: float, player_pos, bounds: pygame.Rect | None = None) -> None:
-        self.think(dt, player_pos)
+    def update(self, dt, player_pos, bounds=None):
+        direction = self.think(dt, player_pos)
 
-        self.pos += self.vel * dt
+        # same movement
+        acceleration = direction * self.thrust - (g_config["DRAG"] * self.velocity)
+        self.velocity += acceleration * dt
+
+        if self.velocity.length_squared() < 1:
+            self.velocity = Vec2(0, 0)
+
+        self.pos += self.velocity * dt
 
         if bounds is not None:
-        # stay within the screen
             self.pos.x = max(bounds.left, min(self.pos.x, bounds.right - self.size))
             self.pos.y = max(bounds.top,  min(self.pos.y, bounds.bottom - self.size))
 
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
+        
     @abstractmethod
     def think(self, dt: float, player_pos:Vec2) -> None:    #changed to an abstract class, the subclass must implement this
         pass
