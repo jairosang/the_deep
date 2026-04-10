@@ -67,7 +67,7 @@ class UnderwaterState(BaseState):
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed BEFORE camera is drawn !!!!
         if is_debug_on:
             for c in self.creatures:
-                pygame.draw.line(self.world_surface, (0,0,255), c.rect.center, c.rect.center + c.vel)
+                pygame.draw.line(self.world_surface, (0,0,255), c.rect.center, c.rect.center + c.velocity)
             
             # Grid with tile separation
             for row_i in range(self.tile_map.mid_layer.width - 1):
