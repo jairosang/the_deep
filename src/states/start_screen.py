@@ -13,8 +13,9 @@ class StartScreen(BaseState):
     #==== Abstract Methods from base class =====
     def enter(self):
         self.buttons += [
-            # Creation of play and quit buttons respectively
-            Button((g_config["SCREEN_SIZE"][0]/2, g_config["SCREEN_SIZE"][1]*2/3), (g_config["SCREEN_SIZE"][0]/2,70), (100,100,100), (130, 130, 130), text="Play Game", font_size=30, func=self.exit),
+            # Creation of play and quit buttons respectively (homebase and underwater buttons for now in order to test each state separately)
+            Button((g_config["SCREEN_SIZE"][0]/8 * 3, g_config["SCREEN_SIZE"][1]*2/3), (g_config["SCREEN_SIZE"][0]/4,70), (100,100,100), (130, 130, 130), text="Go to Homebase", font_size=30, func= self._go_to_homebase),
+            Button((g_config["SCREEN_SIZE"][0]/8 * 5, g_config["SCREEN_SIZE"][1]*2/3), (g_config["SCREEN_SIZE"][0]/4,70), (100,100,100), (130, 130, 130), text="Go Underwater", font_size=30, func=self._go_to_underwater),
             Button((g_config["SCREEN_SIZE"][0]/2, g_config["SCREEN_SIZE"][1]*4/5), (g_config["SCREEN_SIZE"][0]/2,70), (245, 96, 66), (209, 80, 54), text="QUIT", font_size=30, func=self.quit_game),
         ]
 
@@ -45,10 +46,15 @@ class StartScreen(BaseState):
             button.draw(screen)
 
     def exit(self):
-        self.is_done = (True, "HOMEBASE")
+        pass
     
 
     #==== Own Methods ====
     def quit_game(self):
         self.is_quitting = True
+        
+    def _go_to_underwater(self):
+        self.is_done = (True, "UNDERWATER")
 
+    def _go_to_homebase(self):
+        self.is_done = (True, "HOMEBASE")
