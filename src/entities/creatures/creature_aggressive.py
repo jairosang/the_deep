@@ -4,7 +4,7 @@ from config import aggresive_creatures as ac_config
 
 class AggressiveCreature(Creature):
     def __init__(self, pos: tuple[float, float], chase_radius: float = 260.0, size: int = 18) -> None: #also removed kwargs
-        super().__init__(pygame.Surface((20,20)), pos)
+        super().__init__(pygame.Surface((size, size)), pos)     # Temporarily creating a colored surface from the size of the creature but later on intead of size we will inject the creatures with the path to their image and create their surface from that image, then adjust that image to their size 
         self.image.fill((255,0,0))         # THIS IS TEMPORARY  
 
         self.chase_radius = chase_radius

@@ -4,8 +4,8 @@ from config import passive_creatures as pc_config
 
 class PassiveCreature(Creature):
     def __init__(self, pos: tuple[float, float], fear_radius: float = 150.0, size: int = 18) -> None:  #removed kwargs 
-        super().__init__(pygame.Surface((20,20)), pos)
-        self.image.fill((0,0,150))         # THIS IS TEMPORARY  
+        super().__init__(pygame.Surface((size, size)), pos)     # Temporarily creating a colored surface from the size of the creature but later on intead of size we will inject the creatures with the path to their image and create their surface from that image, then adjust that image to their size
+        self.image.fill((0,50,255))         # THIS IS TEMPORARY  
 
         self.fear_radius = fear_radius
         self.mass = pc_config["MASS"]
