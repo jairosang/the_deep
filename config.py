@@ -32,10 +32,10 @@ player = {
 
 aggresive_creatures = {
     "MASS": 30,
-    "THRUST": 140,
+    "THRUST": 160,
 }
 
 passive_creatures = {
     "MASS": 15,
-    "THRUST": 140,
+    "THRUST": 180,
 }

@@ -103,17 +103,31 @@ class UnderwaterState(BaseState):
     # ==== Own Methods ====
     def spawn_creatures(self):
         self.creatures.clear()
-        w, h = g_config["SCREEN_SIZE"]
+        w, h = self.tile_map.map_size
 
-        for _ in range(6):
-            x = random.randint(40, int(w) - 40)
-            y = random.randint(80, int(h) - 40)
-            self.creatures.append(PassiveCreature((x, y), size=18, fear_radius=160))
+        for _ in range(10):
+            cluster_x = random.randint(200, int(w) - 200)
+            cluster_y = random.randint(200, int(h) - 200)
+            for _ in range(random.randint(5, 12)):
+                x = random.randint(cluster_x - 40, cluster_x + 40)
+                y = random.randint(cluster_y - 40, cluster_y + 40)
 
-        for _ in range(2):
-            x = random.randint(40, int(w) - 40)
-            y = random.randint(80, int(h) - 40)
-            self.creatures.append(AggressiveCreature((x, y), size=18, chase_radius=160))
+                creature_size = random.randint(10,20)
+                c = PassiveCreature((x, y), size=creature_size, fear_radius=200)
+                c.thrust = c.thrust - round((creature_size % 10) * 8)
+                c.mass = c.mass + round((creature_size % 10) * 1.5)
+                self.creatures.append(c)
+
+
+        for _ in range(15):
+            x = random.randint(100, int(w) - 100)
+            y = random.randint(100, int(h) - 100)
+
+            creature_size = random.randint(20,30)
+            c = AggressiveCreature((x, y), size=creature_size, chase_radius=200)
+            c.thrust = c.thrust - round((creature_size % 20) * 8)
+            c.mass = c.mass + round((creature_size % 20) * 1.5)
+            self.creatures.append(c)
 
     def check_return_point(self):
         pass
