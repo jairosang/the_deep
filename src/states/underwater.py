@@ -49,7 +49,8 @@ class UnderwaterState(BaseState):
         )
         player_pos = pygame.math.Vector2(self.player.rect.center)
         for c in self.creatures:
-            c.update(dt, player_pos, bounds)
+            area_tiles = self.tile_map.get_tiles_at_area(c.rect.centerx, c.rect.centery, (7,7))
+            c.update(dt, self.world_rect, area_tiles, player_pos)
 
         if self.player.oxygen <= 0 or self.player.health <= 0:
             self.trigger_game_over()

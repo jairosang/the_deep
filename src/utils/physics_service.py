@@ -1,8 +1,10 @@
-from src.utils.tile_map import TileMap
-from src.entities.base_entity import Entity
-from src.entities.creatures.base_creature import Creature
-from src.entities.creatures.creature_aggressive import AggressiveCreature
+from typing import TYPE_CHECKING
 from pygame import Rect
+# This is to avoid circular imports
+if TYPE_CHECKING:
+    from src.entities.base_moving_thing import MovingThing
+    from src.entities.creatures.creature_aggressive import AggressiveCreature
+    from src.entities.player import Player
 
 def get_hits(tiles: list[Rect], rect: Rect) -> list[Rect]:
     hits = []
@@ -11,7 +13,7 @@ def get_hits(tiles: list[Rect], rect: Rect) -> list[Rect]:
             hits.append(tile)
     return hits
 
-def check_collisions_x(entity: Entity, tiles):
+def check_collisions_x(entity: 'MovingThing', tiles):
     collisions = get_hits(tiles, entity.rect)
     for tile in collisions:
         if entity.velocity.x > 0:
@@ -23,7 +25,7 @@ def check_collisions_x(entity: Entity, tiles):
             entity.pos.x = entity.rect.x
             break
 
-def check_collisions_y(entity: Entity, tiles):
+def check_collisions_y(entity: 'MovingThing', tiles):
     collisions = get_hits(tiles, entity.rect)
     for tile in collisions:
         if entity.velocity.y < 0:
@@ -35,8 +37,8 @@ def check_collisions_y(entity: Entity, tiles):
             entity.pos.y = entity.rect.y
             break
 
-def check_entity_collisions(player: Entity, creatures: list[Creature]):
-    creature_hits: list[Creature] = []
+def check_entity_collisions(player: 'Player', creatures: list['AggressiveCreature']):
+    creature_hits: list['AggressiveCreature'] = []
     for creature in creatures:
         if player.rect.colliderect(creature.rect):
             player.get_damaged(7)  # The creatures should have a damage attribute that is the one taken here to damage the player
