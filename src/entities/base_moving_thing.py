@@ -17,9 +17,9 @@ class MovingThing(Thing, ABC):
     def update(self, dt, bound_rect: pygame.Rect, area_tiles):
         # ===== Movement update logic =======
         self._move_x(dt)                             # Player moves on one axis
-        phy.check_collisions_x(self, area_tiles)    # Physics react
+        phy.check_and_resolve_player_map_collisions_x(self, area_tiles)    # Physics react
         self._move_y(dt)
-        phy.check_collisions_y(self, area_tiles)
+        phy.check_and_resolve_player_map_collisions_y(self, area_tiles)
         # ====================================
         self._update_velocity(dt)
         self.rect.clamp_ip(bound_rect)              # Applying clamping
