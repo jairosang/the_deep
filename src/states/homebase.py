@@ -29,11 +29,11 @@ class HomebaseState(BaseState):
             self.button.call_back()
 
     def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
-        pass
+        self.player.handle_inputs(keys)
         
     def update(self, dt):
         # Get rects of tiles surrounding player for calculating collisions with environment 
-        area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
+        area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (4,0))
         self.player.update(dt, self.world_rect, area_tiles)
         self.camera.update(dt, self.player.rect)
 
@@ -42,8 +42,23 @@ class HomebaseState(BaseState):
         self.tile_map.draw(self.world_surface, self.camera.rect)
         self.player.draw(self.world_surface)
 
+        if is_debug_on:
+            # Grid with tile separation
+            for row_i in range(self.tile_map.mid_layer.width - 1):
+                pygame.draw.line(self.world_surface, (0,150,0), (row_i * self.tile_map.tile_size[0], 0),  (row_i * self.tile_map.tile_size[0], self.tile_map.mid_layer.height * self.tile_map.tile_size[1]))
+            for col_j in range(self.tile_map.mid_layer.height - 1):
+                pygame.draw.line(self.world_surface, (0,150,0), (0, col_j * self.tile_map.tile_size[1]),  (self.tile_map.mid_layer.width * self.tile_map.tile_size[0], col_j * self.tile_map.tile_size[1]))
+            
+            # Player velocity (with direction)
+            pygame.draw.line(self.world_surface, (255,0,0), self.player.rect.center, self.player.rect.center + self.player.velocity)
+            pygame.draw.circle(self.world_surface, (0,255,0), self.player.pos, 1)
+
         self.camera.draw(self.world_surface, screen)
         self.button.draw(screen)
+
+        if is_debug_on:
+            player_pos_text = pygame.font.Font(None, 36).render(f"Player_pos: {self.player.pos}", True, (255,255,255), (50,50,50))
+            screen.blit(player_pos_text, (10, 5))
 
     def exit(self):
         self.player.movement_axis.y = 1  # Return full movement
