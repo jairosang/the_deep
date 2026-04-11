@@ -22,13 +22,13 @@
 [v0.2.0] - M2: Main Systems Complete 
 [X]-[NONE] Tilemap loading system {
         [X] - Program adding static map without collisions. (Jairo)
-        [] - Implement collision checking with the physics service(Jairo)
+        [X] - Implement collision checking with the physics service (Jairo)
         [X] - fix: avoid rendering the whole map every second. We need to implement render distance. Performance hoooorrible with the bigger map now. (Jairo)
 }
 [ ]- [NONE] Collision handling {
         [X] - Creating physics service (Jairo)
-        [X] - Handling player collisions with map (Jairo)
-        [] - Handling creature collisions with map
+        [X] - Handling player collisions with map (Jairo & David)
+        [X] - Handling creature collisions with map (Jairo)
         [X] - Handling player-creature collision (Jairo)
 }
 
@@ -49,21 +49,21 @@
         [X] - Passive and aggresive creatures work differently (David)
         [] - Fix: Update class diagram to use a factory design pattern as it makes more sense for creature spawning in the long run.
         [] - Fix: Implement the factory in code.
-        [] - Fix: Update the creature's movement to have thrust and acceleration, using the general drag flag from settings.
+        [X] - Fix: Update the creature's movement to have thrust and acceleration, using the general drag flag from settings. (David)
 }
 [ ]-[G2] Player sprite & animations
 
-[]-Fix: Current code does not reflect class diagram, please update the current entities to use Thing and MovingThing.
-[]-Fix: It's kind of wrong that the player is handling his own physics when moving, would be nice that if calculated in the PhysicsService instead of there so the player has no need to access it's drag, this will also applies to all things that move.
+[X]-Fix: Current code does not reflect class diagram, please update the current entities to use Thing and MovingThing. (Jairo)
+[]-Fix: It's kind of wrong that the player is handling his own physics when moving, would be nice that if calculated in the PhysicsService instead of there so the player has no need to access it's drag, this will also applies to all things that move. (I mean its fine we can forget about this - Jairo)
 [X]-Bug: Camera zoom absolutely destroys performance. Needs fixing (Jairo)
 [X]-Bug: Edges have a little gap when the player moves. This is very easy to fix, just extend how much map is being blitted by like 5 px on all edges. This is happening because a of floating number mistmatches between the player position and the camera. Jairo left this task for anyone else who wants to take is as a test of whether someone ever reads the CHANGELOG or not. (Jairo) Ok so I fixed it myself by accident while fixing the zoom in the camera. No idea as to why but if it works it works.
-[]-Fix: Inconsistency in inheritance and classes that must be cleared up in entities. All entities should apply the same movement and thrust and drag and such. Also, all Entities should have a mass and such attributes initialized in the base_entity even if its empty and later overwritten by what is in the config in the classes that inherit this.
+[X]-Fix: Inconsistency in inheritance and classes that must be cleared up in entities. All entities should apply the same movement and thrust and drag and such. Also, all Entities should have a mass and such attributes initialized in the base_entity even if its empty and later overwritten by what is in the config in the classes that inherit this. (David)
 
 
 [v0.3.0] - M3: Economy & States Complete 
 [ ]-[P15] Economy system
-[ ]-[P16] Homebase state
-[ ]-[P5] Health system
+[X]-[P16] Homebase state (Jairo)
+[X]-[P5] Health system (Jairo)
 [ ]-[G6] HUD assets
 
 
@@ -71,7 +71,7 @@
 
 
 [v0.4.0] - M4: Creatures & Research Complete 
-[ ]-[P8] Hostile creature functionality
+[X]-[P8] Hostile creature functionality (David)
 [ ]-[P9] Creature health and elimination
 [ ]-[P10] Research scanning functionality
 [ ]-[P11] Research persistence
