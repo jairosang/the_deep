@@ -10,7 +10,7 @@ class MovingThing(Thing, ABC):
 
         # the physical attributes, can be overwritten later
         self.input_direction = pygame.math.Vector2(0,0)
-        self.velocity = pygame.math.Vector2(0, 0)
+        self.velocity: pygame.math.Vector2 = pygame.math.Vector2(0, 0)
         self.mass = 0
         self.thrust = 0
 
@@ -48,8 +48,8 @@ class MovingThing(Thing, ABC):
 
 
         # Adjust acceleration and velocity according to thrust and adding slowdown with the drag
-        self.acceleration = self.input_direction * current_thrust - (g_config["DRAG"] * self.velocity)
-        self.velocity += self.acceleration * dt
+        acceleration = self.input_direction * current_thrust - (g_config["DRAG"] * self.velocity)
+        self.velocity += acceleration * dt
 
         # Avoid floating point numbers staying there and keeping the thing moving when standing
         if self.velocity.length_squared() < 1:

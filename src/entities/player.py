@@ -13,10 +13,8 @@ class Player(MovingThing):
         self.rect = self.image.get_rect(topleft=(int(self.pos.x), int(self.pos.y)))
 
         # Movement
-        # removed self.velocity = pygame.math.Vector2(0, 0)
         self.thrust = p_config["THRUST"]
         self.mass = p_config["MASS"]
-        self.acceleration = 0
         self.input_direction = pygame.math.Vector2(0, 0)
         self.is_sprinting = False
         self.sprint_multiplier = p_config["SPRINT_MULTIPLIER"]
@@ -60,6 +58,28 @@ class Player(MovingThing):
 
         if self.input_direction.length_squared() > 0:
             self.input_direction = self.input_direction.normalize()
+
+    def draw(self, surface: pygame.Surface):
+        super().draw(surface)
+        if self.velocity.length_squared() > 0: 
+            center = pygame.math.Vector2(self.rect.center)
+            velocity_scaled = self.velocity / 15    # Controls how far the arrow extends
+
+            dir_v = velocity_scaled.normalize()
+            radius = self.rect.height * 3 / 4       # Controls how far from the center the arc is
+            end_point = center + velocity_scaled + dir_v * radius
+            
+            # Drawing an arc in the direction of velocity
+            arc_points = []
+            for angle in range(-20, 21, 3): # Controls how wide the arc is
+                arc_points.append(center + dir_v.rotate(angle) * (radius * 0.95))
+            if len(arc_points) > 1:
+                pygame.draw.lines(surface, (60, 108, 153), False, arc_points, 2)
+            
+            # Draw arrow
+            print(f"{arc_points}\n")
+            pygame.draw.polygon(surface, (60, 108, 153), [end_point] + arc_points[4:-4])
+                    
 
     def _update_oxygen(self):
         # This thing will have implemented the game over thing when the oxygen is 0
