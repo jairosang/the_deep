@@ -98,7 +98,10 @@ class TileMap:
         self.visual_layer: pygame.Surface | None = None
         self.tile_size: tuple[int, int] = (0, 0)
         self.map_size: tuple[int, int] = (0, 0)
-        self.mid_layer: InfiniteTileLayer | TileLayer
+        self.tile_layers: dict[str,TileLayer | InfiniteTileLayer] = {}
+        self.mid_layer: TileLayer | InfiniteTileLayer | None
+        self.background_assets_layer: InfiniteTileLayer | TileLayer
+        self.background_tiles_layer: InfiniteTileLayer | TileLayer
         self.first_gid = 1
 
         self.parse_from_path(path)
@@ -114,21 +117,30 @@ class TileMap:
         # Get em facts from the tiled json file
         self.tile_size = (tile_map["tilewidth"], tile_map["tileheight"])
 
-        mid_layer = next((layer for layer in tile_map["layers"] if layer.get("name") == "Midground"), None)
-        if mid_layer is None:
-            return "I see another error which need to be raised over here"
+        # Buffer for the name of layer and the data
+        tile_layer_buffer = {layer.get("name"):layer for layer in tile_map["layers"]}
+        if tile_layer_buffer.get("Midground") is None:           # These are not errors they just wont be built
+            print("Couldn't find a layer called 'Midground' in your map")
+        if tile_layer_buffer.get("Background_tiles") is None:
+            print("Couldn't find a layer called 'Background_tiles' in your map")
+        if tile_layer_buffer.get("Background_assets") is None:
+            print("Couldn't find a layer called 'Background_assets' in your map")
 
         # ===== Building the mid_layer, it can be either finite or infinite
         if tile_map["infinite"] == True:
-            self.mid_layer = InfiniteTileLayer(mid_layer)
+            for layer in tile_layer_buffer.keys():
+                self.tile_layers[layer] = InfiniteTileLayer(tile_layer_buffer[layer])
         else:
-            self.mid_layer = TileLayer(mid_layer, self.tile_size)
-
+            for layer in tile_layer_buffer.keys():
+                self.tile_layers[layer] = TileLayer(tile_layer_buffer[layer], self.tile_size)
+                
         # Extract the map size
-        self.map_size = (
-            self.mid_layer.width * self.tile_size[0],
-            self.mid_layer.height * self.tile_size[1],
-        )
+        if "Midground" in self.tile_layers:
+            self.mid_layer = self.tile_layers.get("Midground")
+            self.map_size = (
+                self.tile_layers["Midground"].width * self.tile_size[0],
+                self.tile_layers["Midground"].height * self.tile_size[1],
+            )
 
         # Getting the data for the tileset which is the building block for the tilemap, this is like this just for now bc there is only one tileset.
         tileset_data = tile_map["tilesets"][0]
@@ -139,13 +151,13 @@ class TileMap:
         atlas_surface, column_count = self._load_tileset_surface_and_columns(tsx_path)
         
         # Check if the tileset is an image collection
-        self.visual_layer = self._build_visual_layer(atlas_surface, column_count)
+        self.visual_surface = self._build_tile_layers(atlas_surface, column_count)
 
 
     def draw(self, world_surface: pygame.Surface, camera_rect: pygame.Rect, position: tuple[int, int] = (0, 0)) -> None:
-        if self.visual_layer is not None:
+        if self.visual_surface is not None:
             # Blit the map into the world, but only the things inside the camera
-            world_surface.blit(self.visual_layer, camera_rect.topleft, camera_rect)
+            world_surface.blit(self.visual_surface, camera_rect.topleft, camera_rect)
 
 
     def is_tile_solid(self, x, y) -> bool:
@@ -155,7 +167,10 @@ class TileMap:
     
         # Not implemented because its not my thing. Yet....
 
-    def get_tiles_at_area(self, x, y, size: tuple[int,int]):
+    def get_tiles_at_area(self, x, y, size: tuple[int,int]) -> list[pygame.Rect]:
+        if self.mid_layer is None:
+            raise LookupError("Map contains no mid_layer bro")
+
         tile_width, tile_height = self.tile_size
         tiles: list[pygame.Rect] = []
 
@@ -190,6 +205,9 @@ class TileMap:
         return tiles
 
     def get_tile_at_position(self, x, y):
+        if self.mid_layer is None:
+            raise LookupError("Map contains no mid_layer bro")
+        
         tile_width, tile_height = self.tile_size    # cuz its a tuple
 
         column = int(x // tile_width)  # going from pixels to tiles
@@ -239,13 +257,20 @@ class TileMap:
 
 
     # We need to change this later prob, rn the whole map is rebuilding always. Would make more sense for only the part inside the camera to be built
-    def _build_visual_layer(self, atlas_surface: pygame.Surface | dict, column_count: int) -> pygame.Surface:
+    def _build_tile_layers(self, atlas_surface: pygame.Surface | dict, column_count: int) -> pygame.Surface:
         # Create a transparent surface to draw tiles on top of
-        tile_width, tile_height = self.tile_size
-        visual_layer = pygame.Surface(self.map_size, pygame.SRCALPHA)
+        visual_surface = pygame.Surface(self.map_size, pygame.SRCALPHA)
+        for layer in self.tile_layers.values():
+            visual_surface = self._add_tile_layer_to_surface(atlas_surface, layer, visual_surface, column_count)
 
+        return visual_surface
+
+        
+    
+    def _add_tile_layer_to_surface(self, atlas_surface: pygame.Surface | dict, layer: TileLayer | InfiniteTileLayer, dest: pygame.Surface, column_count: int):
         # for every tile in the grid
-        for i, row in enumerate(self.mid_layer.grid):
+        tile_width, tile_height = self.tile_size
+        for i, row in enumerate(layer.grid):
             for j, gid in enumerate(row):
                 # Get the tile ID and flip da flags
                 base_gid, flip_h, flip_v, flip_diagonal = normalize_gid(gid)
@@ -280,6 +305,5 @@ class TileMap:
 
                 # Blit the tile at the right place
                 destination = (j * tile_width, i * tile_height)
-                visual_layer.blit(tile_surface, destination)
-
-        return visual_layer
+                dest.blit(tile_surface, destination)
+        return dest
