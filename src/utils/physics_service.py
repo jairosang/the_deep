@@ -3,6 +3,8 @@ from src.entities.base_entity import Entity
 from src.entities.creatures.base_creature import Creature
 from src.entities.creatures.creature_aggressive import AggressiveCreature
 from pygame import Rect
+from src.entities.item import Item
+from config import aggresive_creatures as ac_config
 
 def get_hits(tiles: list[Rect], rect: Rect) -> list[Rect]:
     hits = []
@@ -36,10 +38,16 @@ def check_collisions_y(entity: Entity, tiles):
             break
 
 def check_entity_collisions(player: Entity, creatures: list[Creature]):
-    creature_hits: list[Creature] = []
+    # removing this: creature_hits: list[Creature] = []
+    dead_creatures = []
+    dropped_items = []
+
     for creature in creatures:
         if player.rect.colliderect(creature.rect):
-            player.get_damaged(7)  # The creatures should have a damage attribute that is the one taken here to damage the player
+            creature.get_damaged(1)  # The creatures should have a damage attribute that is the one taken here to damage the player
+
+            if isinstance(creature, AggressiveCreature):
+                player.get_damaged(ac_config["CONTACT_DAMAGE"])
 
             player_vel_x = ((player.mass - creature.mass)/(player.mass + creature.mass)) * player.velocity
             player_vel_y = ((2 * creature.mass)/(player.mass + creature.mass)) * creature.velocity
@@ -50,4 +58,11 @@ def check_entity_collisions(player: Entity, creatures: list[Creature]):
             creature.velocity = creature_vel_x + creature_vel_y
             player.velocity = player_vel_x + player_vel_y
 
-    return creature_hits
+            if creature.is_dead():
+                dead_creatures.append(creature)
+                dropped_items.append(Item(creature.rect.topleft))
+
+    for creature in dead_creatures:
+        creatures.remove(creature)
+
+    return dropped_items

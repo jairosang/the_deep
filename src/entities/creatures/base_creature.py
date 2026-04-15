@@ -14,6 +14,12 @@ class Creature(Entity):
         self.size = size
         self.thrust = thrust
         self.mass = 0
+        self.health = 0
+        self.max_health = 0
+
+        # for the colour change efffect:
+        self.flash_timer = 0.0
+        self.flash_duration = 0.2
 
         # wander behaviour
         self._wander_dir = Vec2(1, 0)
@@ -21,6 +27,10 @@ class Creature(Entity):
         self._wander_interval = random.uniform(0.6, 1.4)
 
     def update(self, dt, player_pos, bounds=None):
+
+        if self.flash_timer > 0:
+            self.flash_timer -= dt
+
         direction = self.think(dt, player_pos)
 
         # same movement
@@ -71,6 +81,17 @@ class Creature(Entity):
                 self._wander_dir = self._wander_dir.normalize()
 
         return self._wander_dir
+    
+    def get_damaged(self, amount):
+        self.health -= amount
+        self.flash_timer = self.flash_duration
+
+    def is_dead(self):
+        if self.health <= 0:
+            return True
 
     def draw(self, screen: pygame.Surface, color=(30, 30, 30)) -> None:
-        pygame.draw.rect(screen, color, self.rect)
+        if self.flash_timer > 0:
+            pygame.draw.rect(screen, (255, 255, 255), self.rect)
+        else:
+            pygame.draw.rect(screen, color, self.rect)

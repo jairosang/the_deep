@@ -7,6 +7,8 @@ class AggressiveCreature(Creature):
         super().__init__(pos, size, ac_config["THRUST"])
         self.chase_radius = chase_radius
         self.mass = ac_config["MASS"]
+        self.health = ac_config["HEALTH"]
+        self.max_health = ac_config["HEALTH"]
 
     def think(self, dt: float, player_pos) -> None:                             #is now only passing player_pos
         dist = self.pos.distance_to(player_pos)

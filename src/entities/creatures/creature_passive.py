@@ -7,6 +7,8 @@ class PassiveCreature(Creature):
         super().__init__(pos, size, pc_config["THRUST"])
         self.fear_radius = fear_radius
         self.mass = pc_config["MASS"]
+        self.health = pc_config["HEALTH"]
+        self.max_health = pc_config["HEALTH"]
 
     def think(self, dt: float, player_pos: Vec2) -> None:      #only passing player pos
         dist = self.pos.distance_to(player_pos)
