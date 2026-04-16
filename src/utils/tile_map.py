@@ -2,6 +2,7 @@ import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from src.utils.utils import normalize_gid
+from src.utils.interactables import Interactable, Exit, Upgrades, Research
 import pygame
 
 class Layer:
@@ -102,6 +103,7 @@ class TileMap:
         self.mid_layer: TileLayer | InfiniteTileLayer | None
         self.background_assets_layer: InfiniteTileLayer | TileLayer
         self.background_tiles_layer: InfiniteTileLayer | TileLayer
+        self.interactables: list[Interactable]
         self.first_gid = 1
 
         self.parse_from_path(path)
@@ -117,8 +119,9 @@ class TileMap:
         # Get em facts from the tiled json file
         self.tile_size = (tile_map["tilewidth"], tile_map["tileheight"])
 
-        # Buffer for the name of layer and the data
-        tile_layer_buffer = {layer.get("name"):layer for layer in tile_map["layers"]}
+        # ==== Buffer for the name of layer and the data ======
+        # Tile layers
+        tile_layer_buffer = {layer.get("name"):layer for layer in tile_map["layers"] if layer.get("type") == "tilelayer"}
         if tile_layer_buffer.get("Midground") is None:           # These are not errors they just wont be built
             print("Couldn't find a layer called 'Midground' in your map")
         if tile_layer_buffer.get("Background_tiles") is None:
@@ -126,7 +129,18 @@ class TileMap:
         if tile_layer_buffer.get("Background_assets") is None:
             print("Couldn't find a layer called 'Background_assets' in your map")
 
-        # ===== Building the mid_layer, it can be either finite or infinite
+        # Object groups
+        object_groups_buffer = [layer for layer in tile_map["layers"] if layer.get("type") == "objectgroup"]
+        
+        # Interactable layer
+        interactable_layer = None
+        for group in object_groups_buffer:
+            if group.get("name") == "Interactables":
+                interactable_layer = group
+        if interactable_layer is None:
+            print("Couldn't find a layer called 'Interactables' in your map")
+
+        # Building the tile layers, they can be either finite or infinite
         if tile_map["infinite"] == True:
             for layer in tile_layer_buffer.keys():
                 self.tile_layers[layer] = InfiniteTileLayer(tile_layer_buffer[layer])
@@ -150,8 +164,8 @@ class TileMap:
         tsx_path = (path.parent / tileset_data["source"]).resolve()
         atlas_surface, column_count = self._load_tileset_surface_and_columns(tsx_path)
         
-        # Check if the tileset is an image collection
         self.visual_surface = self._build_tile_layers(atlas_surface, column_count)
+        self.interactables = self._load_interactables(interactable_layer)
 
 
     def draw(self, world_surface: pygame.Surface, camera_rect: pygame.Rect, position: tuple[int, int] = (0, 0)) -> None:
@@ -228,6 +242,31 @@ class TileMap:
         # Not implemented because its not my thing. Yet....
         # It should return the ID, NOT GID of the tile in the middle layer ig
     
+    def _load_interactables(self, interactables_layer: dict | None) -> list[Interactable]:
+        if interactables_layer is None:
+            return []
+
+        objects = interactables_layer.get("objects", [])
+        interactables = []  
+
+        # Parse each object and create appropriate Interactable instance
+        for obj in objects:
+            name = obj.get("name", "").lower()
+            x = obj.get("x", 0)
+            y = obj.get("y", 0)
+            width = obj.get("width", 0)
+            height = obj.get("height", 0)
+            
+            # Create the appropriate interactable based on the name
+            if name == "exit":
+                interactables.append(Exit(x, y, width, height))
+            elif name == "upgrades":
+                interactables.append(Upgrades(x, y, width, height))
+            elif name == "research":
+                interactables.append(Research(x, y, width, height))
+
+        return interactables
+
     # Gets the tileset and number of columns in the tileset
     def _load_tileset_surface_and_columns(self, tsx_path: Path) -> tuple[pygame.Surface, int] | tuple[dict, int]:
         tsx_root = ET.parse(tsx_path).getroot()
