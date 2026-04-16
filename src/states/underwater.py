@@ -10,6 +10,7 @@ from config import game as g_config
 from config import player as p_config
 from src.utils.tile_map import TileMap
 from src.utils.camera import Camera
+from src.utils.interactables import Interactable, Exit
 import src.utils.physics_service as phy
 
 
@@ -21,19 +22,23 @@ class UnderwaterState(BaseState):
         self.items = []
         self.tile_map = TileMap(g_config["UNDERWATER_TILEMAP_PATH"])
         self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
+        self.closest_interactable: Interactable | None = None
         
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
         self.camera = Camera(self.world_rect)
+        self._load_interactable_call_backs()
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
-        self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit_to_main_menu)
+        self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
         self.spawn_creatures()
 
     def handle_event(self, e: pygame.event.Event):
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
+        elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
+            self.closest_interactable.interact()
 
     def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
         self.player.handle_inputs(keys)
@@ -42,6 +47,7 @@ class UnderwaterState(BaseState):
         # Get rects of tiles surrounding player for calculating collisions with environment 
         area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.player.update(dt, self.world_rect, area_tiles)
+        self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 100)
         self.camera.update(dt, self.player.rect)
         bounds = pygame.Rect(
             0,
@@ -55,7 +61,7 @@ class UnderwaterState(BaseState):
             c.update(dt, self.world_rect, area_tiles, player_pos)
 
         if self.player.oxygen <= 0 or self.player.health <= 0:
-            self.trigger_game_over()
+            self._trigger_game_over()
 
         dropped_items = phy.check_entity_collisions(self.player, self.creatures)
         self.items.extend(dropped_items)
@@ -64,6 +70,8 @@ class UnderwaterState(BaseState):
         # Wiping the world surface, but only the camera area! This really improved the performance.
         self.world_surface.fill((80, 128, 173), self.camera.rect)
         self.tile_map.draw(self.world_surface, self.camera.rect)
+        if self.closest_interactable is not None:
+            self.closest_interactable.draw_prompt(self.world_surface)
         self.player.draw(self.world_surface)
 
         # Just telling the guys to draw themselves
@@ -141,12 +149,21 @@ class UnderwaterState(BaseState):
     def update_depth(self):
         pass
 
-    def trigger_game_over(self):
+    def _trigger_game_over(self):
         self.is_done = (True, "GAME_OVER")  #switch states
         self.exit()
 
-    def exit_to_main_menu(self):
+    def _go_to_start(self):
         self.is_done = (True, "START_SCREEN")
         self.exit()
 
-    # ========= Private Methods =======
+    def _go_to_homebase(self):
+        self.is_done = (True, "HOMEBASE")
+        self.exit()
+
+    # Interactable objects that load an external callback function
+    def _load_interactable_call_backs(self) -> None:
+        for interactable in self.tile_map.interactables:
+            if isinstance(interactable, Exit):
+                interactable.on_interact = self._go_to_homebase
+                interactable.prompt_text = "Press E to go back to Homebase"

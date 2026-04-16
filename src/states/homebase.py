@@ -30,10 +30,10 @@ class HomebaseState(BaseState):
     def handle_event(self, e):
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
+        elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
+            self.closest_interactable.interact()
 
     def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
-        if keys[pygame.K_e] and self.closest_interactable:
-            self.closest_interactable.interact()
         self.player.handle_inputs(keys)
         
     def update(self, dt):
