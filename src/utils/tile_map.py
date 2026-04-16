@@ -241,7 +241,7 @@ class TileMap:
                 image_element = tile_element.find("image")
                 if image_element is not None:
                     image_path = (tsx_path.parent / image_element.attrib["source"]).resolve()
-                    image_dict[tile_id] = str(image_path)
+                    image_dict[tile_id] = (str(image_path), (image_element.attrib["width"], image_element.attrib["height"]))
             return image_dict, column_count
         
         # Return the atlas surface of the atlas
@@ -268,8 +268,8 @@ class TileMap:
         
     
     def _add_tile_layer_to_surface(self, atlas_surface: pygame.Surface | dict, layer: TileLayer | InfiniteTileLayer, dest: pygame.Surface, column_count: int):
+        map_tile_width, map_tile_height = self.tile_size
         # for every tile in the grid
-        tile_width, tile_height = self.tile_size
         for i, row in enumerate(layer.grid):
             for j, gid in enumerate(row):
                 # Get the tile ID and flip da flags
@@ -283,15 +283,21 @@ class TileMap:
                     continue
                 
                 tile_surface = None
+                destination = (j * map_tile_width, i * map_tile_height)
                 if isinstance(atlas_surface, pygame.Surface):     # The case where the tileset is an actual atlas
                     # Get the tile image from the atlas
-                    source_x = (local_tile_id % column_count) * tile_width              # Same thingies as before, moving through the 2d environment of the atlas using a 1 dimensional number.
-                    source_y = (local_tile_id // column_count) * tile_height            # Column_count can be seen as the width.
-                    source_rect = pygame.Rect(source_x, source_y, tile_width, tile_height)
+                    source_x = (local_tile_id % column_count) * map_tile_width              # Same thingies as before, moving through the 2d environment of the atlas using a 1 dimensional number.
+                    source_y = (local_tile_id // column_count) * map_tile_height            # Column_count can be seen as the width.
+                    source_rect = pygame.Rect(source_x, source_y, map_tile_width, map_tile_height)
                     tile_surface = atlas_surface.subsurface(source_rect)
+
                 elif isinstance(atlas_surface, dict):             # The case where the tileset is an image collection
-                    tile_image_path = Path(atlas_surface[local_tile_id])
+                    tile_width, tile_height = atlas_surface[local_tile_id][1]
+                    tile_image_path = Path(atlas_surface[local_tile_id][0])
                     tile_surface = pygame.image.load(str(tile_image_path)).convert_alpha()
+                    
+                    destination = (destination[0] + map_tile_width - int(tile_width), destination[1] + map_tile_height - int(tile_height))
+                    
 
                 if tile_surface is None:
                     raise UnboundLocalError("Something is weird with the tileset and I couldnt get a tile_surface womp womp")
@@ -304,6 +310,5 @@ class TileMap:
                     tile_surface = pygame.transform.flip(tile_surface, flip_h, flip_v)
 
                 # Blit the tile at the right place
-                destination = (j * tile_width, i * tile_height)
                 dest.blit(tile_surface, destination)
         return dest
