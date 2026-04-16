@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import pygame
 
-class Interactable(ABC):
+class Interactable:
     def __init__(self, x: float, y: float, width: float, height: float) -> None:
         self.rect = pygame.Rect(x - width/2, y, width, height)
         self.x = x
@@ -9,12 +9,9 @@ class Interactable(ABC):
         self.width = width
         self.height = height
         self.prompt_text = "Press E to interact"
-    
+
     @abstractmethod
     def interact(self) -> None:
-        pass
-
-    def update(self, dt) -> None:
         pass
 
     def draw_prompt(self, world_surface: pygame.Surface) -> None:
@@ -27,8 +24,14 @@ class Interactable(ABC):
         world_surface.blit(prompt_surface, prompt_rect)
 
 class Exit(Interactable):
+    def __init__(self, x: float, y: float, width: float, height: float, on_interact=None) -> None:
+        super().__init__(x, y, width, height)
+        self.on_interact = on_interact
+
+
     def interact(self) -> None:
-        pass
+        if self.on_interact is not None:
+            self.on_interact()
 
 class Upgrades(Interactable):
     def interact(self) -> None:

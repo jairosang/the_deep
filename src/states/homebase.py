@@ -4,7 +4,7 @@ from config import game as g_config
 from config import player as p_config
 from src.utils.tile_map import TileMap
 from src.utils.camera import Camera
-from src.utils.interactables import Interactable
+from src.utils.interactables import Interactable, Exit, Upgrades, Research
 from src.ui.components.button import Button
 import pygame
 
@@ -23,7 +23,8 @@ class HomebaseState(BaseState):
     def enter(self, data: dict = {}):
         self.player.pos.xy = p_config["HOMEBASE_START_POS"]
         self.player.movement_axis.y = 0  # Horizontal movement only
-        self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit)
+        self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
+        self._load_interactable_call_backs()
 
 
     def handle_event(self, e):
@@ -31,6 +32,8 @@ class HomebaseState(BaseState):
             self.button.call_back()
 
     def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
+        if keys[pygame.K_e] and self.closest_interactable:
+            self.closest_interactable.interact()
         self.player.handle_inputs(keys)
         
     def update(self, dt):
@@ -72,4 +75,18 @@ class HomebaseState(BaseState):
 
     def exit(self):
         self.player.movement_axis.y = 1  # Return full movement
+
+    def go_underwater(self):
+        self.is_done = (True, "UNDERWATER")
+        self.exit()
+
+    def _go_to_start(self):
         self.is_done = (True, "START_SCREEN")
+        self.exit()
+
+    # Interactable objects that load an external callback function
+    def _load_interactable_call_backs(self) -> None:
+        for interactable in self.tile_map.interactables:
+            if isinstance(interactable, Exit):
+                interactable.on_interact = self.go_underwater
+                interactable.prompt_text = "Press E to go underwater ~"
