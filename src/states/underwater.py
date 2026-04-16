@@ -12,11 +12,13 @@ from src.utils.tile_map import TileMap
 from src.utils.camera import Camera
 import src.utils.physics_service as phy
 
+
 class UnderwaterState(BaseState):
     def __init__(self, player: Player) -> None:
         super().__init__()
         self.player = player
         self.creatures: list[Creature] = []
+        self.items = []
         self.tile_map = TileMap(g_config["UNDERWATER_TILEMAP_PATH"])
         self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
         
@@ -55,7 +57,8 @@ class UnderwaterState(BaseState):
         if self.player.oxygen <= 0 or self.player.health <= 0:
             self.trigger_game_over()
 
-        phy.check_entity_collisions(self.player, self.creatures)
+        dropped_items = phy.check_entity_collisions(self.player, self.creatures)
+        self.items.extend(dropped_items)
 
     def draw(self, screen: pygame.Surface, is_debug_on):
         # Wiping the world surface, but only the camera area! This really improved the performance.
@@ -66,6 +69,9 @@ class UnderwaterState(BaseState):
         # Just telling the guys to draw themselves
         for c in self.creatures:
             c.draw(self.world_surface)
+
+        for item in self.items:
+            item.draw(self.world_surface)
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed BEFORE camera is drawn !!!!
         if is_debug_on:

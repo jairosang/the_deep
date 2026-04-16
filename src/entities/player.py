@@ -1,6 +1,5 @@
 from src.entities.base_moving_thing import MovingThing
 from src.entities.item import Item
-from src.utils import physics_service as phy
 from config import game as g_config, player as p_config
 import pygame
 
