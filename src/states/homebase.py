@@ -4,6 +4,7 @@ from config import game as g_config
 from config import player as p_config
 from src.utils.tile_map import TileMap
 from src.utils.camera import Camera
+from src.utils.interactables import Interactable
 from src.ui.components.button import Button
 import pygame
 
@@ -13,6 +14,7 @@ class HomebaseState(BaseState):
         self.player = player
         self.tile_map = TileMap(g_config["HOMEBASE_TILEMAP_PATH"])
         self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
+        self.closest_interactable: Interactable | None = None
 
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
         self.camera = Camera(self.world_rect,3)
@@ -34,14 +36,19 @@ class HomebaseState(BaseState):
     def update(self, dt):
         # Get rects of tiles surrounding player for calculating collisions with environment 
         area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (4,0))
+        self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 30)
+        
         self.player.update(dt, self.world_rect, area_tiles)
         self.camera.update(dt, self.player.rect)
 
     def draw(self, screen, is_debug_on):
         self.world_surface.fill((80, 128, 173), self.camera.rect)
         self.tile_map.draw(self.world_surface, self.camera.rect)
-        self.player.draw(self.world_surface)
 
+        if self.closest_interactable is not None:
+            self.closest_interactable.draw_prompt(self.world_surface)
+
+        self.player.draw(self.world_surface)
         if is_debug_on:
             # Grid with tile separation
             for row_i in range(self.tile_map.map_size[0] - 1):

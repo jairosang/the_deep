@@ -242,6 +242,24 @@ class TileMap:
         # Not implemented because its not my thing. Yet....
         # It should return the ID, NOT GID of the tile in the middle layer ig
     
+    # Get the closest interactable from a position in the map
+    def get_closest_interactable(self, x, y, max_distance_px: int) -> Interactable | None:
+        closest_interactable = None
+        closest_distance_sq = max_distance_px * max_distance_px
+
+        for interactable in self.interactables:
+            dist_x = interactable.rect.centerx - x
+            dist_y = interactable.rect.centery - y
+            distance_sq = (dist_x * dist_x) + (dist_y * dist_y)
+
+            if distance_sq <= closest_distance_sq:
+                closest_distance_sq = distance_sq
+                closest_interactable = interactable
+
+        return closest_interactable
+
+
+
     def _load_interactables(self, interactables_layer: dict | None) -> list[Interactable]:
         if interactables_layer is None:
             return []
