@@ -59,6 +59,7 @@
 [X]-Bug: Edges have a little gap when the player moves. This is very easy to fix, just extend how much map is being blitted by like 5 px on all edges. This is happening because a of floating number mistmatches between the player position and the camera. Jairo left this task for anyone else who wants to take is as a test of whether someone ever reads the CHANGELOG or not. (Jairo) Ok so I fixed it myself by accident while fixing the zoom in the camera. No idea as to why but if it works it works.
 [X]-Fix: Inconsistency in inheritance and classes that must be cleared up in entities. All entities should apply the same movement and thrust and drag and such. Also, all Entities should have a mass and such attributes initialized in the base_entity even if its empty and later overwritten by what is in the config in the classes that inherit this. (David)
 [X]-Feat: Visualizing player direction and movement as an arrow surrounding him. (Jairo)
+[X]- Bug: Creatures go inside the player when hit by the player and are clipped to the wall.
 
 
 [v0.3.0] - M3: Economy & States Complete 

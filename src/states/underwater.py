@@ -45,8 +45,9 @@ class UnderwaterState(BaseState):
 
     def update(self, dt):
         # Get rects of tiles surrounding player for calculating collisions with environment 
-        area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
-        self.player.update(dt, self.world_rect, area_tiles)
+        player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
+        self.player.update(dt, self.world_rect, player_area_tiles)
+        player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 100)
         self.camera.update(dt, self.player.rect)
         bounds = pygame.Rect(
@@ -63,7 +64,7 @@ class UnderwaterState(BaseState):
         if self.player.oxygen <= 0 or self.player.health <= 0:
             self._trigger_game_over()
 
-        dropped_items = phy.check_entity_collisions(self.player, self.creatures)
+        dropped_items = phy.resolve_player_creature_collisions(self.player, self.creatures, player_area_tiles)
         self.items.extend(dropped_items)
 
     def draw(self, screen: pygame.Surface, is_debug_on):
