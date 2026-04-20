@@ -1,7 +1,7 @@
 import pygame
 from pygame.key import ScancodeWrapper
-from src.ui.components.button import Button
-from src.states.base_state import BaseState
+from ui import Button
+from .base_state import BaseState
 from config import game as g_config
 
 class StartScreen(BaseState):

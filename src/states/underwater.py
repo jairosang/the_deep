@@ -1,17 +1,12 @@
-import pygame
-import random
-from src.ui.components.button import Button
-from src.states.base_state import BaseState
-from src.entities.player import Player
-from src.entities.creatures.base_creature import Creature
-from src.entities.creatures.creature_passive import PassiveCreature
-from src.entities.creatures.creature_aggressive import AggressiveCreature
+from things import Player, Creature, PassiveCreature, AggressiveCreature
+from world import TileMap, Camera, Interactable, Exit
+from ui import Button
+from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
-from src.utils.tile_map import TileMap
-from src.utils.camera import Camera
-from src.utils.interactables import Interactable, Exit
-import src.utils.physics_service as phy
+import utils as phy
+import pygame
+import random
 
 
 class UnderwaterState(BaseState):

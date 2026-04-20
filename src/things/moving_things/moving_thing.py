@@ -1,5 +1,5 @@
-from src.entities.base_thing import Thing
-import src.utils.physics_service as phy
+from ..thing import Thing
+import utils as phy
 from config import game as g_config
 from abc import ABC, abstractmethod
 import pygame

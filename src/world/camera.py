@@ -1,5 +1,5 @@
-import pygame
 from config import game as g_config
+import pygame
 
 class Camera:
 

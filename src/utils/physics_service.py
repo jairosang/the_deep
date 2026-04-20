@@ -1,12 +1,10 @@
 from typing import TYPE_CHECKING
 from pygame import Rect
 from config import aggresive_creatures as ac_config
+
 # This is to avoid circular imports
 if TYPE_CHECKING:
-    from src.entities.base_moving_thing import MovingThing
-    from src.entities.item import Item
-    from src.entities.creatures.base_creature import Creature
-    from src.entities.player import Player
+    from things import MovingThing, Creature, Player
 
 def get_colliding_tiles(tiles: list[Rect], rect: Rect) -> list[Rect]:
     hits = []
@@ -92,8 +90,7 @@ def _resolve_player_creature_contact(player: 'Player', creature: 'Creature', til
             player.velocity.y = original_vy
 
 def resolve_player_creature_collisions(player: 'Player', creatures: list['Creature'], tiles: list[Rect] | None = None):
-    from src.entities.creatures.creature_aggressive import AggressiveCreature
-    from src.entities.item import Item
+    from things import AggressiveCreature, Item
     
     dead_creatures = []
     dropped_items = []

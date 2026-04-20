@@ -1,5 +1,5 @@
 import pygame
-from src.entities.creatures.base_creature import Creature, Vec2
+from .base_creature import Creature, Vec2
 from config import passive_creatures as pc_config
 
 class PassiveCreature(Creature):

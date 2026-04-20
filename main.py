@@ -1,11 +1,16 @@
-from src.game import GameManager
-from src.states.homebase import HomebaseState
-from src.states.underwater import UnderwaterState
-from src.states.start_screen import StartScreen
-from src.states.game_over import GameOverState
-from src.entities.player import Player
 from config import game as g_config
+from pathlib import Path
 import pygame
+import sys
+
+# Removing src from imports within src
+SRC_PATH = Path(__file__).resolve().parent / "src"
+if str(SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(SRC_PATH))
+
+from game import GameManager
+from states import GameOverState, HomebaseState, StartScreen, UnderwaterState
+from things import Player
 
 def initialize():
     pygame.init()

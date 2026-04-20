@@ -1,7 +1,7 @@
+from ..moving_thing import MovingThing
+from abc import abstractmethod, ABC
 import pygame
 import random
-from abc import abstractmethod, ABC
-from src.entities.base_moving_thing import MovingThing
 Vec2 = pygame.math.Vector2
 
 class Creature(MovingThing, ABC):

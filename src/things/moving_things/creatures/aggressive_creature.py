@@ -1,6 +1,6 @@
-import pygame
-from src.entities.creatures.base_creature import Creature, Vec2
+from .base_creature import Creature, Vec2
 from config import aggresive_creatures as ac_config
+import pygame
 
 class AggressiveCreature(Creature):
     def __init__(self, pos: tuple[float, float], chase_radius: float = 260.0, size: int = 18) -> None: #also removed kwargs

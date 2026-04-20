@@ -1,11 +1,9 @@
-from src.states.base_state import BaseState
-from src.entities.player import Player
+from world import TileMap, Camera, Interactable, Exit, Upgrades, Research
+from things import Player
+from ui import Button
+from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
-from src.utils.tile_map import TileMap
-from src.utils.camera import Camera
-from src.utils.interactables import Interactable, Exit, Upgrades, Research
-from src.ui.components.button import Button
 import pygame
 
 class HomebaseState(BaseState):

@@ -1,6 +1,6 @@
 import pygame
-from src.states.base_state import BaseState
-from src.ui.components.button import Button
+from .base_state import BaseState
+from ui import Button
 from config import game as g_config
 
 class GameOverState(BaseState):
