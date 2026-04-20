@@ -29,6 +29,7 @@ class Player(MovingThing):
         self.max_depth_limit = p_config["BASE_STATS"]["MAX_DEPTH_LIMIT"]
         self.buffer_inventory:list[Item] = []
         self.buffer_inventory_capacity = p_config["BASE_STATS"]["INVENTORY_CAPACITY"]
+        self.inventory: dict[str, int] = {} #intended to store a thing and the amount of that thing
         # Missing harpoon, weapon and research gun
 
 

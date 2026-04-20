@@ -62,6 +62,20 @@ class UnderwaterState(BaseState):
         dropped_items = phy.resolve_player_creature_collisions(self.player, self.creatures, player_area_tiles)
         self.items.extend(dropped_items)
 
+        items_to_remove = []
+        for item in self.items:
+            if item.pickup_timer > 0:
+                item.pickup_timer = max(0, item.pickup_timer - 0.015) #could use dt i've seen online, not sure how it works though
+            elif self.player.rect.colliderect(item.rect):
+                if item.name in self.player.inventory:
+                    self.player.inventory[item.name] += 1
+                else:
+                    self.player.inventory[item.name] = 1
+                items_to_remove.append(item)
+        for item in items_to_remove:
+            self.items.remove(item)
+
+
     def draw(self, screen: pygame.Surface, is_debug_on):
         # Wiping the world surface, but only the camera area! This really improved the performance.
         self.world_surface.fill((80, 128, 173), self.camera.rect)
