@@ -21,10 +21,15 @@ skinparam package<<UI>> {
     BackgroundColor LightCoral
     BorderColor Coral
 }
-skinparam package<<utilities>> {
+skinparam package<<world>> {
     BackgroundColor LightBlue
     BorderColor Blue
 }
+skinparam package<<utilities>> {
+    BackgroundColor AliceBlue
+    BorderColor SteelBlue
+}
+
 top to bottom direction
 
 ' === Core Runtime ===
@@ -36,21 +41,11 @@ class GameManager {
     - fps: int
     - states: dict[str, BaseState]
     - current_state: BaseState
-    + get_events(): void
+    + get_whats_going_on(): void
     + update(dt: float): void
     + transition_states(): void
     + run(): void
 }
-}
-
-class DataManager {
-    - {static} instance: DataManager
-    - save_data: dict
-    + {static} get_instance(): DataManager
-    + load(path: Path): dict
-    + save(path: Path): void
-    + get(key: str, default=None): Any
-    + set(key: str, value: Any): void
 }
 
 package states <<states>> {
@@ -89,7 +84,7 @@ package states <<states>> {
         + spawn_creatures(): void
         + check_return_point(): bool
         + update_depth(): void
-        + trigger_game_over(): void
+        + _trigger_game_over(): void
     }
 
     class HomebaseState {
@@ -101,133 +96,166 @@ package states <<states>> {
         + draw(surface: Surface): void
         + exit(): void
     }
+
+    class GameOverState {
+        - buttons: list[Button]
+        + enter(data: dict = {}): void
+        + handle_event(event: Event): void
+        + update(dt: float): void
+        + draw(surface: Surface): void
+        + exit(): void
+    }
 }
 
 package things <<things>> {
-abstract class Thing {
-    - image: pygame.Surface
-    - pos: pygame.math.Vector2
-    - rect: pygame.Rect
-    + update(dt: float): void
-    + draw(surface: Surface): void
+    abstract class Thing {
+        - image: pygame.Surface
+        - pos: pygame.math.Vector2
+        - rect: pygame.Rect
+        + update(dt: float): void
+        + draw(surface: Surface): void
+    }
+
+    abstract class MovingThing {
+        - thrust: float
+        - velocity: pygame.math.Vector2
+        - movement_axis: pygame.math.Vector2
+        - is_sprinting: bool
+        - sprint_multiplier: float
+        + handle_inputs(keys): void
+        + update(dt: float): void
+    }
+    
+
+    package moving_things <<things>> {
+        class Player {
+            - health: int
+            - max_health: int
+            - oxygen: float
+            - max_oxygen: float
+            - oxygen_depletion_rate: float
+            - depth: float
+            - max_depth_limit: float
+            - buffer_inventory: List[Item]
+            - buffer_inventory_capacity: int
+            - holdables: List[Holdable]
+            - active_holdable: Holdable
+            + update(dt: float): void
+            + draw(surface: Surface): void
+            + update_oxygen(): void
+            + update_depth_damage(): void
+            + heal(): void
+            + interact(): void
+            + revert(): void
+        }
+
+        abstract class Creature {
+            - health: int
+            - max_health: int
+            + think(dt: float, player_pos: Vec2): Vec2
+            + update(dt: float): void
+            + draw(surface: Surface): void
+            + get_damaged(amount: int): void
+            + is_dead(): bool
+        }
+
+        class PassiveCreature {
+            - fear_radius: float
+            + think(dt: float, player_pos: Vec2): Vec2
+        }
+
+        class AggressiveCreature {
+            - chase_radius: float
+            + think(dt: float, player_pos: Vec2): Vec2
+        }
+    }
+
+    package items <<things>> {
+        class Item {
+            + interact(): void
+        }
+
+        abstract class Holdable {
+            - range: float
+            - cooldown_s: float
+            - is_available: bool
+            + {abstract} shoot(pos: tuple[int, int]): void
+        }
+
+        class Weapon {
+            - damage: int
+            - ammo: int
+            + shoot(pos: tuple[int,int]): void
+        }
+
+        class Harpoon {
+            - projectile_speed: float
+            + shoot(pos: tuple[int,int]): void
+        }
+
+        class ResearchGun {
+            - scan_rate: float
+            + shoot(pos: tuple[int,int]): void
+        }
+    }
 }
 
-abstract class MovingThing {
-    - speed: float
-    - velocity: pygame.math.Vector2
-    - movement_axis: pygame.math.Vector2
-    - is_sprinting: bool
-    - sprint_multiplier: float
-    + get_input(): void
-    + move(dt: float): void
-}
-
-abstract class Holdable {
-    - range: float
-    - cooldown_s: float
-    - is_available: bool
-    + {abstract} shoot(pos: tuple[int, int]): void
-}
-
-class Player {
-    - health: int
-    - max_health: int
-    - oxygen: float
-    - max_oxygen: float
-    - oxygen_depletion_rate: float
-    - depth: float
-    - max_depth_limit: float
-    - buffer_inventory: List[Item]
-    - buffer_inventory_capacity: int
-    - holdables: List[Holdable]
-    - active_holdable: Holdable
-    + update(dt: float): void
-    + draw(surface: Surface): void
-    + update_oxygen(): void
-    + update_depth_damage(): void
-    + heal(): void
-    + interact(): void
-    + revert(): void
-}
-
-abstract class Creature {
-    - species_id: int
-    - species_name: str
-    - health: int
-    - max_health: int
-    - is_alive: bool
-    - research_progress: float
-    - max_research_progress: float
-    - monetary_value: int
-    - damage_amount: int
-    + {abstract} update(dt: float): void
-    + {abstract} draw(surface: Surface): void
-    + take_damage(amount: int): void
-    + die(): void
-}
-
-class CreaturePassive {
-    - flee_radius: float
-    + update(dt: float): void
-    + draw(surface: Surface): void
-    + flee_from_player(player: Player): void
-}
-
-class CreatureAggressive {
-    - attack_radius: float
-    + update(dt: float): void
-    + draw(surface: Surface): void
-    + chase_player(player: Player): void
-}
-
-class Item {
-    + interact(): void
-}
-
-class Weapon {
-    - damage: int
-    - ammo: int
-    + shoot(pos: tuple[int,int]): void
-}
-
-class Harpoon {
-    - projectile_speed: float
-    + shoot(pos: tuple[int,int]): void
-}
-
-class ResearchGun {
-    - scan_rate: float
-    + shoot(pos: tuple[int,int]): void
-}
-}
-
-package utilities <<utilities>> {
+package world <<world>> {
     class TileMap {
         - path: Path
         - visual_layer: pygame.Surface
         - collision_layer: List[List[int]]
         - tile_size: tuple[int, int]
         - map_size: tuple[int, int]
-        + load_from_file(path: Path): void
-        + get_visual_layer(): pygame.Surface
+        + parse_from_path(path: Path): void
+        + draw(surface: Surface, camera_rect: Rect): void
         + is_tile_solid(x: int, y: int): bool
         + get_tile_at_position(x: float, y: float): tuple
-    }
-
-    class PhysicsService {
-        - {static} instance: PhysicsService
-        + {static} get_instance(): PhysicsService
-        + check_tile_collision(entity: MovingThing, tilemap: TileMap): bool
-        + solve_collision_movement(entity: MovingThing, tilemap: TileMap): void
+        + get_closest_interactable(x: float, y: float, max_distance: int): Interactable
     }
 
     class Camera {
         - offset: pygame.math.Vector2
         - world_size: pygame.Rect
         - map_boundaries: pygame.Rect
-        + follow(target_rect: pygame.Rect): void
-        + apply(target_rect: pygame.Rect): pygame.Rect
-        + clamp_to_boundaries(): void
+        + update(dt: float, target_rect: pygame.Rect): void
+        + draw(world_surface: Surface, screen: Surface): void
+    }
+
+    abstract class Interactable {
+        - rect: pygame.Rect
+        - prompt_text: str
+        + {abstract} interact(): void
+        + draw_prompt(surface: Surface): void
+    }
+
+    class Exit {
+        - on_interact: callable
+        + interact(): void
+    }
+
+    class Upgrades {
+        + interact(): void
+    }
+
+    class Research {
+        + interact(): void
+    }
+}
+
+package utils <<utilities>> {
+    class PhysicsService {
+        + resolve_map_collision_on_x_axis(entity: MovingThing, tiles: list[Rect]): void
+        + resolve_map_collision_on_y_axis(entity: MovingThing, tiles: list[Rect]): void
+        + resolve_player_creature_collisions(player: Player, creatures: list[Creature], tiles: list[Rect]): list[Item]
+    }
+
+    class DataManager {
+        - save_data: dict
+        + load(path: Path): dict
+        + save(path: Path): void
+        + get(key: str, default=None): Any
+        + set(key: str, value: Any): void
     }
 }
 
@@ -276,54 +304,59 @@ class Button {
 
 GameManager o-down- "*" BaseState : registry
 
-' --- State Inheritance ---
 BaseState <|-- StartScreen
 BaseState <|-- UnderwaterState
 BaseState <|-- HomebaseState
+BaseState <|-- GameOverState
 
-' --- Inheritance ---
-Thing <|-- Item
 Thing <|-- MovingThing
-Thing <|-- Holdable
 MovingThing <|-- Player
 MovingThing <|-- Creature
+Thing <|-- Item
+
+Creature <|-- PassiveCreature
+Creature <|-- AggressiveCreature
+
+Thing <|-- Holdable
 Holdable <|-- Weapon
 Holdable <|-- Harpoon
 Holdable <|-- ResearchGun
 
-Creature <|-- CreaturePassive
-Creature <|-- CreatureAggressive
+Interactable <|-- Exit
+Interactable <|-- Upgrades
+Interactable <|-- Research
 
-'--- State Relations ---
+' --- State Relations ---
 UnderwaterState o-- Player
 HomebaseState o-- Player
 StartScreen o-- "*" Button
 UnderwaterState o-- Button
-Player o-- "*" Holdable : loadout
-Player --> Holdable : active
+GameOverState o-- "*" Button
+Player o-- "*" Holdable
 
 UnderwaterState o-- "*" Creature
-UnderwaterState ..> HUD
 UnderwaterState o-- TileMap
 UnderwaterState o-- Camera
 UnderwaterState ..> PhysicsService
+UnderwaterState o-- "0..1" Interactable : closest
 HomebaseState o-- TileMap
+HomebaseState o-- "0..1" Interactable : closest
 HomebaseState ..> BaseMenu
 HomebaseState ..> DataManager
 
-' --- Utilities dependencies ---
 PhysicsService ..> TileMap : checks
 PhysicsService ..> MovingThing : checks
-DataManager ..> Player
+TileMap o-- "*" Interactable
 
-' --- Layout ---
 core -[hidden]down-> states
 states -[hidden]down-> things
-states -[hidden]down-> utilities
+states -[hidden]down-> world
+states -[hidden]down-> utils
 states -[hidden]down-> ui
 
-things -[hidden]left-> utilities
-ui -[hidden]right-> utilities
+things -[hidden]left-> world
+utils -[hidden]right-> world
+ui -[hidden]right-> world
 
 Button -[hidden]up-> HUD
 @enduml
