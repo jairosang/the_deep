@@ -143,12 +143,14 @@ class UnderwaterState(BaseState):
                 self.creatures.append(c)
 
 
-        for _ in range(15):
+        for i in range(15):
             x = random.randint(100, int(w) - 100)
             y = random.randint(100, int(h) - 100)
 
             creature_size = random.randint(20,30)
-            c = AggressiveCreature((x, y), size=creature_size, chase_radius=200)
+
+            sprite = "fish-dart" if i % 2 == 0 else "fish-big"
+            c = AggressiveCreature((x, y), size=creature_size, chase_radius=200, sprite = sprite)
             c.thrust = c.thrust - round((creature_size % 20) * 8)
             c.mass = c.mass + round((creature_size % 20) * 1.5)
             self.creatures.append(c)

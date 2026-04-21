@@ -1,11 +1,39 @@
 import pygame
 from .base_creature import Creature, Vec2
 from config import passive_creatures as pc_config
+from utils.sprite_sheet import load_frames
+from utils.animation import Animation
+from pathlib import Path
+
+FISH_FRAMES = None
+
+def get_fish_frames():
+    global FISH_FRAMES
+    if FISH_FRAMES is None:
+        FISH_FRAMES = load_frames(Path("assets/sprites/fish.png"), 32, 32, 4)
+    return FISH_FRAMES
 
 class PassiveCreature(Creature):
     def __init__(self, pos: tuple[float, float], fear_radius: float = 150.0, size: int = 18) -> None:  #removed kwargs 
-        super().__init__(pygame.Surface((size, size)), pos)     # Temporarily creating a colored surface from the size of the creature but later on intead of size we will inject the creatures with the path to their image and create their surface from that image, then adjust that image to their size
-        self.color = (0,50,255)         # THIS IS TEMPORARY  
+
+        frames = get_fish_frames()
+
+        base = pygame.transform.scale(frames[0], (size, size))
+        super().__init__(base, pos)
+
+        # REMOVED       Temporarily creating a colored surface from the size of the creature but later on intead of size we will inject the creatures with the path to their image and create their surface from that image, then adjust that image to their size
+        self.color = (0,50,255)         # THIS IS   no longer    TEMPORARY  
+
+        scaled_frames = [pygame.transform.scale(f, (size, size)) for f in frames]
+        self.anim = Animation(scaled_frames, fps=8)
+
+        white = pygame.Surface((size, size))
+        white.fill((250, 250, 250))
+        white.set_colorkey(None)
+        self._white_flash_image = white
+
+        self._base_image = self.anim.get_image()  # updated each frame
+        self.image = self._base_image
 
         self.fear_radius = fear_radius
         self.mass = pc_config["MASS"]
@@ -26,3 +54,9 @@ class PassiveCreature(Creature):
             # wander at reduced speed (looks natural)
             self.is_sprinting = False
             return self.wander_dir(dt)
+        
+    def update(self, dt, bound_rect, area_tiles, player_pos):
+        if not self.is_dying:
+            self.anim.update(dt)
+            self._base_image = self.anim.get_image()
+        super().update(dt, bound_rect, area_tiles, player_pos)

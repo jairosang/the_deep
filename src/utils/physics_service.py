@@ -96,6 +96,13 @@ def resolve_player_creature_collisions(player: 'Player', creatures: list['Creatu
     dropped_items = []
 
     for creature in creatures:
+
+        if creature.is_dying:
+            if creature.is_dead():
+                dead_creatures.append(creature)
+                dropped_items.append(Item(creature.rect.topleft))
+            continue
+        
         if player.rect.colliderect(creature.rect):
             _resolve_player_creature_contact(player, creature, tiles)
             creature.get_damaged(1)  # The creatures should have a damage attribute that is the one taken here to damage the player

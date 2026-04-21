@@ -2,12 +2,25 @@ from .moving_thing import MovingThing
 from ..items.item import Item
 from config import game as g_config, player as p_config
 import pygame
+from pathlib import Path
+from utils.sprite_sheet import load_frames
+from utils.animation import Animation
+
+SPRITES = Path("assets/sprites")
 
 class Player(MovingThing):
     def __init__(self) -> None:
         super().__init__(pygame.Surface(p_config["SIZE"]))
-        # THIS IS TEMPORARY
-        self.image.fill((255,255,255))
+        # THIS IS    no longer    TEMPORARY
+
+        self.anim_idle    = Animation(load_frames(SPRITES / "player-idle.png",    80, 80, 6), fps=6)
+        self.anim_swim    = Animation(load_frames(SPRITES / "player-swiming.png", 80, 80, 7), fps=8)
+        self.anim_fast    = Animation(load_frames(SPRITES / "player-fast.png",    80, 80, 5), fps=10)
+        self.anim_rush    = Animation(load_frames(SPRITES / "player-rush.png",    80, 80, 7), fps=10)
+        self.anim_hurt    = Animation(load_frames(SPRITES / "player-hurt.png",    80, 80, 5), fps=8, loop=False)
+ 
+        self._current_anim = self.anim_idle
+        self.image = self._current_anim.get_image()
 
         self.rect = self.image.get_rect(topleft=(int(self.pos.x), int(self.pos.y)))
 
@@ -36,6 +49,39 @@ class Player(MovingThing):
     def update(self, dt, bound_rect: pygame.Rect, area_tiles):
         super().update(dt, bound_rect, area_tiles)
         self._update_oxygen()
+        self.update_animation(dt)
+
+
+    def update_animation(self, dt):
+        speed = self.velocity.length()
+ 
+        # hurt animation plays until finished, then it goes back to normal
+        if self._current_anim is self.anim_hurt and not self.anim_hurt.finished:
+            pass
+        elif speed < 1:
+            self._current_anim = self.anim_idle
+        elif self.is_sprinting and speed > 80:
+            self._current_anim = self.anim_rush
+        elif self.is_sprinting:
+            self._current_anim = self.anim_fast
+        else:
+            self._current_anim = self.anim_swim
+ 
+        self._current_anim.update(dt)
+        self.image = self._current_anim.get_image()
+
+        if abs(self.velocity.x) >= abs(self.velocity.y):
+            # moving mostly horizontal
+            if self.velocity.x < 0:
+                self.image = pygame.transform.flip(self.image, True, False)
+        else:
+            # moving mostly vertical
+            if self.velocity.y < 0:
+                self.image = pygame.transform.rotate(self.image, 90)
+            else:
+                self.image = pygame.transform.rotate(self.image, -90) #fixed bc it was reversed
+
+
 
     def handle_inputs(self, keys):
         self.input_direction.x = 0
@@ -111,3 +157,5 @@ class Player(MovingThing):
 
     def get_damaged(self, ammt):
         self.health -= ammt
+        self.anim_hurt.reset()
+        self._current_anim = self.anim_hurt
