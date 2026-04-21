@@ -1,6 +1,7 @@
 import pygame
 import random
 from src.ui.components.button import Button
+from src.ui.hud_tools import Inventory
 from src.states.base_state import BaseState
 from src.entities.player import Player
 from src.entities.creatures.base_creature import Creature
@@ -29,11 +30,30 @@ class UnderwaterState(BaseState):
     def enter(self, data: dict = {}):
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self.exit_to_main_menu)
+
+        # Tools inventory placed in the bottom right
+        slot_count = len(self.player.tools)
+        slot_size = (60, 60)
+        padding = 8
+        toolbar_width = slot_count * slot_size[0] + (slot_count - 1) * padding
+        toolbar_x = g_config["SCREEN_SIZE"][0] - toolbar_width - 20
+        toolbar_y = g_config["SCREEN_SIZE"][1] - slot_size[1] - 30
+        self.inventory = Inventory((toolbar_x, toolbar_y), slot_count=slot_count, slot_size=slot_size, padding=padding)
+        self.inventory.select(self.player.selected_tool_index)
+
         self.spawn_creatures()
 
     def handle_event(self, e: pygame.event.Event):
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
+
+        # Let the inventory handle number-key
+        self.inventory.handle_event(e)
+        self.player.selected_tool_index = self.inventory.selected_index
+        # Kept on purpose as two separate classes with one job each:
+        # - Inventory "hud_tools.py": draws the toolbar and reads the 1/2/3 keys
+        # - Player "player.py": owns the player's state eg health, oxygen, tools, equipped slot
+
 
     def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
         self.player.handle_inputs(keys)
@@ -96,6 +116,9 @@ class UnderwaterState(BaseState):
         health_text = pygame.font.Font(None, 36).render(f"Health: {self.player.health:.0f}", True, (255, 255, 255))
         screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 70))
         screen.blit(health_text, (10, g_config["SCREEN_SIZE"][1] - 40))
+
+        # Inventory toolbar
+        self.inventory.draw(screen, self.player.tools)
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed AFTER camera is drawn !!!!
         if is_debug_on:

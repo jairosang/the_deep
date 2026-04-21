@@ -1,6 +1,8 @@
 from src.entities.base_moving_thing import MovingThing
 from src.entities.item import Item
+from src.entities.tool import Tool
 from config import game as g_config, player as p_config
+from pathlib import Path
 import pygame
 
 class Player(MovingThing):
@@ -29,7 +31,34 @@ class Player(MovingThing):
         self.max_depth_limit = p_config["BASE_STATS"]["MAX_DEPTH_LIMIT"]
         self.buffer_inventory:list[Item] = []
         self.buffer_inventory_capacity = p_config["BASE_STATS"]["INVENTORY_CAPACITY"]
-        # Missing harpoon, weapon and research gun
+
+        # Tools the player carries underwater. Stats are just empty numbers, later ill tie them to the upgrade system and actual dmg.
+        icons_dir = Path("assets/ui")
+        self.tools: list[Tool] = [
+            Tool(name="Weapon", stat_label="Weapon damage",
+                stat_value=10,
+                description="Ranged weapon against hostile creatures.",
+                color=(200, 60, 60),
+                image_path=icons_dir / "icon_weapon.png",
+            ),
+            Tool(
+                name="Harpoon",
+                stat_label="Harpoon damage",
+                stat_value=5,
+                description="Close range weapon and harvesting tool for passive creatures.",
+                color=(80, 180, 80),
+                image_path=icons_dir / "icon_harpoon.png",
+            ),
+            Tool(
+                name="Research Gun",
+                stat_label="Utility",
+                stat_value="-",
+                description="Used to research alien species.", # yet to be implemented
+                color=(80, 140, 220),
+                image_path=icons_dir / "icon_research_gun.png",
+            ),
+        ]
+        self.selected_tool_index = 0
 
 
     def update(self, dt, bound_rect: pygame.Rect, area_tiles):
