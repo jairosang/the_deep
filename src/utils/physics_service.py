@@ -100,7 +100,7 @@ def resolve_player_creature_collisions(player: 'Player', creatures: list['Creatu
         if creature.is_dying:
             if creature.is_dead():
                 dead_creatures.append(creature)
-                dropped_items.append(Item(creature.rect.topleft))
+                dropped_items.append(Item(creature.rect.topleft, image=creature.image))
             continue
         
         if player.rect.colliderect(creature.rect):
@@ -121,7 +121,7 @@ def resolve_player_creature_collisions(player: 'Player', creatures: list['Creatu
 
             if creature.is_dead():
                 dead_creatures.append(creature)
-                dropped_items.append(Item(creature.rect.topleft))
+                dropped_items.append(Item(creature.rect.topleft, image=creature.image))
 
     for creature in dead_creatures:
         creatures.remove(creature)
