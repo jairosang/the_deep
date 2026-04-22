@@ -65,7 +65,7 @@ class UnderwaterState(BaseState):
         items_to_remove = []
         for item in self.items:
             if item.pickup_timer > 0:
-                item.pickup_timer = max(0, item.pickup_timer - 0.015) #could use dt i've seen online, not sure how it works though
+                item.pickup_timer = max(0, item.pickup_timer - dt) #could use dt i've seen online, not sure how it works though
             elif self.player.rect.colliderect(item.rect):
                 if item.name in self.player.inventory:
                     self.player.inventory[item.name] += 1
