@@ -95,6 +95,7 @@ class UnderwaterState(BaseState):
         if is_debug_on:
             for c in self.creatures:
                 pygame.draw.line(self.world_surface, (0,0,255), c.rect.center, c.rect.center + c.velocity)
+                pygame.draw.rect(self.world_surface, (255, 0, 255), c.rect, 2)
             
             # Grid with tile separation
             for row_i in range(self.tile_map.map_size[0] - 1):
@@ -105,6 +106,7 @@ class UnderwaterState(BaseState):
             # Player velocity (with direction)
             pygame.draw.line(self.world_surface, (255,0,0), self.player.rect.center, self.player.rect.center + self.player.velocity)
             pygame.draw.circle(self.world_surface, (0,255,0), self.player.pos, 1)
+            pygame.draw.rect(self.world_surface, (255, 255, 0), self.player.rect, 2)
         
         self.camera.draw(self.world_surface, screen)
         self.button.draw(screen)

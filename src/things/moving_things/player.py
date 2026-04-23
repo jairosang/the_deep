@@ -22,7 +22,8 @@ class Player(MovingThing):
         self._current_anim = self.anim_idle
         self.image = self._current_anim.get_image()
 
-        self.rect = self.image.get_rect(topleft=(int(self.pos.x), int(self.pos.y)))
+        self.rect = pygame.Rect(0, 0, 16, 40)
+        self.rect.center = (int(self.pos.x), int(self.pos.y))
 
         # Movement
         self.thrust = p_config["THRUST"]
@@ -76,6 +77,9 @@ class Player(MovingThing):
             angle = self.velocity.angle_to(pygame.math.Vector2(1, 0)) 
             snapped = round(angle / 15) * 15
             self.image = pygame.transform.rotate(self.image.convert_alpha(), snapped)
+            self._update_hitbox(snapped)
+        else:
+            self._update_hitbox(None)
 
 
 
@@ -101,14 +105,24 @@ class Player(MovingThing):
         if self.input_direction.length_squared() > 0:
             self.input_direction = self.input_direction.normalize()
 
+    def _update_hitbox(self, angle):
+        old_center = self.rect.center
+        if angle is None:
+            self.rect.size = (16, 40)
+        else:
+            horizontal = abs(angle) <= 45 or abs(angle) >= 135
+            self.rect.size = (40, 16) if horizontal else (16, 40)
+        self.rect.center = old_center
+
     def draw(self, surface: pygame.Surface):
-        super().draw(surface)
+        image_rect = self.image.get_rect(center=self.rect.center)
+        surface.blit(self.image, image_rect)
         if self.velocity.length_squared() > 0: 
             center = pygame.math.Vector2(self.rect.center)
             velocity_scaled = self.velocity / 15    # Controls how far the arrow extends
 
             dir_v = velocity_scaled.normalize()
-            radius = self.rect.height * 3 / 4       # Controls how far from the center the arc is
+            radius = 40       # Fixed radius instead of using rect.height
             end_point = center + velocity_scaled + dir_v * radius
             
             # Drawing an arc in the direction of velocity
