@@ -70,16 +70,12 @@ class Player(MovingThing):
         self._current_anim.update(dt)
         self.image = self._current_anim.get_image()
 
-        if abs(self.velocity.x) >= abs(self.velocity.y):
-            # moving mostly horizontal
-            if self.velocity.x < 0:
-                self.image = pygame.transform.flip(self.image, True, False)
-        else:
-            # moving mostly vertical
-            if self.velocity.y < 0:
-                self.image = pygame.transform.rotate(self.image, 90)
-            else:
-                self.image = pygame.transform.rotate(self.image, -90) #fixed bc it was reversed
+        if self.velocity.length_squared() > 0:
+            # removed the logic we had before, added new one so we snap to a direction every 15 degrees.
+            # get the angle of movement, snap it to nearest 15 degrees.
+            angle = self.velocity.angle_to(pygame.math.Vector2(1, 0)) 
+            snapped = round(angle / 15) * 15
+            self.image = pygame.transform.rotate(self.image.convert_alpha(), snapped)
 
 
 

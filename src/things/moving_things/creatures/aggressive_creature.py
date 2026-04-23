@@ -68,4 +68,6 @@ class AggressiveCreature(Creature):
         if not self.is_dying:
             self.anim.update(dt)
             self._base_image = self.anim.get_image()
+            if self.velocity.x < 0:
+                self._base_image = pygame.transform.flip(self._base_image, True, False)
         super().update(dt, bound_rect, area_tiles, player_pos)
