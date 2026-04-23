@@ -20,7 +20,7 @@ class UnderwaterState(BaseState):
         self.closest_interactable: Interactable | None = None
         
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
-        self.camera = Camera(self.world_rect)
+        self.camera = Camera(self.world_rect, 4)
         self._load_interactable_call_backs()
 
     #==== Abstract Methods from base class =====
