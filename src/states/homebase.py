@@ -60,6 +60,9 @@ class HomebaseState(BaseState):
             for interactable in self.tile_map.interactables:
                 pygame.draw.rect(self.world_surface, (0,0,255), interactable.rect, 2)
 
+            # Player hitbox
+            pygame.draw.rect(self.world_surface, (255,255,0), self.player.rect, 2)
+
             # Player velocity (with direction)
             pygame.draw.line(self.world_surface, (255,0,0), self.player.rect.center, self.player.rect.center + self.player.velocity)
             pygame.draw.circle(self.world_surface, (0,255,0), self.player.pos, 1)

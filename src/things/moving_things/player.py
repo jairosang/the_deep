@@ -20,7 +20,8 @@ class Player(MovingThing):
         self.anim_hurt    = Animation(load_frames(SPRITES / "player-hurt.png",    80, 80, 5), fps=8, loop=False)
  
         self._current_anim = self.anim_idle
-        self.image = self._current_anim.get_image()
+        self._base_image = self._current_anim.get_image()
+        self.image = self._base_image
 
         self.rect = pygame.Rect(0, 0, 16, 40)
         self.rect.center = (int(self.pos.x), int(self.pos.y))
@@ -69,14 +70,15 @@ class Player(MovingThing):
             self._current_anim = self.anim_swim
  
         self._current_anim.update(dt)
-        self.image = self._current_anim.get_image()
+        self._base_image = self._current_anim.get_image()
+        self.image = self._base_image
 
         if self.velocity.length_squared() > 0:
             # removed the logic we had before, added new one so we snap to a direction every 15 degrees.
             # get the angle of movement, snap it to nearest 15 degrees.
             angle = self.velocity.angle_to(pygame.math.Vector2(1, 0)) 
             snapped = round(angle / 15) * 15
-            self.image = pygame.transform.rotate(self.image.convert_alpha(), snapped)
+            self.image = pygame.transform.rotate(self._base_image.convert_alpha(), snapped)
             self._update_hitbox(snapped)
         else:
             self._update_hitbox(None)
@@ -107,14 +109,13 @@ class Player(MovingThing):
 
     def _update_hitbox(self, angle):
         old_center = self.rect.center
-        if angle is None:
-            self.rect.size = (16, 40)
-        else:
-            horizontal = abs(angle) <= 45 or abs(angle) >= 135
-            self.rect.size = (40, 16) if horizontal else (16, 40)
+        # Keep a consistent collision rect size to prevent camera jitter
+        # The sprite rotation doesn't need to change the actual hitbox
+        self.rect.size = (32, 32)
         self.rect.center = old_center
 
     def draw(self, surface: pygame.Surface):
+        # Draw sprite centered on collision rect center
         image_rect = self.image.get_rect(center=self.rect.center)
         surface.blit(self.image, image_rect)
         if self.velocity.length_squared() > 0: 
