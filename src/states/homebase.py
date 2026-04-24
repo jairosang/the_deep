@@ -30,9 +30,7 @@ class HomebaseState(BaseState):
             self.button.call_back()
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
             self.closest_interactable.interact()
-
-    def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
-        self.player.handle_inputs(keys)
+        self.player.handle_event(e)
         
     def update(self, dt):
         # Get rects of tiles surrounding player for calculating collisions with environment 

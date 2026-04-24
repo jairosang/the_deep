@@ -21,9 +21,6 @@ class GameOverState(BaseState):
             for button in self.buttons:
                 if button.rect.collidepoint(click_pos):
                     button.call_back()
-
-    def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
-        pass
         
     def update(self, dt):
         pass

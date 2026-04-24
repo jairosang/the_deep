@@ -42,9 +42,11 @@ class UnderwaterState(BaseState):
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
             self.closest_interactable.interact()
 
-    def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
-        world_mouse_pos = self._screen_to_world_pos(mouse_pos)
-        self.player.handle_inputs(keys, world_mouse_pos)
+        if e.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
+            world_mouse_pos = self._screen_to_world_pos(e.pos)
+            self.player.handle_event(e, world_mouse_pos)
+        else:
+            self.player.handle_event(e)
 
     def update(self, dt):
         # Get rects of tiles surrounding player for calculating collisions with environment 

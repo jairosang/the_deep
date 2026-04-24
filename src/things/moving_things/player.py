@@ -36,6 +36,12 @@ class Player(MovingThing):
         self.is_sprinting = False
         self.sprint_multiplier = p_config["SPRINT_MULTIPLIER"]
         self.movement_axis = pygame.math.Vector2(1, 1)  # (x, y) 1 allows the p_config to move on that axis
+        self._movement_keys = {
+            pygame.K_w: False,
+            pygame.K_a: False,
+            pygame.K_s: False,
+            pygame.K_d: False,
+        }
 
         # Stats (FOR NOW PULLS BASE DATA FROM CONFIG, WHEN THERE IS PERSISTANCE THIS SHOULD BE PULLED FROM THE DATA MANAGER WHICH WILL DETERMINE IF TO USE BASE STATS OR LOADED STATS)
         self.health = p_config["BASE_STATS"]["MAX_HEALTH"]
@@ -97,20 +103,35 @@ class Player(MovingThing):
 
 
 
-    def handle_inputs(self, keys, mouse_pos: tuple[int, int] | None = None):
+    def handle_event(self, event: pygame.event.Event, mouse_pos: tuple[int, int] | None = None):
+        if event.type == pygame.KEYDOWN:
+            if event.key in self._movement_keys:
+                self._movement_keys[event.key] = True
+                self._refresh_input_direction()
+            elif event.key == pygame.K_SPACE:
+                self.is_sprinting = True
+        elif event.type == pygame.KEYUP:
+            if event.key in self._movement_keys:
+                self._movement_keys[event.key] = False
+                self._refresh_input_direction()
+            elif event.key == pygame.K_SPACE:
+                self.is_sprinting = False
+
+        if self.current_holdable is not None and mouse_pos is not None:
+            self.current_holdable.handle_inputs(mouse_pos)
+
+    def _refresh_input_direction(self):
         self.input_direction.x = 0
         self.input_direction.y = 0
 
-        if keys[pygame.K_w]:
-            self.input_direction.y = -1
-        if keys[pygame.K_s]:
-            self.input_direction.y = 1
-        if keys[pygame.K_a]:
-            self.input_direction.x = -1
-        if keys[pygame.K_d]:
-            self.input_direction.x = 1
-
-        self.is_sprinting = keys[pygame.K_SPACE]
+        if self._movement_keys[pygame.K_w]:
+            self.input_direction.y -= 1
+        if self._movement_keys[pygame.K_s]:
+            self.input_direction.y += 1
+        if self._movement_keys[pygame.K_a]:
+            self.input_direction.x -= 1
+        if self._movement_keys[pygame.K_d]:
+            self.input_direction.x += 1
 
         # Removes movement on axis if its turned off
         self.input_direction.x *= self.movement_axis.x
@@ -118,9 +139,6 @@ class Player(MovingThing):
 
         if self.input_direction.length_squared() > 0:
             self.input_direction = self.input_direction.normalize()
-
-        if self.current_holdable is not None and mouse_pos is not None:
-            self.current_holdable.handle_inputs(mouse_pos)
 
     def set_holdable(self, holdable: Holdable | None) -> None:
         self.current_holdable = holdable
@@ -183,6 +201,9 @@ class Player(MovingThing):
     def revert(self):
         self.velocity *= 0
         self.input_direction *= 0
+        for key in self._movement_keys:
+            self._movement_keys[key] = False
+        self.is_sprinting = False
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
         self.health = self.max_health
         self.oxygen = self.max_oxygen
