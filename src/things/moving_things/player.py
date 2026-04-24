@@ -20,6 +20,7 @@ class Player(MovingThing):
             "fast": Animation(load_frames(SPRITES / "player-fast.png", 80, 80, 5), fps=10),
             "rush": Animation(load_frames(SPRITES / "player-rush.png", 80, 80, 7), fps=10),
             "hurt": Animation(load_frames(SPRITES / "player-hurt.png", 80, 80, 5), fps=8, loop=False),
+            "shoot": Animation(load_frames(SPRITES / "player-shoot.png", 80, 80, 6), fps=8, loop=False),
         }
  
         self._current_anim = self.animations["idle"]
@@ -33,6 +34,7 @@ class Player(MovingThing):
         self.thrust = p_config["THRUST"]
         self.mass = p_config["MASS"]
         self.input_direction = pygame.math.Vector2(0, 0)
+        self._shoot_facing_vector: pygame.math.Vector2 | None = None
         self.is_sprinting = False
         self.sprint_multiplier = p_config["SPRINT_MULTIPLIER"]
         self.movement_axis = pygame.math.Vector2(1, 1)  # (x, y) 1 allows the p_config to move on that axis
@@ -63,6 +65,7 @@ class Player(MovingThing):
             self.current_holdable.update(dt, bound_rect, self.rect.center)
         self._update_oxygen()
         self.update_animation(dt)
+        
 
 
     def update_animation(self, dt):
@@ -70,7 +73,8 @@ class Player(MovingThing):
  
         # hurt animation plays until finished, then it goes back to normal
         hurt_anim = self.animations["hurt"]
-        if self._current_anim is hurt_anim and not hurt_anim.finished:
+        shoot_anim = self.animations["shoot"]
+        if self._current_anim is hurt_anim and not hurt_anim.finished or self._current_anim is shoot_anim and not shoot_anim.finished:
             pass
         elif speed < 2:
             self._current_anim = self.animations["idle"]
@@ -85,12 +89,26 @@ class Player(MovingThing):
         self._base_image = self._current_anim.get_image()
         self.image = self._base_image
 
-        if self.velocity.length_squared() > 0:
-            is_going_left = True if self.velocity.x < 0 else False
-            # removed the logic we had before, added new one so we snap to a direction every 15 degrees.
-            # get the angle of movement, snap it to nearest 15 degrees.
-            angle = self.velocity.angle_to(pygame.math.Vector2(1, 0)) 
-            angle = angle * - 1 if is_going_left else angle
+        holdable = self.current_holdable
+        is_shooting = self._current_anim == self.animations["shoot"] and holdable is not None
+        if not is_shooting:
+            self._shoot_facing_vector = None
+
+        if self.velocity.length_squared() > 0 or is_shooting:
+            # During shooting, keep the initial click direction locked.
+            if is_shooting and self._shoot_facing_vector is not None:
+                facing_vector = self._shoot_facing_vector
+            else:
+                facing_vector = self.velocity
+
+            if facing_vector.length_squared() == 0:
+                facing_vector = pygame.math.Vector2(1, 0)
+
+            is_going_left = facing_vector.x < 0 # Check if we are going left
+
+            # Get the angle of the current facing direction.
+            angle = facing_vector.angle_to(pygame.math.Vector2(1, 0))
+            angle = angle * -1 if is_going_left else angle
             snapped = round(angle / 15) * 15
             transformed_image = pygame.transform.rotate(self._base_image.convert_alpha(), snapped)
             if is_going_left:
@@ -116,9 +134,19 @@ class Player(MovingThing):
                 self._refresh_input_direction()
             elif event.key == pygame.K_SPACE:
                 self.is_sprinting = False
-
-        if self.current_holdable is not None and mouse_pos is not None:
-            self.current_holdable.handle_inputs(mouse_pos)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if self.current_holdable is not None and mouse_pos is not None:
+                self.current_holdable.handle_inputs(mouse_pos)
+                aim_vector = pygame.math.Vector2(mouse_pos) - pygame.math.Vector2(self.rect.center)
+                if aim_vector.length_squared() > 0:
+                    self._shoot_facing_vector = aim_vector
+                elif self.velocity.length_squared() > 0:
+                    self._shoot_facing_vector = self.velocity.copy()
+                else:
+                    self._shoot_facing_vector = pygame.math.Vector2(1, 0)
+                self.animations["shoot"].reset()
+                self._current_anim = self.animations["shoot"]
+                self.current_holdable.shoot(mouse_pos)
 
     def _refresh_input_direction(self):
         self.input_direction.x = 0
@@ -172,7 +200,7 @@ class Player(MovingThing):
             # Draw arrow
             pygame.draw.polygon(surface, (60, 108, 153), [end_point] + arc_points[4:-4])
 
-        if self.current_holdable is not None:
+        if self._current_anim == self.animations["shoot"] and self.current_holdable is not None:
             self.current_holdable.draw(surface)
                     
 

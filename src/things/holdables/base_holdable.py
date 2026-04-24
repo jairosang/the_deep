@@ -30,7 +30,7 @@ class Holdable(Thing, ABC):
         self.base_image = self.image.copy()
         self.mouse_pos = pygame.math.Vector2(self.rect.center)
         self.player_center = pygame.math.Vector2(self.rect.center)
-        self.orbit_radius = max(12, int(max(self.rect.width, self.rect.height) * 0.75))
+        self.orbit_radius = 25
         self._aim_direction = pygame.math.Vector2(1, 0)
 
     def handle_inputs(self, mouse_pos: tuple[int, int]):
