@@ -1,6 +1,7 @@
 from things import Player, Creature, PassiveCreature, AggressiveCreature
 from world import TileMap, Camera, Interactable, Exit
-from ui import Button
+from things import Weapon, ResearchGun, Harpoon
+from ui import Button, HeldInventory
 from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
@@ -22,6 +23,8 @@ class UnderwaterState(BaseState):
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
         self.camera = Camera(self.world_rect)
         self._load_interactable_call_backs()
+        self.held_inventory = HeldInventory([Weapon(), ResearchGun(), Harpoon()])
+        self.player.set_holdable(self.held_inventory.selected_holdable)
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
@@ -30,13 +33,19 @@ class UnderwaterState(BaseState):
         self.spawn_creatures()
 
     def handle_event(self, e: pygame.event.Event):
+        prev_index = self.held_inventory.selected_index
+        self.held_inventory.handle_event(e)
+        if self.held_inventory.selected_index != prev_index:
+            self.player.set_holdable(self.held_inventory.selected_holdable)
+
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
             self.closest_interactable.interact()
 
     def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
-        self.player.handle_inputs(keys)
+        world_mouse_pos = self._screen_to_world_pos(mouse_pos)
+        self.player.handle_inputs(keys, world_mouse_pos)
 
     def update(self, dt):
         # Get rects of tiles surrounding player for calculating collisions with environment 
@@ -45,12 +54,6 @@ class UnderwaterState(BaseState):
         player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 100)
         self.camera.update(dt, self.player.rect)
-        bounds = pygame.Rect(
-            0,
-            0,
-            int(g_config["SCREEN_SIZE"][0]),
-            int(g_config["SCREEN_SIZE"][1]) # make creatures stay within bounds
-        )
         player_pos = pygame.math.Vector2(self.player.rect.center)
         for c in self.creatures:
             area_tiles = self.tile_map.get_tiles_at_area(c.rect.centerx, c.rect.centery, (7,7))
@@ -116,6 +119,7 @@ class UnderwaterState(BaseState):
         health_text = pygame.font.Font(None, 36).render(f"Health: {self.player.health:.0f}", True, (255, 255, 255))
         screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 70))
         screen.blit(health_text, (10, g_config["SCREEN_SIZE"][1] - 40))
+        self.held_inventory.draw(screen)
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed AFTER camera is drawn !!!!
         if is_debug_on:
@@ -159,6 +163,13 @@ class UnderwaterState(BaseState):
 
     def check_return_point(self):
         pass
+
+    def _screen_to_world_pos(self, screen_pos: tuple[int, int]) -> tuple[int, int]:
+        zoom_x = g_config["SCREEN_SIZE"][0] / self.camera.rect.width
+        zoom_y = g_config["SCREEN_SIZE"][1] / self.camera.rect.height
+        world_x = self.camera.rect.left + (screen_pos[0] / zoom_x)
+        world_y = self.camera.rect.top + (screen_pos[1] / zoom_y)
+        return (int(world_x), int(world_y))
 
     def update_depth(self):
         pass

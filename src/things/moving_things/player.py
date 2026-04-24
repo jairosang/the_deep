@@ -1,5 +1,6 @@
 from .moving_thing import MovingThing
 from ..items.item import Item
+from ..holdables.base_holdable import Holdable
 from config import game as g_config, player as p_config
 import pygame
 from pathlib import Path
@@ -45,11 +46,13 @@ class Player(MovingThing):
         self.buffer_inventory:list[Item] = []
         self.buffer_inventory_capacity = p_config["BASE_STATS"]["INVENTORY_CAPACITY"]
         self.inventory: dict[str, int] = {} #intended to store a thing and the amount of that thing
+        self.current_holdable: Holdable | None = None
         # Missing harpoon, weapon and research gun
-
 
     def update(self, dt, bound_rect: pygame.Rect, area_tiles):
         super().update(dt, bound_rect, area_tiles)
+        if self.current_holdable is not None:
+            self.current_holdable.update(dt, bound_rect, self.rect.center)
         self._update_oxygen()
         self.update_animation(dt)
 
@@ -85,7 +88,7 @@ class Player(MovingThing):
 
 
 
-    def handle_inputs(self, keys):
+    def handle_inputs(self, keys, mouse_pos: tuple[int, int] | None = None):
         self.input_direction.x = 0
         self.input_direction.y = 0
 
@@ -106,6 +109,12 @@ class Player(MovingThing):
 
         if self.input_direction.length_squared() > 0:
             self.input_direction = self.input_direction.normalize()
+
+        if self.current_holdable is not None and mouse_pos is not None:
+            self.current_holdable.handle_inputs(mouse_pos)
+
+    def set_holdable(self, holdable: Holdable | None) -> None:
+        self.current_holdable = holdable
 
     def _update_hitbox(self, angle):
         old_center = self.rect.center
@@ -134,8 +143,10 @@ class Player(MovingThing):
                 pygame.draw.lines(surface, (60, 108, 153), False, arc_points, 2)
             
             # Draw arrow
-            print(f"{arc_points}\n")
             pygame.draw.polygon(surface, (60, 108, 153), [end_point] + arc_points[4:-4])
+
+        if self.current_holdable is not None:
+            self.current_holdable.draw(surface)
                     
 
     def _update_oxygen(self):
