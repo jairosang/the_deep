@@ -4,7 +4,7 @@ from config import aggresive_creatures as ac_config
 
 # This is to avoid circular imports
 if TYPE_CHECKING:
-    from things import MovingThing, Creature, Player
+    from things import MovingThing, Creature, Player, Item
 
 def get_colliding_tiles(tiles: list[Rect], rect: Rect) -> list[Rect]:
     hits = []
@@ -127,3 +127,20 @@ def resolve_player_creature_collisions(player: 'Player', creatures: list['Creatu
         creatures.remove(creature)
 
     return dropped_items
+
+def resolve_player_item_pickups(player: 'Player', items: list['Item'], dt: float) -> list['Item']:
+    picked_items = []
+
+    for item in items:
+        if item.pickup_timer > 0:
+            item.pickup_timer = max(0, item.pickup_timer - dt)
+            continue
+
+        if player.rect.colliderect(item.rect):
+            player.inventory[item.name] = player.inventory.get(item.name, 0) + 1
+            picked_items.append(item)
+
+    for item in picked_items:
+        items.remove(item)
+
+    return picked_items

@@ -5,6 +5,7 @@ from .physics_service import (
 	resolve_overlap_on_x_axis,
 	resolve_overlap_on_y_axis,
 	resolve_player_creature_collisions,
+	resolve_player_item_pickups,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
 	"resolve_overlap_on_x_axis",
 	"resolve_overlap_on_y_axis",
 	"resolve_player_creature_collisions",
+	"resolve_player_item_pickups",
 ]
