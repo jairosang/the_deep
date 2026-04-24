@@ -182,11 +182,13 @@ class Player(MovingThing):
 
     def revert(self):
         self.velocity *= 0
+        self.input_direction *= 0
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
         self.health = self.max_health
         self.oxygen = self.max_oxygen
+        self.current_holdable = None
 
     def get_damaged(self, ammt):
         self.health -= ammt
-        self.anim_hurt.reset()
-        self._current_anim = self.anim_hurt
+        self.animations["hurt"].reset()
+        self._current_anim = self.animations["hurt"]

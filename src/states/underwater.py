@@ -24,7 +24,6 @@ class UnderwaterState(BaseState):
         self.camera = Camera(self.world_rect)
         self._load_interactable_call_backs()
         self.held_inventory = HeldInventory([Weapon(), ResearchGun(), Harpoon()])
-        self.player.set_holdable(self.held_inventory.selected_holdable)
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
@@ -117,6 +116,7 @@ class UnderwaterState(BaseState):
 
     def exit(self):
         self.player.revert()
+        self.player.movement_axis[1] = 0
 
 
     # ==== Own Methods ====
