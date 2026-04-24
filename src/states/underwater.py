@@ -1,5 +1,5 @@
 from things import Player, Creature, PassiveCreature, AggressiveCreature
-from world import TileMap, Camera, Interactable, Exit
+from world import TileMap, Camera, Interactable, Exit, OxygenTank
 from things import Weapon, ResearchGun, Harpoon
 from ui import Button, HeldInventory
 from .base_state import BaseState
@@ -16,6 +16,7 @@ class UnderwaterState(BaseState):
         self.player = player
         self.creatures: list[Creature] = []
         self.items = []
+        self.oxygen_tanks: list[OxygenTank] = []
         self.tile_map = TileMap(g_config["UNDERWATER_TILEMAP_PATH"])
         self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
         self.closest_interactable: Interactable | None = None
@@ -30,6 +31,7 @@ class UnderwaterState(BaseState):
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
         self.spawn_creatures()
+        self._spawn_oxygen_tanks()
 
     def handle_event(self, e: pygame.event.Event):
         prev_index = self.held_inventory.selected_index
@@ -54,6 +56,13 @@ class UnderwaterState(BaseState):
         self.player.update(dt, self.world_rect, player_area_tiles)
         player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 100)
+        
+        # Check for closest oxygen tank
+        for tank in self.oxygen_tanks:
+            dist_to_tank = ((tank.rect.centerx - self.player.rect.centerx)**2 + (tank.rect.centery - self.player.rect.centery)**2)**0.5
+            if self.closest_interactable is None or dist_to_tank < self._get_interactable_distance(self.closest_interactable):
+                if dist_to_tank < 100:
+                    self.closest_interactable = tank
         self.camera.update(dt, self.player.rect)
         player_pos = pygame.math.Vector2(self.player.rect.center)
         for c in self.creatures:
@@ -75,14 +84,31 @@ class UnderwaterState(BaseState):
         self.tile_map.draw(self.world_surface, self.camera.rect)
         if self.closest_interactable is not None:
             self.closest_interactable.draw_prompt(self.world_surface)
-        self.player.draw(self.world_surface)
-
-        # Just telling the guys to draw themselves
+        
+        # Collect all drawable entities with their Y positions for depth sorting
+        drawable_entities = []
+        
+        # Add player
+        drawable_entities.append(('player', self.player, self.player.rect.centery))
+        
+        # Add oxygen tanks
+        for tank in self.oxygen_tanks:
+            drawable_entities.append(('tank', tank, tank.rect.centery))
+        
+        # Add creatures
         for c in self.creatures:
-            c.draw(self.world_surface)
-
+            drawable_entities.append(('creature', c, c.rect.centery))
+        
+        # Add items
         for item in self.items:
-            item.draw(self.world_surface)
+            drawable_entities.append(('item', item, item.rect.centery))
+        
+        # Sort by Y position (smaller Y = further away, drawn first)
+        drawable_entities.sort(key=lambda x: x[2])
+        
+        # Draw all entities in sorted order
+        for entity_type, entity, _ in drawable_entities:
+            entity.draw(self.world_surface)
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed BEFORE camera is drawn !!!!
         if is_debug_on:
@@ -183,3 +209,33 @@ class UnderwaterState(BaseState):
             if isinstance(interactable, Exit):
                 interactable.on_interact = self._go_to_homebase
                 interactable.prompt_text = "Press E to go back to Homebase"
+
+    def _spawn_oxygen_tanks(self) -> None:
+        """Spawn oxygen tanks randomly across the underwater map, avoiding walls."""
+        self.oxygen_tanks.clear()
+        w, h = self.tile_map.map_size
+        num_tanks = 8  # Number of oxygen tanks to spawn
+        spawned = 0
+        max_attempts = 500  # Prevent infinite loops
+        attempts = 0
+        
+        while spawned < num_tanks and attempts < max_attempts:
+            attempts += 1
+            x = random.randint(100, int(w) - 100)
+            y = random.randint(100, int(h) - 100)
+            
+            # Check if position is not solid (not a wall)
+            if not self.tile_map.is_tile_solid(x, y):
+                tank = OxygenTank(x, y, oxygen_refill=30.0)
+                tank.on_interact = lambda t=tank: self._refill_oxygen(t)
+                self.oxygen_tanks.append(tank)
+                spawned += 1
+    
+    def _refill_oxygen(self, tank: OxygenTank) -> None:
+        """Refill player oxygen from a tank."""
+        self.player.oxygen = min(self.player.oxygen + tank.oxygen_refill, self.player.max_oxygen)
+    
+    def _get_interactable_distance(self, interactable: Interactable) -> float:
+        """Calculate distance from player to an interactable."""
+        return ((interactable.rect.centerx - self.player.rect.centerx)**2 + 
+                (interactable.rect.centery - self.player.rect.centery)**2)**0.5

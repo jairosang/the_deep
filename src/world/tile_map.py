@@ -189,9 +189,8 @@ class TileMap:
 
 
     def is_tile_solid(self, x, y) -> bool:
-        if self.get_tile_at_position(x, y) != 0:
-            return True
-        return False
+        normalized_gID, _, _, _ = self.get_tile_at_position(x, y)
+        return normalized_gID != 0
     
         # Not implemented because its not my thing. Yet....
 
