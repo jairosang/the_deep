@@ -14,13 +14,15 @@ class Player(MovingThing):
         super().__init__(pygame.Surface(p_config["SIZE"]))
         # THIS IS    no longer    TEMPORARY
 
-        self.anim_idle    = Animation(load_frames(SPRITES / "player-idle.png",    80, 80, 6), fps=6)
-        self.anim_swim    = Animation(load_frames(SPRITES / "player-swiming.png", 80, 80, 7), fps=8)
-        self.anim_fast    = Animation(load_frames(SPRITES / "player-fast.png",    80, 80, 5), fps=10)
-        self.anim_rush    = Animation(load_frames(SPRITES / "player-rush.png",    80, 80, 7), fps=10)
-        self.anim_hurt    = Animation(load_frames(SPRITES / "player-hurt.png",    80, 80, 5), fps=8, loop=False)
+        self.animations = {
+            "idle": Animation(load_frames(SPRITES / "player-idle.png", 80, 80, 6), fps=6),
+            "swim": Animation(load_frames(SPRITES / "player-swiming.png", 80, 80, 7), fps=8),
+            "fast": Animation(load_frames(SPRITES / "player-fast.png", 80, 80, 5), fps=10),
+            "rush": Animation(load_frames(SPRITES / "player-rush.png", 80, 80, 7), fps=10),
+            "hurt": Animation(load_frames(SPRITES / "player-hurt.png", 80, 80, 5), fps=8, loop=False),
+        }
  
-        self._current_anim = self.anim_idle
+        self._current_anim = self.animations["idle"]
         self._base_image = self._current_anim.get_image()
         self.image = self._base_image
 
@@ -61,16 +63,17 @@ class Player(MovingThing):
         speed = self.velocity.length()
  
         # hurt animation plays until finished, then it goes back to normal
-        if self._current_anim is self.anim_hurt and not self.anim_hurt.finished:
+        hurt_anim = self.animations["hurt"]
+        if self._current_anim is hurt_anim and not hurt_anim.finished:
             pass
         elif speed < 2:
-            self._current_anim = self.anim_idle
+            self._current_anim = self.animations["idle"]
         elif self.is_sprinting and speed > 80:
-            self._current_anim = self.anim_rush
+            self._current_anim = self.animations["rush"]
         elif self.is_sprinting:
-            self._current_anim = self.anim_fast
+            self._current_anim = self.animations["fast"]
         else:
-            self._current_anim = self.anim_swim
+            self._current_anim = self.animations["swim"]
  
         self._current_anim.update(dt)
         self._base_image = self._current_anim.get_image()
