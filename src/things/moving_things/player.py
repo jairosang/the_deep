@@ -63,7 +63,7 @@ class Player(MovingThing):
         # hurt animation plays until finished, then it goes back to normal
         if self._current_anim is self.anim_hurt and not self.anim_hurt.finished:
             pass
-        elif speed < 1:
+        elif speed < 2:
             self._current_anim = self.anim_idle
         elif self.is_sprinting and speed > 80:
             self._current_anim = self.anim_rush
@@ -77,11 +77,17 @@ class Player(MovingThing):
         self.image = self._base_image
 
         if self.velocity.length_squared() > 0:
+            is_going_left = True if self.velocity.x < 0 else False
             # removed the logic we had before, added new one so we snap to a direction every 15 degrees.
             # get the angle of movement, snap it to nearest 15 degrees.
             angle = self.velocity.angle_to(pygame.math.Vector2(1, 0)) 
+            angle = angle * - 1 if is_going_left else angle
             snapped = round(angle / 15) * 15
-            self.image = pygame.transform.rotate(self._base_image.convert_alpha(), snapped)
+            transformed_image = pygame.transform.rotate(self._base_image.convert_alpha(), snapped)
+            if is_going_left:
+                transformed_image = pygame.transform.flip(transformed_image, False, True)
+
+            self.image = transformed_image
             self._update_hitbox(snapped)
         else:
             self._update_hitbox(None)
