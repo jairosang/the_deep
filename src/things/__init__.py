@@ -5,6 +5,7 @@ from .moving_things.player import Player
 from .moving_things.creatures.base_creature import Creature, Vec2
 from .moving_things.creatures.passive_creature import PassiveCreature
 from .moving_things.creatures.aggressive_creature import AggressiveCreature
+from .moving_things.projectile import Projectile
 from .holdables.harpoon import Harpoon
 from .holdables.research_gun import ResearchGun
 from .holdables.weapon import Weapon
@@ -22,5 +23,6 @@ __all__ = [
     "Harpoon",
     "ResearchGun",
     "Weapon",
-    "Holdable"
+    "Holdable",
+    "Projectile",
 ]
