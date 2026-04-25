@@ -138,7 +138,6 @@ class UnderwaterState(BaseState):
             pygame.draw.rect(self.world_surface, (255, 255, 0), self.player.rect, 2)
         
         self.camera.draw(self.world_surface, screen)
-        self.button.draw(screen)
 
         # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
         oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))

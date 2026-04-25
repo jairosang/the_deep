@@ -66,7 +66,6 @@ class HomebaseState(BaseState):
             pygame.draw.circle(self.world_surface, (0,255,0), self.player.pos, 1)
 
         self.camera.draw(self.world_surface, screen)
-        self.button.draw(screen)
 
         if is_debug_on:
             player_pos_text = pygame.font.Font(None, 36).render(f"Player_pos: {self.player.pos}", True, (255,255,255), (50,50,50))
