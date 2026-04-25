@@ -71,6 +71,7 @@ class HomebaseState(BaseState):
         if is_debug_on:
             player_pos_text = pygame.font.Font(None, 36).render(f"Player_pos: {self.player.pos}", True, (255,255,255), (50,50,50))
             screen.blit(player_pos_text, (10, 5))
+            self.button.draw(screen)
 
     def exit(self):
         self.player.movement_axis.y = 1  # Return full movement
