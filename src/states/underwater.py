@@ -5,6 +5,7 @@ from ui import Button, HeldInventory
 from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
+from utils.research_database import ResearchDatabase
 import utils as phy
 import pygame
 import random
@@ -23,7 +24,28 @@ class UnderwaterState(BaseState):
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
         self.camera = Camera(self.world_rect)
         self._load_interactable_call_backs()
-        self.held_inventory = HeldInventory([Weapon(), ResearchGun(), Harpoon()])
+        
+        # Initialize research database
+        self.research_database = ResearchDatabase()
+        
+        # Create inventory with research database reference
+        research_gun = ResearchGun(self.research_database)
+        self.held_inventory = HeldInventory([Weapon(), research_gun, Harpoon()])
+        
+        # Track player's last health for damage detection
+        self.player_last_health = self.player.health
+        
+        # Track previous holdable to detect weapon switches
+        self.previous_holdable = self.held_inventory.selected_holdable
+        
+        # Store reference to research gun for scanning
+        self.research_gun = research_gun
+        
+        # Track if left mouse button is held for scanning
+        self.left_mouse_held = False
+        
+        # Track if F key is held for scanning
+        self.f_key_held = False
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
@@ -41,6 +63,21 @@ class UnderwaterState(BaseState):
             self.button.call_back()
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
             self.closest_interactable.interact()
+        # ===== RESEARCH GUN ACTIVATION =====
+        elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:  # Left click held
+            self.left_mouse_held = True
+        elif e.type == pygame.MOUSEBUTTONUP and e.button == 1:  # Left click released
+            self.left_mouse_held = False
+            # Stop scanning when mouse button released
+            if isinstance(self.held_inventory.selected_holdable, ResearchGun):
+                self.research_gun.stop_scan()
+        elif e.type == pygame.KEYDOWN and e.key == pygame.K_f:  # F key held
+            self.f_key_held = True
+        elif e.type == pygame.KEYUP and e.key == pygame.K_f:  # F key released
+            self.f_key_held = False
+            # Stop scanning when F key released
+            if isinstance(self.held_inventory.selected_holdable, ResearchGun):
+                self.research_gun.stop_scan()
 
         if e.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
             world_mouse_pos = self._screen_to_world_pos(e.pos)
@@ -67,6 +104,45 @@ class UnderwaterState(BaseState):
         self.items.extend(dropped_items)
 
         phy.resolve_player_item_pickups(self.player, self.items, dt)
+        
+        # ===== RESEARCH GUN SCANNING LOGIC =====
+        # Check if player took damage - interrupt scanning
+        if self.player.health < self.player_last_health:
+            self.research_gun.interrupt_scan()
+        self.player_last_health = self.player.health
+        
+        # Check if player switched weapons - stop scanning
+        if self.held_inventory.selected_holdable != self.previous_holdable:
+            self.research_gun.stop_scan()
+        self.previous_holdable = self.held_inventory.selected_holdable
+        
+        # ===== HOLD-TO-RESEARCH: Only scan if mouse button is held and gun equipped
+        if (self.left_mouse_held or self.f_key_held) and isinstance(self.held_inventory.selected_holdable, ResearchGun):
+            mouse_world_pos = self._screen_to_world_pos(pygame.mouse.get_pos())
+            
+            # Find closest creature to mouse within range
+            target_creature = None
+            min_distance = self.research_gun.range
+            
+            for creature in self.creatures:
+                dist_to_creature = ((creature.rect.centerx - mouse_world_pos[0])**2 + 
+                                   (creature.rect.centery - mouse_world_pos[1])**2)**0.5
+                if dist_to_creature < min_distance:
+                    target_creature = creature
+                    min_distance = dist_to_creature
+            
+            # Start or continue scanning
+            if target_creature:
+                if self.research_gun.current_target != target_creature:
+                    self.research_gun.start_scan(target_creature)
+                self.research_gun.update_scan(dt)
+            else:
+                # No creature in range - stop scanning
+                self.research_gun.stop_scan()
+        else:
+            # Not holding mouse button or gun not equipped - stop scanning
+            if self.research_gun.current_target:
+                self.research_gun.stop_scan()
 
 
     def draw(self, screen: pygame.Surface, is_debug_on):
@@ -83,6 +159,72 @@ class UnderwaterState(BaseState):
 
         for item in self.items:
             item.draw(self.world_surface)
+
+        # ===== DRAW RESEARCH SCANNING EFFECTS =====
+        if self.research_gun.current_target and self.research_gun.scan_progress > 0:
+            target = self.research_gun.current_target
+            player_center = self.player.rect.center
+            target_center = target.rect.center
+            
+            # Draw green beam trapezoid from player gun to target
+            beam_width_start = 8
+            beam_width_end = 20
+            
+            # Calculate direction
+            dx = target_center[0] - player_center[0]
+            dy = target_center[1] - player_center[1]
+            distance = (dx**2 + dy**2)**0.5
+            
+            if distance > 0:
+                # Normalize direction
+                dx_norm = dx / distance
+                dy_norm = dy / distance
+                
+                # Perpendicular direction for trapezoid width
+                perp_x = -dy_norm
+                perp_y = dx_norm
+                
+                # Calculate trapezoid corners
+                p1 = (int(player_center[0] + perp_x * beam_width_start/2), 
+                      int(player_center[1] + perp_y * beam_width_start/2))
+                p2 = (int(player_center[0] - perp_x * beam_width_start/2), 
+                      int(player_center[1] - perp_y * beam_width_start/2))
+                p3 = (int(target_center[0] - perp_x * beam_width_end/2), 
+                      int(target_center[1] - perp_y * beam_width_end/2))
+                p4 = (int(target_center[0] + perp_x * beam_width_end/2), 
+                      int(target_center[1] + perp_y * beam_width_end/2))
+                
+                # Draw beam with transparency
+                beam_surface = pygame.Surface((self.world_surface.get_width(), self.world_surface.get_height()), pygame.SRCALPHA)
+                pygame.draw.polygon(beam_surface, (0, 255, 100, 100), [p1, p2, p3, p4])
+                self.world_surface.blit(beam_surface, (0, 0))
+            
+            # Draw larger, more visible progress bar above creature
+            bar_width = 60
+            bar_height = 12
+            bar_x = int(target.rect.centerx - bar_width/2)
+            bar_y = int(target.rect.top - 25)
+            
+            # Background (dark)
+            pygame.draw.rect(self.world_surface, (30, 30, 30), (bar_x, bar_y, bar_width, bar_height))
+            
+            # Progress (bright green)
+            progress_width = int((self.research_gun.scan_progress / 100.0) * bar_width)
+            pygame.draw.rect(self.world_surface, (0, 255, 100), (bar_x, bar_y, progress_width, bar_height))
+            
+            # Border (bright green)
+            pygame.draw.rect(self.world_surface, (0, 255, 150), (bar_x, bar_y, bar_width, bar_height), 2)
+        
+        # ===== DRAW COMPLETION ANIMATION =====
+        if self.research_gun.scan_just_completed and self.research_gun.current_target:
+            target = self.research_gun.current_target
+            # Flash green ring around creature
+            ring_radius = int(40 + (0.5 - self.research_gun.completion_timer) * 30)  # Expands
+            alpha = int(255 * (self.research_gun.completion_timer / 0.5))  # Fades out
+            
+            anim_surface = pygame.Surface((self.world_surface.get_width(), self.world_surface.get_height()), pygame.SRCALPHA)
+            pygame.draw.circle(anim_surface, (0, 255, 100, alpha), target.rect.center, ring_radius, 3)
+            self.world_surface.blit(anim_surface, (0, 0))
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed BEFORE camera is drawn !!!!
         if is_debug_on:
@@ -165,6 +307,25 @@ class UnderwaterState(BaseState):
 
     def update_depth(self):
         pass
+
+    def _activate_research_scan(self):
+        """Activate scanning when player clicks/presses F near a creature."""
+        mouse_world_pos = self._screen_to_world_pos(pygame.mouse.get_pos())
+        
+        # Find closest creature to mouse position within range
+        target_creature = None
+        min_distance = self.research_gun.range
+        
+        for creature in self.creatures:
+            dist_to_creature = ((creature.rect.centerx - mouse_world_pos[0])**2 + 
+                               (creature.rect.centery - mouse_world_pos[1])**2)**0.5
+            if dist_to_creature < min_distance:
+                target_creature = creature
+                min_distance = dist_to_creature
+        
+        # Start scanning if found a creature in range
+        if target_creature:
+            self.research_gun.start_scan(target_creature)
 
     def _trigger_game_over(self):
         self.is_done = (True, "GAME_OVER")  #switch states

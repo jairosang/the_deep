@@ -42,6 +42,7 @@ class PassiveCreature(Creature):
         self.sprint_multiplier = 1.4
         self.health = pc_config["HEALTH"]
         self.max_health = pc_config["HEALTH"]
+        self.species = "passive"  # For research database
 
     def think(self, dt: float, player_pos: Vec2) -> Vec2:      #only passing player pos
         dist = self.pos.distance_to(player_pos)

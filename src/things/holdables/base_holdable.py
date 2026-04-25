@@ -17,13 +17,18 @@ class Holdable(Thing, ABC):
         self.image_path: Path | None = getattr(self, "image_path", None)
 
         if self.image_path is not None:
-            loaded = pygame.image.load(str(self.image_path)).convert_alpha()
-
-            loaded.set_colorkey((0, 0, 0))
-            self.image = loaded 
+            try:
+                loaded = pygame.image.load(str(self.image_path)).convert_alpha()
+                loaded.set_colorkey((0, 0, 0))
+                self.image = loaded
+            except:
+                # Fallback if image fails to load
+                self.image = pygame.Surface((16, 16))
+                self.image.fill(self.color)
         else:
-            self.image = pygame.Surface((16,16))
-            self.image.fill((255,255,255))
+            # Create colored placeholder if no image path
+            self.image = pygame.Surface((16, 16))
+            self.image.fill(self.color)
 
         super().__init__(self.image)
 
