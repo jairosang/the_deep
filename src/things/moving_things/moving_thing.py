@@ -13,6 +13,7 @@ class MovingThing(Thing, ABC):
         self.velocity: pygame.math.Vector2 = pygame.math.Vector2(0, 0)
         self.mass = 0
         self.thrust = 0
+        self.damage = 1
 
     def update(self, dt, bound_rect: pygame.Rect, area_tiles):
         # ===== Movement update logic =======

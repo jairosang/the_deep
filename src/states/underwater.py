@@ -30,7 +30,8 @@ class UnderwaterState(BaseState):
     def enter(self, data: dict = {}):
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
-        self.spawn_creatures()
+        self.player.set_holdable(self.held_inventory.selected_holdable)
+        self._spawn_creatures()
         self._spawn_oxygen_tanks()
 
     def handle_event(self, e: pygame.event.Event):
@@ -41,6 +42,7 @@ class UnderwaterState(BaseState):
 
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
+            return
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
             self.closest_interactable.interact()
 
@@ -54,7 +56,6 @@ class UnderwaterState(BaseState):
         # Get rects of tiles surrounding player for calculating collisions with environment 
         player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.player.update(dt, self.world_rect, player_area_tiles)
-        player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 100)
         
         # Check for closest oxygen tank
@@ -68,6 +69,8 @@ class UnderwaterState(BaseState):
         for c in self.creatures:
             area_tiles = self.tile_map.get_tiles_at_area(c.rect.centerx, c.rect.centery, (7,7))
             c.update(dt, self.world_rect, area_tiles, player_pos)
+
+        self._update_projectiles(dt)
 
         if self.player.oxygen <= 0 or self.player.health <= 0:
             self._trigger_game_over()
@@ -110,11 +113,18 @@ class UnderwaterState(BaseState):
         for entity_type, entity, _ in drawable_entities:
             entity.draw(self.world_surface)
 
+        for holdable in self.held_inventory.holdables:
+            holdable.draw_things_on_screen(self.world_surface)     # Stuff like the research gun ray area nd stuff
+
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed BEFORE camera is drawn !!!!
         if is_debug_on:
             for c in self.creatures:
                 pygame.draw.line(self.world_surface, (0,0,255), c.rect.center, c.rect.center + c.velocity)
                 pygame.draw.rect(self.world_surface, (255, 0, 255), c.rect, 2)
+            for holdable in self.held_inventory.holdables:
+                for projectile in holdable.get_projectiles():
+                    pygame.draw.line(self.world_surface, (0,0,255), projectile.rect.center, projectile.rect.center + projectile.velocity)
+                    pygame.draw.rect(self.world_surface, (255, 0, 255), projectile.rect, 2)
             
             # Grid with tile separation
             for row_i in range(self.tile_map.map_size[0] - 1):
@@ -149,7 +159,7 @@ class UnderwaterState(BaseState):
 
 
     # ==== Own Methods ====
-    def spawn_creatures(self):
+    def _spawn_creatures(self):
         self.creatures.clear()
         w, h = self.tile_map.map_size
 
@@ -179,7 +189,19 @@ class UnderwaterState(BaseState):
             c.mass = c.mass + round((creature_size % 20) * 1.5)
             self.creatures.append(c)
 
-    def check_return_point(self):
+    def _update_projectiles(self, dt: float) -> None:
+        for holdable in self.held_inventory.holdables:
+            projectiles_list = holdable.get_projectiles()
+            dropped_items, spent_projectiles = phy.resolve_projectile_creature_collisions(projectiles_list, self.creatures)
+            holdable.remove_projectiles(spent_projectiles)   # Necessary for garbage collector, strips away the reference 
+            self.items.extend(dropped_items)
+            
+            for projectile in projectiles_list:
+                projectile_area_tiles = self.tile_map.get_tiles_at_area(projectile.rect.centerx, projectile.rect.centery, (5,5))
+                projectile.update(dt, self.world_rect, projectile_area_tiles)
+
+
+    def _check_return_point(self):
         pass
 
     def _screen_to_world_pos(self, screen_pos: tuple[int, int]) -> tuple[int, int]:

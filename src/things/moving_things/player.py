@@ -58,69 +58,14 @@ class Player(MovingThing):
         self.buffer_inventory_capacity = p_config["BASE_STATS"]["INVENTORY_CAPACITY"]
         self.inventory: dict[str, int] = {} #intended to store a thing and the amount of that thing
         self.current_holdable: Holdable | None = None
-        # Missing harpoon, weapon and research gun
+        self._left_click_pressed: bool = False
 
     def update(self, dt, bound_rect: pygame.Rect, area_tiles):
         super().update(dt, bound_rect, area_tiles)
         if self.current_holdable is not None:
             self.current_holdable.update(dt, bound_rect, self.rect.center)
         self._update_oxygen()
-        self.update_animation(dt)
-        
-
-
-    def update_animation(self, dt):
-        speed = self.velocity.length()
- 
-        # hurt animation plays until finished, then it goes back to normal
-        hurt_anim = self.animations["hurt"]
-        shoot_anim = self.animations["shoot"]
-        if self._current_anim is hurt_anim and not hurt_anim.finished or self._current_anim is shoot_anim and not shoot_anim.finished:
-            pass
-        elif speed < 2:
-            self._current_anim = self.animations["idle"]
-        elif self.is_sprinting and speed > 80:
-            self._current_anim = self.animations["rush"]
-        elif self.is_sprinting:
-            self._current_anim = self.animations["fast"]
-        else:
-            self._current_anim = self.animations["swim"]
- 
-        self._current_anim.update(dt)
-        self._base_image = self._current_anim.get_image()
-        self.image = self._base_image
-
-        holdable = self.current_holdable
-        is_shooting = self._current_anim == self.animations["shoot"] and holdable is not None
-        if not is_shooting:
-            self._shoot_facing_vector = None
-
-        if self.velocity.length_squared() > 0 or is_shooting:
-            # During shooting, keep the initial click direction locked.
-            if is_shooting and self._shoot_facing_vector is not None:
-                facing_vector = self._shoot_facing_vector
-            else:
-                facing_vector = self.velocity
-
-            if facing_vector.length_squared() == 0:
-                facing_vector = pygame.math.Vector2(1, 0)
-
-            is_going_left = facing_vector.x < 0 # Check if we are going left
-
-            # Get the angle of the current facing direction.
-            angle = facing_vector.angle_to(pygame.math.Vector2(1, 0))
-            angle = angle * -1 if is_going_left else angle
-            snapped = round(angle / 15) * 15
-            transformed_image = pygame.transform.rotate(self._base_image.convert_alpha(), snapped)
-            if is_going_left:
-                transformed_image = pygame.transform.flip(transformed_image, False, True)
-
-            self.image = transformed_image
-            self._update_hitbox(snapped)
-        else:
-            self._update_hitbox(None)
-
-
+        self._update_animation_underwater(dt)
 
     def handle_event(self, event: pygame.event.Event, mouse_pos: tuple[int, int] | None = None):
         if event.type == pygame.KEYDOWN:
@@ -135,52 +80,33 @@ class Player(MovingThing):
                 self._refresh_input_direction()
             elif event.key == pygame.K_SPACE:
                 self.is_sprinting = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if self.current_holdable is not None and mouse_pos is not None:
-                self.current_holdable.handle_inputs(mouse_pos)
-                aim_vector = pygame.math.Vector2(mouse_pos) - pygame.math.Vector2(self.rect.center)
-                if aim_vector.length_squared() > 0:
-                    self._shoot_facing_vector = aim_vector
-                elif self.velocity.length_squared() > 0:
-                    self._shoot_facing_vector = self.velocity.copy()
-                else:
-                    self._shoot_facing_vector = pygame.math.Vector2(1, 0)
-                self.animations["shoot"].reset()
-                self._current_anim = self.animations["shoot"]
-                self.current_holdable.shoot(mouse_pos)
 
-                recoil_direction = self._shoot_facing_vector.normalize()
-                self.velocity -= recoil_direction * self.shoot_recoil
+        if self.current_holdable is not None and event.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
+            fired = self.current_holdable.handle_event(event, mouse_pos)
 
-    def _refresh_input_direction(self):
-        self.input_direction.x = 0
-        self.input_direction.y = 0
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and mouse_pos is not None:
+                self._left_click_pressed = True
+                should_start_anim = fired or self.current_holdable.continuous
+                if should_start_anim:
+                    if not self.current_holdable.continuous:
+                        self.current_holdable.is_active = True
+                    aim_vector = pygame.math.Vector2(mouse_pos) - pygame.math.Vector2(self.rect.center)
+                    if aim_vector.length_squared() > 0:
+                        self._shoot_facing_vector = aim_vector
+                    elif self.velocity.length_squared() > 0:
+                        self._shoot_facing_vector = self.velocity.copy()
+                    else:
+                        self._shoot_facing_vector = pygame.math.Vector2(1, 0)
 
-        if self._movement_keys[pygame.K_w]:
-            self.input_direction.y -= 1
-        if self._movement_keys[pygame.K_s]:
-            self.input_direction.y += 1
-        if self._movement_keys[pygame.K_a]:
-            self.input_direction.x -= 1
-        if self._movement_keys[pygame.K_d]:
-            self.input_direction.x += 1
+                    self.animations["shoot"].reset()
+                    self._current_anim = self.animations["shoot"]
 
-        # Removes movement on axis if its turned off
-        self.input_direction.x *= self.movement_axis.x
-        self.input_direction.y *= self.movement_axis.y
+                    # Recoil Mechanics
+                    recoil_direction = self._shoot_facing_vector.normalize()
+                    self.velocity -= recoil_direction * self.current_holdable.shoot_recoil
 
-        if self.input_direction.length_squared() > 0:
-            self.input_direction = self.input_direction.normalize()
-
-    def set_holdable(self, holdable: Holdable | None) -> None:
-        self.current_holdable = holdable
-
-    def _update_hitbox(self, angle):
-        old_center = self.rect.center
-        # Keep a consistent collision rect size to prevent camera jitter
-        # The sprite rotation doesn't need to change the actual hitbox
-        self.rect.size = (32, 32)
-        self.rect.center = old_center
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                self._left_click_pressed = False
 
     def draw(self, surface: pygame.Surface):
         # Draw sprite centered on collision rect center
@@ -204,22 +130,13 @@ class Player(MovingThing):
             # Draw arrow
             pygame.draw.polygon(surface, (60, 108, 153), [end_point] + arc_points[4:-4])
 
-        if self._current_anim == self.animations["shoot"] and self.current_holdable is not None:
+        if self.current_holdable is not None and self.current_holdable.is_active:
             self.current_holdable.draw(surface)
-                    
 
-    def _update_oxygen(self):
-        # This thing will have implemented the game over thing when the oxygen is 0
-        if self.oxygen <= 0:
-            pass
-
-        # This is the thing that checks how to update the oxygen thing if you are sprinting or not
-        if self.oxygen > 0:
-            if self.is_sprinting == False:
-                self.oxygen -= self.oxygen_depletion_rate/g_config["FPS"]
-            if self.is_sprinting == True:
-                self.oxygen -= self.oxygen_depletion_rate*2/g_config["FPS"]
-        # You have to divide the thing by the FPS to not have it go crazy ofc
+    def set_holdable(self, holdable: Holdable | None) -> None:
+        if self.current_holdable is not None and self.current_holdable is not holdable:
+            self.current_holdable.reset_input_state()
+        self.current_holdable = holdable
 
     def update_depth_damage(self):
         pass
@@ -236,12 +153,127 @@ class Player(MovingThing):
         for key in self._movement_keys:
             self._movement_keys[key] = False
         self.is_sprinting = False
+        self._left_click_pressed = False
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
         self.health = self.max_health
         self.oxygen = self.max_oxygen
+        if self.current_holdable is not None:
+            self.current_holdable.reset_input_state()
         self.current_holdable = None
 
     def get_damaged(self, ammt):
         self.health -= ammt
         self.animations["hurt"].reset()
         self._current_anim = self.animations["hurt"]
+
+
+    # ====== The caves of functions ======
+
+
+    def _refresh_input_direction(self):
+        self.input_direction.x = 0
+        self.input_direction.y = 0
+
+        if self._movement_keys[pygame.K_w]:
+            self.input_direction.y -= 1
+        if self._movement_keys[pygame.K_s]:
+            self.input_direction.y += 1
+        if self._movement_keys[pygame.K_a]:
+            self.input_direction.x -= 1
+        if self._movement_keys[pygame.K_d]:
+            self.input_direction.x += 1
+
+        # Removes movement on axis if its turned off
+        self.input_direction.x *= self.movement_axis.x
+        self.input_direction.y *= self.movement_axis.y
+
+        if self.input_direction.length_squared() > 0:
+            self.input_direction = self.input_direction.normalize()
+
+    def _update_hitbox(self, angle):
+        old_center = self.rect.center
+        # Keep a consistent collision rect size to prevent camera jitter
+        # The sprite rotation doesn't need to change the actual hitbox
+        self.rect.size = (32, 32)
+        self.rect.center = old_center
+
+    def _movement_anim(self, speed: float):
+        if speed < 2:
+            return self.animations["idle"]
+        if self.is_sprinting and speed > 80:
+            return self.animations["rush"]
+        if self.is_sprinting:
+            return self.animations["fast"]
+        return self.animations["swim"]
+
+    def _update_animation_underwater(self, dt):
+        speed = self.velocity.length()
+        hurt_anim = self.animations["hurt"]
+        shoot_anim = self.animations["shoot"]
+        holdable = self.current_holdable
+        is_held_continuous = self._left_click_pressed and holdable is not None and holdable.continuous
+
+        # If player is hurt this should be priority
+        if self._current_anim is hurt_anim and not hurt_anim.finished:
+            pass
+        # If the current held is continous the anim loops while left_click is held
+        elif is_held_continuous:
+            if self._current_anim is not shoot_anim or shoot_anim.finished:
+                shoot_anim.reset()
+            self._current_anim = shoot_anim
+        # If the current held is NOT continuous and the animation is not finished we let if finish
+        elif self._current_anim is shoot_anim and not shoot_anim.finished:
+            pass
+        # Priority 4: movement — clean up shoot state if we just finished
+        else:
+            # Clean the shooting if it's done
+            if self._current_anim is shoot_anim and holdable is not None:
+                holdable.is_active = False
+                self._shoot_facing_vector = None
+            self._current_anim = self._movement_anim(speed)
+
+        self._current_anim.update(dt)
+        self._base_image = self._current_anim.get_image()
+        self.image = self._base_image
+
+        # The player should face the aim direction while shooting or holding and the velocity direction if none
+        is_shooting = self._current_anim is shoot_anim
+        needs_rotation = is_shooting or is_held_continuous or self.velocity.length_squared() > 0
+
+        if needs_rotation:
+            # If holdable is continuous we constantly update to the mouse pos, if it's not then we lock to the click pos
+            if is_held_continuous:
+                facing_vector = holdable.aim_direction.copy()
+            elif is_shooting and self._shoot_facing_vector is not None:
+                facing_vector = self._shoot_facing_vector
+            else:
+                facing_vector = self.velocity
+
+            if facing_vector.length_squared() == 0:
+                facing_vector = pygame.math.Vector2(1, 0)
+
+            is_going_left = facing_vector.x < 0
+            angle = facing_vector.angle_to(pygame.math.Vector2(1, 0))
+            # Flip sign so rotation matches direction when going left
+            angle = angle * -1 if is_going_left else angle
+            snapped = round(angle / 15) * 15
+            transformed_image = pygame.transform.rotate(self._base_image.convert_alpha(), snapped)
+            if is_going_left:
+                transformed_image = pygame.transform.flip(transformed_image, False, True)
+            self.image = transformed_image
+            self._update_hitbox(snapped)
+        else:
+            self._update_hitbox(None)
+
+    def _update_oxygen(self):
+        # This thing will have implemented the game over thing when the oxygen is 0
+        if self.oxygen <= 0:
+            pass
+
+        # This is the thing that checks how to update the oxygen thing if you are sprinting or not
+        if self.oxygen > 0:
+            if self.is_sprinting == False:
+                self.oxygen -= self.oxygen_depletion_rate/g_config["FPS"]
+            if self.is_sprinting == True:
+                self.oxygen -= self.oxygen_depletion_rate*2/g_config["FPS"]
+        # You have to divide the thing by the FPS to not have it go crazy ofc
