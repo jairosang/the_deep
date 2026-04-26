@@ -20,6 +20,8 @@ class Ray:
     def update(self, origin, target_pos) -> None:
         self.origin.update(origin)
         direction = pygame.math.Vector2(target_pos) - self.origin
+        if direction.length() <= 0:
+            return
         direction.scale_to_length(self.range)
         self.end_pos = self.origin + direction
 

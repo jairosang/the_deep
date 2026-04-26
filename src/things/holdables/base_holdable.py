@@ -100,35 +100,30 @@ class Holdable(Thing, ABC):
     def draw_things_on_screen(self, surface):
         pass
 
-    def handle_event(self, event: pygame.event.Event, mouse_pos: tuple[int, int] | None = None) -> bool:
-        if mouse_pos is not None:
-            self._last_mouse_pos = mouse_pos
-
-        if event.type == pygame.MOUSEMOTION and mouse_pos is not None and self.continuous:
-            self._update_aim(mouse_pos)
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and mouse_pos is not None:
-            return self._on_left_click_down(mouse_pos)
-        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1 and mouse_pos is not None:
-            self._on_left_click_up(mouse_pos)
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            return self._on_left_click_down()
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            self._on_left_click_up()
         return False
 
     def reset_input_state(self) -> None:
         self._is_left_click_down = False
         self._last_mouse_pos = None
 
-    def _on_left_click_down(self, mouse_pos: tuple[int, int]) -> bool:
+    def _on_left_click_down(self) -> bool:
         self._is_left_click_down = True
-        self._last_mouse_pos = mouse_pos
-        self._update_aim(mouse_pos)
-        fired = self.shoot(mouse_pos)
-        if fired and not self.continuous:
-            self.is_already_shot = True
-        return fired
+        if self._last_mouse_pos:
+            self._update_aim(self._last_mouse_pos)
+            fired = self.shoot(self._last_mouse_pos)
+            if fired and not self.continuous:
+                self.is_already_shot = True
+            return fired
+        return False
 
-    def _on_left_click_up(self, mouse_pos: tuple[int, int]) -> None:
+    def _on_left_click_up(self) -> None:
         self._is_left_click_down = False
         self._is_active = False
-        self._last_mouse_pos = mouse_pos
         self.is_already_shot = False
 
     def _update_aim(self, mouse_pos: tuple[int, int]) -> None:

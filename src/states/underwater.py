@@ -62,16 +62,15 @@ class UnderwaterState(BaseState):
             self.button.call_back()
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
             self.closest_interactable.interact()
-        if e.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
-            world_mouse_pos = self._screen_to_world_pos(e.pos)
-            self.player.handle_event(e, world_mouse_pos)
-        else:
-            self.player.handle_event(e)
+
+        self.player.handle_event(e)
 
     def update(self, dt):
         # Get rects of tiles surrounding player for calculating collisions with environment 
         player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.player.update(dt, self.world_rect, player_area_tiles)
+        if self.player.current_holdable is not None:
+            self.player.current_holdable._last_mouse_pos = self._screen_to_world_pos(pygame.mouse.get_pos())
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 100)
         
         # Check for closest oxygen tank

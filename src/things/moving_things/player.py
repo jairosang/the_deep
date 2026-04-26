@@ -67,7 +67,7 @@ class Player(MovingThing):
         self._update_oxygen()
         self._update_animation_underwater(dt)
 
-    def handle_event(self, event: pygame.event.Event, mouse_pos: tuple[int, int] | None = None):
+    def handle_event(self, event: pygame.event.Event):
         if event.type == pygame.KEYDOWN:
             if event.key in self._movement_keys:
                 self._movement_keys[event.key] = True
@@ -82,15 +82,16 @@ class Player(MovingThing):
                 self.is_sprinting = False
 
         if self.current_holdable is not None and event.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
-            fired = self.current_holdable.handle_event(event, mouse_pos)
+            fired = self.current_holdable.handle_event(event)
+            holdable = self.current_holdable
 
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and mouse_pos is not None:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and holdable._last_mouse_pos:
                 self._left_click_pressed = True
-                should_start_anim = fired or self.current_holdable.continuous
+                should_start_anim = fired or holdable.continuous
                 if should_start_anim:
-                    if not self.current_holdable.continuous:
-                        self.current_holdable.is_active = True
-                    aim_vector = pygame.math.Vector2(mouse_pos) - pygame.math.Vector2(self.rect.center)
+                    if not holdable.continuous:
+                        holdable.is_active = True
+                    aim_vector = pygame.math.Vector2(holdable._last_mouse_pos) - pygame.math.Vector2(self.rect.center)
                     if aim_vector.length_squared() > 0:
                         self._shoot_facing_vector = aim_vector
                     elif self.velocity.length_squared() > 0:
@@ -103,7 +104,7 @@ class Player(MovingThing):
 
                     # Recoil Mechanics
                     recoil_direction = self._shoot_facing_vector.normalize()
-                    self.velocity -= recoil_direction * self.current_holdable.shoot_recoil
+                    self.velocity -= recoil_direction * holdable.shoot_recoil
 
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self._left_click_pressed = False
