@@ -6,6 +6,7 @@ from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
 import utils as phy
+from utils.research_database import ResearchDatabase
 import pygame
 import random
 
@@ -23,7 +24,24 @@ class UnderwaterState(BaseState):
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
         self.camera = Camera(self.world_rect)
         self._load_interactable_call_backs()
-        self.held_inventory = HeldInventory([Weapon(), ResearchGun(), Harpoon()])
+        
+        # Initialize research database
+        self.research_database = ResearchDatabase()
+        
+        # Create inventory with research database reference
+        research_gun = ResearchGun(self.research_database)
+        self.held_inventory = HeldInventory([Weapon(), research_gun, Harpoon()])
+        
+        # Store reference to research gun for scanning
+        self.research_gun = research_gun
+        
+        # Research gun input tracking
+        self.left_mouse_held = False
+        self.f_key_held = False
+        
+        # Research gun state tracking
+        self.player_last_health = self.player.health
+        self.previous_holdable = None
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
@@ -40,9 +58,23 @@ class UnderwaterState(BaseState):
 
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
-            return
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
             self.closest_interactable.interact()
+        # ===== RESEARCH GUN ACTIVATION =====
+        elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:  # Left click held
+            self.left_mouse_held = True
+        elif e.type == pygame.MOUSEBUTTONUP and e.button == 1:  # Left click released
+            self.left_mouse_held = False
+            # Stop scanning when mouse button released
+            if isinstance(self.held_inventory.selected_holdable, ResearchGun):
+                self.research_gun.stop_scan()
+        elif e.type == pygame.KEYDOWN and e.key == pygame.K_f:  # F key held
+            self.f_key_held = True
+        elif e.type == pygame.KEYUP and e.key == pygame.K_f:  # F key released
+            self.f_key_held = False
+            # Stop scanning when F key released
+            if isinstance(self.held_inventory.selected_holdable, ResearchGun):
+                self.research_gun.stop_scan()
 
         if e.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
             world_mouse_pos = self._screen_to_world_pos(e.pos)
@@ -61,8 +93,6 @@ class UnderwaterState(BaseState):
             area_tiles = self.tile_map.get_tiles_at_area(c.rect.centerx, c.rect.centery, (7,7))
             c.update(dt, self.world_rect, area_tiles, player_pos)
 
-        self._update_projectiles(dt)
-
         if self.player.oxygen <= 0 or self.player.health <= 0:
             self._trigger_game_over()
 
@@ -70,6 +100,47 @@ class UnderwaterState(BaseState):
         self.items.extend(dropped_items)
 
         phy.resolve_player_item_pickups(self.player, self.items, dt)
+        
+        # ===== RESEARCH GUN SCANNING LOGIC =====
+        # Check if player took damage - interrupt scanning
+        if self.player.health < self.player_last_health:
+            self.research_gun.interrupt_scan()
+        self.player_last_health = self.player.health
+        
+        # Check if player switched weapons - stop scanning
+        if self.held_inventory.selected_holdable != self.previous_holdable:
+            self.research_gun.stop_scan()
+        self.previous_holdable = self.held_inventory.selected_holdable
+        
+        # ===== HOLD-TO-RESEARCH: Only scan if mouse button is held and gun equipped
+        if (self.left_mouse_held or self.f_key_held) and isinstance(self.held_inventory.selected_holdable, ResearchGun):
+            mouse_world_pos = self._screen_to_world_pos(pygame.mouse.get_pos())
+            
+            # Find closest creature to mouse within range
+            target_creature = None
+            min_distance = self.research_gun.range
+            
+            for creature in self.creatures:
+                dist_to_creature = ((creature.rect.centerx - mouse_world_pos[0])**2 + 
+                                   (creature.rect.centery - mouse_world_pos[1])**2)**0.5
+                if dist_to_creature < min_distance:
+                    target_creature = creature
+                    min_distance = dist_to_creature
+            
+            # Start or continue scanning
+            if target_creature:
+                if self.research_gun.current_target != target_creature:
+                    self.research_gun.start_scan(target_creature)
+                self.research_gun.update_scan(dt)
+            else:
+                # No creature in range - stop scanning
+                self.research_gun.stop_scan()
+        else:
+            # Not holding mouse button or gun not equipped - stop scanning
+            if self.research_gun.current_target:
+                self.research_gun.stop_scan()
+
+        self._update_projectiles(dt)
 
 
     def draw(self, screen: pygame.Surface, is_debug_on):
