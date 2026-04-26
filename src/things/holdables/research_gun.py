@@ -3,6 +3,7 @@ from .base_holdable import Holdable
 from ..shootables.ray import Ray
 from things import Creature
 from utils import ResearchDatabase
+from pathlib import Path
 
 class ResearchGun(Holdable):
 
@@ -10,7 +11,7 @@ class ResearchGun(Holdable):
         self.name = "Research Gun"
         self.description = "Scanner used to analyze underwater creatures"
         self.color = (90, 200, 160)
-        self.image_path = None
+        self.image_path = Path("./assets/holdables/research_gun_asset.png")
         self.scan_rate = 1.0
         self.range = 200
         self.cooldown_s = 0.25
