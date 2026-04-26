@@ -62,22 +62,6 @@ class UnderwaterState(BaseState):
             self.button.call_back()
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
             self.closest_interactable.interact()
-        # ===== RESEARCH GUN ACTIVATION =====
-        elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:  # Left click held
-            self.left_mouse_held = True
-        elif e.type == pygame.MOUSEBUTTONUP and e.button == 1:  # Left click released
-            self.left_mouse_held = False
-            # Stop scanning when mouse button released
-            if isinstance(self.held_inventory.selected_holdable, ResearchGun):
-                self.research_gun.stop_scan()
-        elif e.type == pygame.KEYDOWN and e.key == pygame.K_f:  # F key held
-            self.f_key_held = True
-        elif e.type == pygame.KEYUP and e.key == pygame.K_f:  # F key released
-            self.f_key_held = False
-            # Stop scanning when F key released
-            if isinstance(self.held_inventory.selected_holdable, ResearchGun):
-                self.research_gun.stop_scan()
-
         if e.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
             world_mouse_pos = self._screen_to_world_pos(e.pos)
             self.player.handle_event(e, world_mouse_pos)
@@ -109,47 +93,7 @@ class UnderwaterState(BaseState):
         self.items.extend(dropped_items)
 
         phy.resolve_player_item_pickups(self.player, self.items, dt)
-        
-        # ===== RESEARCH GUN SCANNING LOGIC =====
-        # Check if player took damage - interrupt scanning
-        if self.player.health < self.player_last_health:
-            self.research_gun.interrupt_scan()
-        self.player_last_health = self.player.health
-        
-        # Check if player switched weapons - stop scanning
-        if self.held_inventory.selected_holdable != self.previous_holdable:
-            self.research_gun.stop_scan()
-        self.previous_holdable = self.held_inventory.selected_holdable
-        
-        # ===== HOLD-TO-RESEARCH: Only scan if mouse button is held and gun equipped
-        if (self.left_mouse_held or self.f_key_held) and isinstance(self.held_inventory.selected_holdable, ResearchGun):
-            mouse_world_pos = self._screen_to_world_pos(pygame.mouse.get_pos())
-            
-            # Find closest creature to mouse within range
-            target_creature = None
-            min_distance = self.research_gun.range
-            
-            for creature in self.creatures:
-                dist_to_creature = ((creature.rect.centerx - mouse_world_pos[0])**2 + 
-                                   (creature.rect.centery - mouse_world_pos[1])**2)**0.5
-                if dist_to_creature < min_distance:
-                    target_creature = creature
-                    min_distance = dist_to_creature
-            
-            # Start or continue scanning
-            if target_creature:
-                if self.research_gun.current_target != target_creature:
-                    self.research_gun.start_scan(target_creature)
-                self.research_gun.update_scan(dt)
-            else:
-                # No creature in range - stop scanning
-                self.research_gun.stop_scan()
-        else:
-            # Not holding mouse button or gun not equipped - stop scanning
-            if self.research_gun.current_target:
-                self.research_gun.stop_scan()
-
-        self._update_projectiles(dt)
+        self._update_shootables(dt)
 
 
     def draw(self, screen: pygame.Surface, is_debug_on):
@@ -193,9 +137,9 @@ class UnderwaterState(BaseState):
                 pygame.draw.line(self.world_surface, (0,0,255), c.rect.center, c.rect.center + c.velocity)
                 pygame.draw.rect(self.world_surface, (255, 0, 255), c.rect, 2)
             for holdable in self.held_inventory.holdables:
-                for projectile in holdable.get_projectiles():
-                    pygame.draw.line(self.world_surface, (0,0,255), projectile.rect.center, projectile.rect.center + projectile.velocity)
-                    pygame.draw.rect(self.world_surface, (255, 0, 255), projectile.rect, 2)
+                for shootable in holdable.get_shootables():
+                    pygame.draw.line(self.world_surface, (0,0,255), shootable.rect.center, shootable.rect.center + shootable.velocity)
+                    pygame.draw.rect(self.world_surface, (255, 0, 255), shootable.rect, 2)
             
             # Grid with tile separation
             for row_i in range(self.tile_map.map_size[0] - 1):
@@ -259,17 +203,12 @@ class UnderwaterState(BaseState):
             c.mass = c.mass + round((creature_size % 20) * 1.5)
             self.creatures.append(c)
 
-    def _update_projectiles(self, dt: float) -> None:
+    def _update_shootables(self, dt: float) -> None:
         for holdable in self.held_inventory.holdables:
-            projectiles_list = holdable.get_projectiles()
-            dropped_items, spent_projectiles = phy.resolve_projectile_creature_collisions(projectiles_list, self.creatures)
-            holdable.remove_projectiles(spent_projectiles)   # Necessary for garbage collector, strips away the reference 
+            # The return value is for the projectiles, this is such bad design and will crash if return something we shouldn't but we dont have tiiiiiiiiiiime
+            dropped_items, spent_shootables = holdable.update_shootables(dt, self.creatures, self.world_rect, self.tile_map.get_tiles_at_area)
+            holdable.remove_shootables(spent_shootables)
             self.items.extend(dropped_items)
-            
-            for projectile in projectiles_list:
-                projectile_area_tiles = self.tile_map.get_tiles_at_area(projectile.rect.centerx, projectile.rect.centery, (5,5))
-                projectile.update(dt, self.world_rect, projectile_area_tiles)
-
 
     def _check_return_point(self):
         pass

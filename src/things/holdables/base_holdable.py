@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from ..thing import Thing
-from ..moving_things.projectile import Projectile
 from pathlib import Path
 import math
 import pygame
@@ -9,7 +8,7 @@ class Holdable(Thing, ABC):
     continuous: bool = False  # if True keeps shooting while left click is held
     is_available: bool
     name: str
-    description: str 
+    description: str
     color: tuple[int, int, int]
     image_path: Path | None
     range: float
@@ -24,6 +23,7 @@ class Holdable(Thing, ABC):
         self.orbit_radius = 25
         self.shoot_recoil:int = 0
         self.is_already_shot = False
+        self.shootables: list = []
 
         if self.image_path is not None:
             loaded = pygame.image.load(str(self.image_path)).convert_alpha()
@@ -47,12 +47,13 @@ class Holdable(Thing, ABC):
     def is_active(self, val: bool) -> None:
         self._is_active = val
 
-    # Optional functions: If a weapon that has projectiles then must return a list with them so they can be updated
-    def get_projectiles(self) -> list[Projectile]:
-        return []
-    
-    def remove_projectiles(self, projectiles: list[Projectile]):    # Must be implemented for garbage collection purposes
-        pass
+    def get_shootables(self) -> list:
+        return self.shootables
+
+    def remove_shootables(self, to_remove: list) -> None:
+        for s in to_remove:
+            if s in self.shootables:
+                self.shootables.remove(s)
 
     @property
     def get_image(self) -> pygame.Surface:
@@ -64,6 +65,9 @@ class Holdable(Thing, ABC):
 
     def update(self, dt, bound_rect: pygame.Rect, player_pos) -> None:
         self.player_center.update(player_pos)
+
+        if self._last_mouse_pos is not None and self.continuous == True:
+            self._update_aim(self._last_mouse_pos)
 
         holdable_center = self.player_center + self.aim_direction * self.orbit_radius
         self.rect.center = (int(holdable_center.x), int(holdable_center.y))
@@ -84,6 +88,10 @@ class Holdable(Thing, ABC):
                 return
             self.shoot(self._last_mouse_pos)
 
+    # I know this is wrong because I will just keep adding arguments for all the classes that need them but it's too late to refactor now :()
+    @abstractmethod
+    def update_shootables(self, dt: float, creatures: list, world_rect=None, get_tiles=None) -> tuple[list, list]:
+        pass
 
     def draw(self, surface) -> None:
         surface.blit(self.image, self.rect)

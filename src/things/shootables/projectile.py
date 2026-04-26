@@ -1,8 +1,7 @@
 from pygame import Surface
 import pygame
 import utils as phy
-from .moving_thing import MovingThing
-
+from ..moving_things.moving_thing import MovingThing
 
 class Projectile(MovingThing):
     def __init__(self, pos: tuple[int, int], thrust: int, target_pos: tuple[int, int] | None = None, image: Surface | None = None, max_range: float = 64, damage: int = 1) -> None:
