@@ -1,9 +1,10 @@
 import pygame
 from .base_holdable import Holdable
+from ..shootables.ray import Ray
+from things import Creature
 from utils import ResearchDatabase
 
 class ResearchGun(Holdable):
-    continuous: bool = True
 
     def __init__(self, research_database: ResearchDatabase | None = None) -> None:
         self.name = "Research Gun"
@@ -11,157 +12,134 @@ class ResearchGun(Holdable):
         self.color = (90, 200, 160)
         self.image_path = None
         self.scan_rate = 1.0
-        self.range = 35
+        self.range = 200
         self.cooldown_s = 0.25
         self.is_available = False
+        self.continuous = True
 
-        # Research gun specific
         self.research_database = research_database
-        self.current_target = None  # Currently scanned creature
-        self.scan_progress = 0.0  # Scan progress for current target (0-100%)
-        self.scan_timer = 0.0  # Time spent on current target
-        self.scan_just_completed = False  # Flag for completion animation
-        self.completion_timer = 0.0  # Timer for completion animation (0.5 seconds)
+        self.scan_timers: dict = {}  # creature -> how long we've been scanning it
+        self.beam_creatures: set = set()  # creatures currently in the beam
 
         super().__init__()
-    
+
     def set_research_database(self, research_database):
-        # set the research database reference
         self.research_database = research_database
-    
-    def start_scan(self, target_creature):
-        # start scanning a creature
-        self.current_target = target_creature
-        self.scan_progress = 0.0
-        self.scan_timer = 0.0
-        self.scan_just_completed = False
-    
-    def stop_scan(self):
-        # stop scanning and reset progress
-        self.current_target = None
-        self.scan_progress = 0.0
-        self.scan_timer = 0.0
-        self.scan_just_completed = False
-        self.completion_timer = 0.0
-    
-    def interrupt_scan(self):
-        # interrupt scan due to player damage or being too far away, makes it reset to 0
-        self.scan_progress = 0.0
-        self.scan_timer = 0.0
-        self.scan_just_completed = False
-    
-    def update_scan(self, dt: float):
-        # update scanning progress
-        if self.current_target is None or self.research_database is None:
-            return
-        
-        # Get species and scan duration
-        species = getattr(self.current_target, 'species', 'passive')
-        is_alive = self.current_target.health > 0
-        scan_duration = self.research_database.get_scan_duration(species)
-        
-        # Update scan timer
-        self.scan_timer += dt
-        
-        # Calculate progress percentage
-        raw_progress = (self.scan_timer / scan_duration) * 100.0
-        self.scan_progress = min(100.0, raw_progress)
-        
-        # Cap progress based on creature state
-        if not is_alive:
-            self.scan_progress = min(self.scan_progress, 50.0)
-        
-        # Update database if scan is complete
-        if self.scan_timer >= scan_duration and not self.scan_just_completed:
-            creature_id = id(self.current_target)
-            self.research_database.update_scan_progress(
-                creature_id, species, is_alive, self.scan_progress
-            )
-            self.scan_just_completed = True
-            self.completion_timer = 0.5  # Animation duration
-        
-        # Update completion timer
-        if self.scan_just_completed:
-            self.completion_timer -= dt
-            if self.completion_timer <= 0:
-                self.scan_just_completed = False
-    
-    def get_scan_visual_data(self):
-        # get data for scan effect
-        if self.current_target is None or self.scan_progress <= 0:
-            return None
-        
-        return {
-            'target_pos': self.current_target.rect.center,
-            'progress': self.scan_progress,
-        }
-    
-    def draw_things_on_screen(self, surface: pygame.Surface):
-        # draw the green beam ray while scanning
-        if self.current_target and self.scan_progress > 0:
-            target = self.current_target
-            player_center = self.player_center
-            target_center = target.rect.center
-            
-            # draw green beam trapezoid from player gun to target
-            beam_width_start = 8
-            beam_width_end = 20
-            
-            # calculate direction
-            dx = target_center[0] - player_center[0]
-            dy = target_center[1] - player_center[1]
-            distance = (dx**2 + dy**2)**0.5
-            
-            if distance > 0:
-                # normalize direction
-                dx_norm = dx / distance
-                dy_norm = dy / distance
-                
-                # Perpendicular direction for trapezoid width
-                perp_x = -dy_norm
-                perp_y = dx_norm
-                
-                # Calculate trapezoid corners
-                p1 = (int(player_center[0] + perp_x * beam_width_start/2), 
-                      int(player_center[1] + perp_y * beam_width_start/2))
-                p2 = (int(player_center[0] - perp_x * beam_width_start/2), 
-                      int(player_center[1] - perp_y * beam_width_start/2))
-                p3 = (int(target_center[0] - perp_x * beam_width_end/2), 
-                      int(target_center[1] - perp_y * beam_width_end/2))
-                p4 = (int(target_center[0] + perp_x * beam_width_end/2), 
-                      int(target_center[1] + perp_y * beam_width_end/2))
-                
-                # draw beam with transparency
-                beam_surface = pygame.Surface((surface.get_width(), surface.get_height()), pygame.SRCALPHA)
-                pygame.draw.polygon(beam_surface, (0, 255, 100, 100), [p1, p2, p3, p4])
-                surface.blit(beam_surface, (0, 0))
-            
-            # draw larger, more visible progress bar above creature
-            bar_width = 60
-            bar_height = 12
-            bar_x = int(target.rect.centerx - bar_width/2)
-            bar_y = int(target.rect.top - 25)
-            
-            # Background (dark)
-            pygame.draw.rect(surface, (30, 30, 30), (bar_x, bar_y, bar_width, bar_height))
-            
-            # Progress (bright green)
-            progress_width = int((self.scan_progress / 100.0) * bar_width)
-            pygame.draw.rect(surface, (0, 255, 100), (bar_x, bar_y, progress_width, bar_height))
-            
-            # Border (bright green)
-            pygame.draw.rect(surface, (0, 255, 150), (bar_x, bar_y, bar_width, bar_height), 2)
-        
-        # draw completion animation
-        if self.scan_just_completed and self.current_target:
-            target = self.current_target
-            # flash green ring around creature
-            ring_radius = int(40 + (0.5 - self.completion_timer) * 30)  # Expands
-            alpha = int(255 * (self.completion_timer / 0.5))  # Fades out
-            
-            anim_surface = pygame.Surface((surface.get_width(), surface.get_height()), pygame.SRCALPHA)
-            pygame.draw.circle(anim_surface, (0, 255, 100, alpha), target.rect.center, ring_radius, 3)
-            surface.blit(anim_surface, (0, 0))
 
     def shoot(self, pos: tuple[int, int]) -> bool:
-        return False
+        if not self.shootables:
+            self.shootables.append(Ray(self.player_center, self.range))
+        return True
+
+    def update_shootables(self, dt: float, creatures: list, world_rect=None, get_tiles=None) -> tuple[list, list]:
+        if not self.is_active:
+            # gun turned off — kill the beam and save any partial scan progress
+            for ray in self.shootables:
+                ray.is_spent = True
+            for c in list(self.scan_timers):
+                self._save_progress(c)
+            self.scan_timers.clear()
+            self.beam_creatures = set()
+            return [], [ray for ray in self.shootables if ray.is_spent]
+
+        ray = self.shootables[0] if self.shootables else None
+        if ray is None:
+            return [], []
+
+        target_pos = self._last_mouse_pos or self.player_center
+        ray.update(self.rect.center, target_pos)
+
+        in_beam = ray.get_creatures_in_beam(creatures)
+
+        # only scan the closest creature of each species
+        nearest_per_species: dict = {}
+        for c in in_beam:
+            dist_sq = (pygame.math.Vector2(c.rect.center) - self.player_center).length_squared()
+            if c.species not in nearest_per_species or dist_sq < nearest_per_species[c.species][1]:
+                nearest_per_species[c.species] = (c, dist_sq)
+        beam_set = {c for c, _ in nearest_per_species.values()}
+        self.beam_creatures = beam_set
+
+        # save progress for creatures that left the beam
+        for c in list(self.scan_timers):
+            if c not in beam_set:
+                self._save_progress(c)
+                del self.scan_timers[c]
+
+        # tick scan timers for creatures still in beam
+        for c in beam_set:
+            if c not in self.scan_timers:
+                self.scan_timers[c] = self._get_saved_time(c)
+            self.scan_timers[c] += dt
+            self._check_scan_done(c)
+
+        return [], []
+
+    def _get_saved_time(self, creature: Creature) -> float:
+        # converts stored progress % back to seconds so scanning feels continuous
+        if self.research_database is None:
+            return 0.0
+        is_alive = creature.health > 0
+        saved = self.research_database.get_scan_progress(creature.species, is_alive)
+        return saved / 100.0 * creature.scan_duration
+
+    def _save_progress(self, creature: Creature) -> None:
+        # called when a creature leaves the beam or gun turns off
+        if self.research_database is None:
+            return
+        elapsed = self.scan_timers.get(creature, 0.0)
+        if elapsed <= 0:
+            return
+        is_alive = creature.health > 0
+        progress = min(100.0, elapsed / creature.scan_duration * 100.0)
+        if not is_alive:
+            progress = min(50.0, progress)  # dead scans cap at 50%
+        self.research_database.update_scan_progress(creature.species, is_alive, progress)
+
+    def _check_scan_done(self, creature: Creature) -> None:
+        if self.research_database is None:
+            return
+        species = creature.species
+        is_alive = creature.health > 0
+        duration = creature.scan_duration
+        if self.scan_timers.get(creature, 0.0) >= duration:
+            progress = 50.0 if not is_alive else 100.0
+            self.research_database.update_scan_progress(species, is_alive, progress)
+            self.scan_timers.pop(creature)
+
+    def draw_things_on_screen(self, surface) -> None:
+        if self.is_active:
+            for ray in self.shootables:
+                ray.draw(surface)
+
+        for creature in self.beam_creatures:
+            is_complete = (
+                self.research_database is not None and
+                self.research_database.get_total_species_progress(creature.species) >= 100.0
+            )
+            if is_complete:
+                self._draw_check(surface, creature.rect)
+            else:
+                timer = self.scan_timers.get(creature, 0.0)
+                progress = min(100.0, timer / creature.scan_duration * 100.0)
+                if creature.health <= 0:
+                    progress = min(50.0, progress)
+                self._draw_scan_bar(surface, creature.rect, progress)
+
+    def _draw_check(self, surface, target_rect) -> None:
+        cx = target_rect.centerx
+        cy = int(target_rect.top - 19)
+        size = 7
+        p1 = (cx - size, cy)
+        p2 = (cx - size // 3, cy + size - 2)
+        p3 = (cx + size, cy - size + 2)
+        pygame.draw.lines(surface, (0, 255, 100), False, [p1, p2, p3], 3)
+
+    def _draw_scan_bar(self, surface, target_rect, progress: float) -> None:
+        bar_width, bar_height = 60, 12
+        bar_x = int(target_rect.centerx - bar_width / 2)
+        bar_y = int(target_rect.top - 25)
+        pygame.draw.rect(surface, (30, 30, 30), (bar_x, bar_y, bar_width, bar_height))
+        pygame.draw.rect(surface, (0, 255, 100),
+                         (bar_x, bar_y, int(progress / 100.0 * bar_width), bar_height))
+        pygame.draw.rect(surface, (0, 255, 150), (bar_x, bar_y, bar_width, bar_height), 2)
