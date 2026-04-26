@@ -36,7 +36,9 @@ class Creature(MovingThing, ABC):
 
         # death animation 
         self.death_anim = Animation(get_death_frames(), fps=8, loop=False)
-        self.is_dying = False  # true once health hits 0, stays True 
+        self.is_dying = False  # true once health hits 0, stays True
+        self.species: str
+        self.scan_duration: float
 
     def update(self, dt, bound_rect: pygame.Rect, area_tiles, player_pos):
 

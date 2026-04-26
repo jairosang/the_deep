@@ -51,6 +51,8 @@ class AggressiveCreature(Creature):
         self.sprint_multiplier = 1.3
         self.health = ac_config["HEALTH"]
         self.max_health = ac_config["HEALTH"]
+        self.species = "aggressive"
+        self.scan_duration = 6.0
 
     def think(self, dt: float, player_pos) -> Vec2:                             #is now only passing player_pos
         dist = self.pos.distance_to(player_pos)
