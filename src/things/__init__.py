@@ -10,7 +10,7 @@ from .holdables.harpoon import Harpoon
 from .holdables.research_gun import ResearchGun
 from .holdables.weapon import Weapon
 from .holdables.base_holdable import Holdable
-
+from .shootables.ray import Ray
 __all__ = [
 	"Thing",
 	"MovingThing",
@@ -25,4 +25,5 @@ __all__ = [
     "Weapon",
     "Holdable",
     "Projectile",
+    "Ray",
 ]

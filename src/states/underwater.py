@@ -1,6 +1,6 @@
 from things import Player, Creature, PassiveCreature, AggressiveCreature
 from world import TileMap, Camera, Interactable, Exit, OxygenTank
-from things import Weapon, ResearchGun, Harpoon
+from things import Weapon, ResearchGun, Harpoon, Ray
 from ui import Button, HeldInventory
 from .base_state import BaseState
 from config import game as g_config
@@ -31,7 +31,7 @@ class UnderwaterState(BaseState):
         
         # Create inventory with research database reference
         research_gun = ResearchGun(self.research_database)
-        self.held_inventory = HeldInventory([Weapon(), research_gun, Harpoon()])
+        self.held_inventory = HeldInventory([Weapon(), research_gun])
         
         # Store reference to research gun for scanning
         self.research_gun = research_gun
@@ -124,12 +124,12 @@ class UnderwaterState(BaseState):
         # Sort by Y position (smaller Y = further away, drawn first)
         drawable_entities.sort(key=lambda x: x[2])
         
+        for holdable in self.held_inventory.holdables:
+            holdable.draw_things_on_screen(self.world_surface)     # Stuff like the research gun ray area nd stuff
+
         # Draw all entities in sorted order
         for entity_type, entity, _ in drawable_entities:
             entity.draw(self.world_surface)
-
-        for holdable in self.held_inventory.holdables:
-            holdable.draw_things_on_screen(self.world_surface)     # Stuff like the research gun ray area nd stuff
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed BEFORE camera is drawn !!!!
         if is_debug_on:
@@ -138,8 +138,9 @@ class UnderwaterState(BaseState):
                 pygame.draw.rect(self.world_surface, (255, 0, 255), c.rect, 2)
             for holdable in self.held_inventory.holdables:
                 for shootable in holdable.get_shootables():
-                    pygame.draw.line(self.world_surface, (0,0,255), shootable.rect.center, shootable.rect.center + shootable.velocity)
-                    pygame.draw.rect(self.world_surface, (255, 0, 255), shootable.rect, 2)
+                    if not isinstance(shootable, Ray):
+                        pygame.draw.line(self.world_surface, (0,0,255), shootable.rect.center, shootable.rect.center + shootable.velocity)
+                        pygame.draw.rect(self.world_surface, (255, 0, 255), shootable.rect, 2)
             
             # Grid with tile separation
             for row_i in range(self.tile_map.map_size[0] - 1):
