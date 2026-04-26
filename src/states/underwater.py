@@ -12,7 +12,7 @@ import random
 
 
 class UnderwaterState(BaseState):
-    def __init__(self, player: Player, research_database = None) -> None:
+    def __init__(self, player: Player, research_database: ResearchDatabase | None = None) -> None:
         super().__init__()
         self.player = player
         self.creatures: list[Creature] = []

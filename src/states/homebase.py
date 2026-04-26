@@ -4,10 +4,11 @@ from ui import Button
 from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
+from utils import ResearchDatabase
 import pygame
 
 class HomebaseState(BaseState):
-    def __init__(self, player: Player, research_database=None) -> None:
+    def __init__(self, player: Player, research_database: ResearchDatabase | None = None) -> None:
         super().__init__()
         self.player = player
         self.research_database = research_database

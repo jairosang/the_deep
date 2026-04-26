@@ -1,10 +1,11 @@
 import pygame
 from .base_holdable import Holdable
+from utils import ResearchDatabase
 
 class ResearchGun(Holdable):
     continuous: bool = True
 
-    def __init__(self, research_database=None) -> None:
+    def __init__(self, research_database: ResearchDatabase | None = None) -> None:
         self.name = "Research Gun"
         self.description = "Scanner used to analyze underwater creatures"
         self.color = (90, 200, 160)
@@ -13,7 +14,7 @@ class ResearchGun(Holdable):
         self.range = 35
         self.cooldown_s = 0.25
         self.is_available = False
-        
+
         # Research gun specific
         self.research_database = research_database
         self.current_target = None  # Currently scanned creature

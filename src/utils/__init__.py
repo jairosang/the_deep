@@ -9,6 +9,8 @@ from .physics_service import (
 	resolve_projectile_creature_collisions,
 )
 
+from .research_database import ResearchDatabase
+
 __all__ = [
 	"get_colliding_tiles",
 	"resolve_map_collision_on_x_axis",
@@ -18,4 +20,5 @@ __all__ = [
 	"resolve_player_creature_collisions",
 	"resolve_player_item_pickups",
 	"resolve_projectile_creature_collisions",
+    "ResearchDatabase"
 ]
