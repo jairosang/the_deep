@@ -7,9 +7,10 @@ from config import player as p_config
 import pygame
 
 class HomebaseState(BaseState):
-    def __init__(self, player: Player) -> None:
+    def __init__(self, player: Player, research_database=None) -> None:
         super().__init__()
         self.player = player
+        self.research_database = research_database
         self.tile_map = TileMap(g_config["HOMEBASE_TILEMAP_PATH"])
         self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
         self.closest_interactable: Interactable | None = None

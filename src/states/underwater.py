@@ -12,7 +12,7 @@ import random
 
 
 class UnderwaterState(BaseState):
-    def __init__(self, player: Player) -> None:
+    def __init__(self, player: Player, research_database = None) -> None:
         super().__init__()
         self.player = player
         self.creatures: list[Creature] = []
@@ -26,8 +26,8 @@ class UnderwaterState(BaseState):
         self.camera = Camera(self.world_rect)
         self._load_interactable_call_backs()
         
-        # Initialize research database
-        self.research_database = ResearchDatabase()
+        # Store research database reference
+        self.research_database = research_database 
         
         # Create inventory with research database reference
         research_gun = ResearchGun(self.research_database)
