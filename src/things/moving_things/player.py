@@ -37,7 +37,6 @@ class Player(MovingThing):
         self._shoot_facing_vector: pygame.math.Vector2 | None = None
         self.is_sprinting = False
         self.sprint_multiplier = p_config["SPRINT_MULTIPLIER"]
-        self.shoot_recoil = 45  # We should add to p_config ; also we should use p_config.get so we have a default if its not in p_config
         self.movement_axis = pygame.math.Vector2(1, 1)  # (x, y) 1 allows the p_config to move on that axis
         self._movement_keys = {
             pygame.K_w: False,

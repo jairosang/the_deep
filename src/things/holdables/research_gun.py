@@ -17,6 +17,7 @@ class ResearchGun(Holdable):
         self.cooldown_s = 0.25
         self.is_available = False
         self.continuous = True
+        self.shoot_recoil = 20
 
         self.research_database = research_database
         self.scan_timers: dict = {}  # creature -> how long we've been scanning it

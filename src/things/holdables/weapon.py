@@ -13,7 +13,7 @@ class Weapon(Holdable):
         self.ammo = 10
         self.range = 500
         self.cooldown_s = 0.5
-        self.shoot_recoil = 200
+        self.shoot_recoil = 30
         self.is_available = False
         self.shot_dt = 0.0
         self.thrust = 500

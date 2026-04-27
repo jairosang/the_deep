@@ -13,6 +13,7 @@ class Holdable(Thing, ABC):
     image_path: Path | None
     range: float
     cooldown_s: float
+    shoot_recoil: int
 
     def __init__(self) -> None:
         self.image_path: Path | None = getattr(self, "image_path", None)
@@ -21,7 +22,6 @@ class Holdable(Thing, ABC):
         self._last_mouse_pos: tuple[int, int] | None = None
         self.aim_direction = pygame.math.Vector2(1, 0)
         self.orbit_radius = 25
-        self.shoot_recoil:int = 0
         self.is_already_shot = False
         self.shootables: list = []
 
