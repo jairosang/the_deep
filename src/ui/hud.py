@@ -5,7 +5,7 @@ import pygame
 class HeldInventory:
     # Toolbar style inventory. Draws a row of slots on the lower right side of the screen
     # falls back to a colored square if a tool has no image
-    def __init__(self, init_holdables: list[Holdable], slot_size=(60, 60), padding=8) -> None:
+    def __init__(self, init_holdables: list[Holdable], slot_size=(100,100), padding=8) -> None:
         self.slot_size = slot_size
         self.padding = padding
         self.selected_index = 0
