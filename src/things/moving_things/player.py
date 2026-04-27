@@ -81,25 +81,28 @@ class Player(MovingThing):
                 self.is_sprinting = False
 
         if self.current_holdable is not None and event.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
-            fired = self.current_holdable.handle_event(event)
             holdable = self.current_holdable
+            fired = holdable.handle_event(event)
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and holdable._last_mouse_pos:
                 self._left_click_pressed = True
+                aim_vector = pygame.math.Vector2(holdable._last_mouse_pos) - pygame.math.Vector2(self.rect.center)
+                if aim_vector.length_squared() > 0:
+                    self._shoot_facing_vector = aim_vector
+                elif self.velocity.length_squared() > 0:
+                    self._shoot_facing_vector = self.velocity.copy()
+                else:
+                    self._shoot_facing_vector = pygame.math.Vector2(1, 0)
+
                 should_start_anim = fired or holdable.continuous
                 if should_start_anim:
                     if not holdable.continuous:
                         holdable.is_active = True
-                    aim_vector = pygame.math.Vector2(holdable._last_mouse_pos) - pygame.math.Vector2(self.rect.center)
-                    if aim_vector.length_squared() > 0:
-                        self._shoot_facing_vector = aim_vector
-                    elif self.velocity.length_squared() > 0:
-                        self._shoot_facing_vector = self.velocity.copy()
-                    else:
-                        self._shoot_facing_vector = pygame.math.Vector2(1, 0)
 
                     self.animations["shoot"].reset()
                     self._current_anim = self.animations["shoot"]
+                    self._base_image = self._current_anim.get_image()
+                    self._apply_facing_rotation(self._shoot_facing_vector)
 
                     # Recoil Mechanics
                     recoil_direction = self._shoot_facing_vector.normalize()
@@ -241,29 +244,30 @@ class Player(MovingThing):
         needs_rotation = is_shooting or is_held_continuous or self.velocity.length_squared() > 0
 
         if needs_rotation:
-            # If holdable is continuous we constantly update to the mouse pos, if it's not then we lock to the click pos
             if is_held_continuous:
                 facing_vector = holdable.aim_direction.copy()
             elif is_shooting and self._shoot_facing_vector is not None:
                 facing_vector = self._shoot_facing_vector
             else:
                 facing_vector = self.velocity
-
-            if facing_vector.length_squared() == 0:
-                facing_vector = pygame.math.Vector2(1, 0)
-
-            is_going_left = facing_vector.x < 0
-            angle = facing_vector.angle_to(pygame.math.Vector2(1, 0))
-            # Flip sign so rotation matches direction when going left
-            angle = angle * -1 if is_going_left else angle
-            snapped = round(angle / 15) * 15
-            transformed_image = pygame.transform.rotate(self._base_image.convert_alpha(), snapped)
-            if is_going_left:
-                transformed_image = pygame.transform.flip(transformed_image, False, True)
-            self.image = transformed_image
-            self._update_hitbox(snapped)
+            self._apply_facing_rotation(facing_vector)
         else:
             self._update_hitbox(None)
+
+    def _apply_facing_rotation(self, facing_vector: pygame.math.Vector2):
+        if facing_vector.length_squared() == 0:
+            facing_vector = pygame.math.Vector2(1, 0)
+
+        is_going_left = facing_vector.x < 0
+        angle = facing_vector.angle_to(pygame.math.Vector2(1, 0))
+        # Flip sign so rotation matches direction when going left
+        angle = angle * -1 if is_going_left else angle
+        snapped = round(angle / 15) * 15
+        transformed_image = pygame.transform.rotate(self._base_image.convert_alpha(), snapped)
+        if is_going_left:
+            transformed_image = pygame.transform.flip(transformed_image, False, True)
+        self.image = transformed_image
+        self._update_hitbox(snapped)
 
     def _update_oxygen(self):
         # This thing will have implemented the game over thing when the oxygen is 0

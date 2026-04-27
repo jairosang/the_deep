@@ -83,10 +83,6 @@ class Holdable(Thing, ABC):
         self.rect = self.image.get_rect(center=self.rect.center)
         self.pos.update(self.rect.x, self.rect.y)
 
-        if self._last_mouse_pos is not None and self.is_active:
-            if not self.continuous and self.is_already_shot:
-                return
-            self.shoot(self._last_mouse_pos)
 
     # I know this is wrong because I will just keep adding arguments for all the classes that need them but it's too late to refactor now :()
     @abstractmethod
@@ -123,7 +119,6 @@ class Holdable(Thing, ABC):
 
     def _on_left_click_up(self) -> None:
         self._is_left_click_down = False
-        self._is_active = False
         self.is_already_shot = False
 
     def _update_aim(self, mouse_pos: tuple[int, int]) -> None:

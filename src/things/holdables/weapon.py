@@ -17,6 +17,7 @@ class Weapon(Holdable):
         self.is_available = False
         self.shot_dt = 0.0
         self.thrust = 500
+        self.shot_cycle_max = 1
         super().__init__()
 
     def update(self, dt, bound_rect, player_pos) -> None:
