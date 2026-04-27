@@ -115,25 +115,26 @@ class Player(MovingThing):
         # Draw sprite centered on collision rect center
         image_rect = self.image.get_rect(center=self.rect.center)
         surface.blit(self.image, image_rect)
-        if self.velocity.length_squared() > 0: 
-            center = pygame.math.Vector2(self.rect.center)
-            velocity_scaled = self.velocity / 15    # Controls how far the arrow extends
+        # COMMENTED OUT TO TEST USING THE ARROW FOR SHOOTING
+        # if self.velocity.length_squared() > 0: 
+        #     center = pygame.math.Vector2(self.rect.center)
+        #     velocity_scaled = self.velocity / 15    # Controls how far the arrow extends
 
-            dir_v = velocity_scaled.normalize()
-            radius = 40       # Fixed radius instead of using rect.height
-            end_point = center + velocity_scaled + dir_v * radius
+        #     dir_v = velocity_scaled.normalize()
+        #     radius = 40       # Fixed radius instead of using rect.height
+        #     end_point = center + velocity_scaled + dir_v * radius
             
-            # Drawing an arc in the direction of velocity
-            arc_points = []
-            for angle in range(-20, 21, 3): # Controls how wide the arc is
-                arc_points.append(center + dir_v.rotate(angle) * (radius * 0.95))
-            if len(arc_points) > 1:
-                pygame.draw.lines(surface, (60, 108, 153), False, arc_points, 2)
+        #     # Drawing an arc in the direction of velocity
+        #     arc_points = []
+        #     for angle in range(-20, 21, 3): # Controls how wide the arc is
+        #         arc_points.append(center + dir_v.rotate(angle) * (radius * 0.95))
+        #     if len(arc_points) > 1:
+        #         pygame.draw.lines(surface, (60, 108, 153), False, arc_points, 2)
             
-            # Draw arrow
-            pygame.draw.polygon(surface, (60, 108, 153), [end_point] + arc_points[4:-4])
+        #     # Draw arrow
+        #     pygame.draw.polygon(surface, (60, 108, 153), [end_point] + arc_points[4:-4])
 
-        if self.current_holdable is not None and self.current_holdable.is_active:
+        if self.current_holdable is not None:
             self.current_holdable.draw(surface)
 
     def set_holdable(self, holdable: Holdable | None) -> None:

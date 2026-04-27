@@ -90,7 +90,25 @@ class Holdable(Thing, ABC):
         pass
 
     def draw(self, surface) -> None:
-        surface.blit(self.image, self.rect)
+        if self._last_mouse_pos: 
+            center = pygame.math.Vector2(self.player_center)
+            target = pygame.math.Vector2(self._last_mouse_pos) - self.player_center
+
+            dir_v = target.normalize()
+            radius = 40       # Fixed radius instead of using rect.height
+            end_point = center + dir_v * 50
+            
+            # Drawing an arc in the direction of velocity
+            arc_points = []
+            for angle in range(-20, 21, 3): # Controls how wide the arc is
+                arc_points.append(center + dir_v.rotate(angle) * (radius * 0.95))
+            if len(arc_points) > 1:
+                pygame.draw.lines(surface, (60, 108, 153), False, arc_points, 2)
+            
+            # Draw arrow
+            pygame.draw.polygon(surface, (60, 108, 153), [end_point] + arc_points[4:-4])
+        if self.is_active:
+            surface.blit(self.image, self.rect)
 
     # Optional function to print projectiles or other things spawned by the holdable
     def draw_things_on_screen(self, surface):
