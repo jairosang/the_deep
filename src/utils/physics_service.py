@@ -41,6 +41,12 @@ def resolve_overlap_on_y_axis(moving_thing: 'MovingThing', rect_b: Rect):
         moving_thing.rect.bottom = rect_b.top
         moving_thing.pos.y = moving_thing.rect.y
 
+def _apply_elastic_collision(a: 'MovingThing', b: 'MovingThing'):
+    a_vel = ((a.mass - b.mass) / (a.mass + b.mass)) * a.velocity + ((2 * b.mass) / (a.mass + b.mass)) * b.velocity
+    b_vel = ((2 * a.mass) / (a.mass + b.mass)) * a.velocity + ((b.mass - a.mass) / (a.mass + b.mass)) * b.velocity
+    a.velocity = a_vel
+    b.velocity = b_vel
+
 def _resolve_player_creature_contact(player: 'Player', creature: 'Creature', tiles: list[Rect] | None = None):
     overlap = player.rect.clip(creature.rect)
     if overlap.width <= 0 or overlap.height <= 0:
@@ -110,14 +116,7 @@ def resolve_player_creature_collisions(player: 'Player', creatures: list['Creatu
             if isinstance(creature, AggressiveCreature):
                 player.get_damaged(creature.damage)
 
-            player_vel_x = ((player.mass - creature.mass)/(player.mass + creature.mass)) * player.velocity
-            player_vel_y = ((2 * creature.mass)/(player.mass + creature.mass)) * creature.velocity
-
-            creature_vel_x = ((2 * player.mass)/(player.mass + creature.mass)) * player.velocity
-            creature_vel_y = ((creature.mass - player.mass)/(player.mass + creature.mass)) * creature.velocity
-
-            creature.velocity = creature_vel_x + creature_vel_y
-            player.velocity = player_vel_x + player_vel_y
+            _apply_elastic_collision(player, creature)
 
             if creature.is_dead():
                 dead_creatures.append(creature)
@@ -163,6 +162,7 @@ def resolve_projectile_creature_collisions(projectiles: list['Projectile'], crea
 
             if projectile.rect.colliderect(creature.rect):
                 creature.get_damaged(projectile.damage)
+                _apply_elastic_collision(projectile, creature)
                 projectile.destroy()
                 spent_projectiles.append(projectile)
 

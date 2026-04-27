@@ -17,6 +17,7 @@ class Projectile(MovingThing):
             if shot.length_squared() > 0:
                 direction = shot.normalize()
 
+        self.mass = 10
         self.velocity = direction * thrust
         self.damage = damage
         self.max_range = max_range
