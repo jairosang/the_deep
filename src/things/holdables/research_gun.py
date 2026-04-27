@@ -13,7 +13,7 @@ class ResearchGun(Holdable):
         self.color = (90, 200, 160)
         self.image_path = Path("./assets/holdables/research_gun_asset.png")
         self.scan_rate = 1.0
-        self.range = 200
+        self.range = 300
         self.cooldown_s = 0.25
         self.is_available = False
         self.continuous = True
@@ -48,8 +48,8 @@ class ResearchGun(Holdable):
         if ray is None:
             return [], []
 
-        target_pos = self._last_mouse_pos or self.player_center
-        ray.update(self.rect.center, target_pos)
+        target_pos = self.player_center + self.aim_direction * self.range
+        ray.update(self.player_center, target_pos)
 
         in_beam = ray.get_creatures_in_beam(creatures)
 
@@ -111,7 +111,9 @@ class ResearchGun(Holdable):
 
     def draw_things_on_screen(self, surface) -> None:
         if self.is_active:
+            target_pos = self.player_center + self.aim_direction * self.range
             for ray in self.shootables:
+                ray.update(self.player_center, target_pos)
                 ray.draw(surface)
 
         for creature in self.beam_creatures:

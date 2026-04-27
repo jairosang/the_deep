@@ -18,10 +18,11 @@ class Ray:
         return self.start_width + 2 * self.range * math.tan(math.radians(self.cone_angle / 2))
 
     def update(self, origin, target_pos) -> None:
-        self.origin.update(origin)
-        direction = pygame.math.Vector2(target_pos) - self.origin
+        direction = pygame.math.Vector2(target_pos) - pygame.math.Vector2(origin)
         if direction.length() <= 0:
             return
+        dir_unit = direction.normalize()
+        self.origin.update(pygame.math.Vector2(origin) + dir_unit * 25)
         direction.scale_to_length(self.range)
         self.end_pos = self.origin + direction
 
