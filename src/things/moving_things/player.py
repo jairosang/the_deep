@@ -21,6 +21,7 @@ class Player(MovingThing):
             "rush": Animation(load_frames(SPRITES / "player-rush.png", 80, 80, 7), fps=10),
             "hurt": Animation(load_frames(SPRITES / "player-hurt.png", 80, 80, 5), fps=8, loop=False),
             "shoot": Animation(load_frames(SPRITES / "player-shoot.png", 80, 80, 6), fps=8, loop=False),
+            "walk": Animation(load_frames(SPRITES / "player-walk.png", 80, 80, 4), fps=8, loop=False)
         }
  
         self._current_anim = self.animations["idle"]
@@ -64,7 +65,6 @@ class Player(MovingThing):
         if self.current_holdable is not None:
             self.current_holdable.update(dt, bound_rect, self.rect.center)
         self._update_oxygen()
-        self._update_animation_underwater(dt)
 
     def handle_event(self, event: pygame.event.Event):
         if event.type == pygame.KEYDOWN:
@@ -201,7 +201,7 @@ class Player(MovingThing):
         self.rect.size = (32, 32)
         self.rect.center = old_center
 
-    def _movement_anim(self, speed: float):
+    def _swim_anim(self, speed: float):
         if speed < 2:
             return self.animations["idle"]
         if self.is_sprinting and speed > 80:
@@ -210,7 +210,7 @@ class Player(MovingThing):
             return self.animations["fast"]
         return self.animations["swim"]
 
-    def _update_animation_underwater(self, dt):
+    def update_animation_underwater(self, dt):
         speed = self.velocity.length()
         hurt_anim = self.animations["hurt"]
         shoot_anim = self.animations["shoot"]
@@ -234,7 +234,7 @@ class Player(MovingThing):
             if self._current_anim is shoot_anim and holdable is not None:
                 holdable.is_active = False
                 self._shoot_facing_vector = None
-            self._current_anim = self._movement_anim(speed)
+            self._current_anim = self._swim_anim(speed)
 
         self._current_anim.update(dt)
         self._base_image = self._current_anim.get_image()
@@ -254,6 +254,21 @@ class Player(MovingThing):
             self._apply_facing_rotation(facing_vector)
         else:
             self._update_hitbox(None)
+
+    def update_animation_homebase(self, dt):
+        speed = self.velocity.length()
+        if self._current_anim.finished:
+            self._current_anim.reset()
+
+        # Clean the shooting if it's done
+        self._current_anim.update(dt)
+
+        self._base_image = self._current_anim.get_image()
+        self.image = self._base_image
+
+        if self.velocity.length() > 0:
+            facing_vector = self.velocity.normalize()
+            self._apply_facing_rotation(facing_vector)
 
     def _apply_facing_rotation(self, facing_vector: pygame.math.Vector2):
         if facing_vector.length_squared() == 0:

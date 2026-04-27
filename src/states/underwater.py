@@ -46,6 +46,7 @@ class UnderwaterState(BaseState):
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
+        g_config["DRAG"] = 0.9
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
         self.player.set_holdable(self.held_inventory.selected_holdable)
@@ -69,6 +70,7 @@ class UnderwaterState(BaseState):
         # Get rects of tiles surrounding player for calculating collisions with environment 
         player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.player.update(dt, self.world_rect, player_area_tiles)
+        self.player.update_animation_underwater(dt)
         if self.player.current_holdable is not None:
             self.player.current_holdable._last_mouse_pos = self._screen_to_world_pos(pygame.mouse.get_pos())
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 100)
