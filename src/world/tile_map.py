@@ -118,7 +118,7 @@ class TileMap:
         self.background_assets_layer: InfiniteTileLayer | TileLayer
         self.background_tiles_layer: InfiniteTileLayer | TileLayer
         self.interactables: list[Interactable]
-        self.first_gid = 1
+        self.tilesets: list[tuple[int, pygame.Surface | dict, int]] = []  # (firstgid, atlas, columns) sorted descending
 
         self.parse_from_path(path)
 
@@ -170,15 +170,14 @@ class TileMap:
                 self.tile_layers["Midground"].height * self.tile_size[1],
             )
 
-        # Getting the data for the tileset which is the building block for the tilemap, this is like this just for now bc there is only one tileset.
-        tileset_data = tile_map["tilesets"][0]
-        self.first_gid = int(tileset_data["firstgid"])
+        for tileset_data in tile_map["tilesets"]:
+            firstgid = int(tileset_data["firstgid"])
+            tsx_path = (path.parent / tileset_data["source"]).resolve()
+            atlas_surface, column_count = self._load_tileset_surface_and_columns(tsx_path)
+            self.tilesets.append((firstgid, atlas_surface, column_count))
+        self.tilesets.sort(key=lambda t: t[0], reverse=True)
 
-        # Just getting the tileset path which is already included in the tilemap
-        tsx_path = (path.parent / tileset_data["source"]).resolve()
-        atlas_surface, column_count = self._load_tileset_surface_and_columns(tsx_path)
-        
-        self.visual_surface = self._build_tile_layers(atlas_surface, column_count)
+        self.visual_surface = self._build_tile_layers()
         self.interactables = self._load_interactables(interactable_layer)
 
 
@@ -327,17 +326,15 @@ class TileMap:
 
 
     # We need to change this later prob, rn the whole map is rebuilding always. Would make more sense for only the part inside the camera to be built
-    def _build_tile_layers(self, atlas_surface: pygame.Surface | dict, column_count: int) -> pygame.Surface:
-        # Create a transparent surface to draw tiles on top of
+    def _build_tile_layers(self) -> pygame.Surface:
         visual_surface = pygame.Surface(self.map_size, pygame.SRCALPHA)
         for layer in self.tile_layers.values():
-            visual_surface = self._add_tile_layer_to_surface(atlas_surface, layer, visual_surface, column_count)
-
+            visual_surface = self._add_tile_layer_to_surface(layer, visual_surface)
         return visual_surface
 
         
     
-    def _add_tile_layer_to_surface(self, atlas_surface: pygame.Surface | dict, layer: TileLayer | InfiniteTileLayer, dest: pygame.Surface, column_count: int):
+    def _add_tile_layer_to_surface(self, layer: TileLayer | InfiniteTileLayer, dest: pygame.Surface):
         map_tile_width, map_tile_height = self.tile_size
         # for every tile in the grid
         for i, row in enumerate(layer.grid):
@@ -347,11 +344,18 @@ class TileMap:
                 if base_gid == 0:
                     continue
 
-                # Calculate the local tile ID from the tileset (first_gid tells you where the numbers from each tileset start)
-                local_tile_id = base_gid - self.first_gid
-                if local_tile_id < 0:
+                # Find the tileset this gid belongs to (we sorted the list before descending by firstgid)
+                tileset_entry = None
+                for firstgid, atlas, columns in self.tilesets:
+                    if base_gid >= firstgid:
+                        tileset_entry = (firstgid, atlas, columns)
+                        break
+                if tileset_entry is None:
                     continue
-                
+
+                firstgid, atlas_surface, column_count = tileset_entry
+                local_tile_id = base_gid - firstgid
+
                 tile_surface = None
                 destination = (j * map_tile_width, i * map_tile_height)
                 if isinstance(atlas_surface, pygame.Surface):     # The case where the tileset is an actual atlas
