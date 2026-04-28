@@ -68,7 +68,10 @@
 [ ]-[P15] Economy system
 [X]-[P16] Homebase state (Jairo)
 [X]-[P5] Health system (Jairo)
+
 [ ]-[G6] HUD assets
+[X]-Fix: Modified the main menu (Daniel)
+
 
 
 

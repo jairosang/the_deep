@@ -1,6 +1,6 @@
 from things import Player, Creature, PassiveCreature, AggressiveCreature
 from world import TileMap, Camera, Interactable, Exit
-from ui import Button
+from ui import Button, InventoryMenu
 from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
@@ -27,13 +27,24 @@ class UnderwaterState(BaseState):
     def enter(self, data: dict = {}):
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
+        # Inventory menu you can open it with E key
+        self.inventory_menu = InventoryMenu()
         self.spawn_creatures()
 
     def handle_event(self, e: pygame.event.Event):
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
-        elif e.type == pygame.KEYDOWN and e.key == pygame.K_e and self.closest_interactable:
-            self.closest_interactable.interact()
+        elif e.type == pygame.KEYDOWN and e.key == pygame.K_e:
+            # # E priority: close menu > interact > open menu
+            if self.inventory_menu.is_open:
+                self.inventory_menu.close()
+            elif self.closest_interactable:
+                self.closest_interactable.interact()
+            else:
+                self.inventory_menu.open()
+
+        # Forward other events to the menu so it can hook the material later
+        self.inventory_menu.handle_event(e)
 
     def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
         self.player.handle_inputs(keys)
@@ -119,6 +130,9 @@ class UnderwaterState(BaseState):
         if is_debug_on:
             player_pos_text = pygame.font.Font(None, 36).render(f"Player_pos: {self.player.pos}", True, (255,255,255), (50,50,50))
             screen.blit(player_pos_text, (10, 5))
+
+        # Inventory menu drawn last so it stays on top of everything
+        self.inventory_menu.draw(screen)
 
     def exit(self):
         self.player.revert()
