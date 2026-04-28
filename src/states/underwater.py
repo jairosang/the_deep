@@ -50,6 +50,7 @@ class UnderwaterState(BaseState):
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
         self.player.set_holdable(self.held_inventory.selected_holdable)
+        self.player.movement_axis.update(1,1)
         self._spawn_creatures()
         self._spawn_oxygen_tanks()
 
