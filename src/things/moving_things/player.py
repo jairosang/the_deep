@@ -60,7 +60,16 @@ class Player(MovingThing):
         self.current_holdable: Holdable | None = None
         self._left_click_pressed: bool = False
 
+        # for the colour change efffect:
+        self.flash_timer = 0.0
+        self.flash_duration = 0.4
+
     def update(self, dt, bound_rect: pygame.Rect, area_tiles):
+        if self.flash_timer > 0:
+            self.flash_timer -= dt
+        if self.flash_timer <= 0:
+            self.image = self._base_image  # Return to original color/state (For now color until there is an img)
+
         super().update(dt, bound_rect, area_tiles)
         if self.current_holdable is not None:
             self.current_holdable.update(dt, bound_rect, self.rect.center)
@@ -170,6 +179,9 @@ class Player(MovingThing):
         self.animations["hurt"].reset()
         self._current_anim = self.animations["hurt"]
 
+        tinted = self._base_image.copy()
+        tinted.fill((180, 0, 0, 0), special_flags=pygame.BLEND_RGB_ADD)
+        self.image = tinted    # red tint on hit
 
     # ====== The caves of functions ======
 
