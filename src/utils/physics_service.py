@@ -111,7 +111,6 @@ def resolve_player_creature_collisions(player: 'Player', creatures: list['Creatu
         
         if player.rect.colliderect(creature.rect):
             _resolve_player_creature_contact(player, creature, tiles)
-            creature.get_damaged(player.damage)  # The creatures should have a damage attribute that is the one taken here to damage the player
 
             if isinstance(creature, AggressiveCreature):
                 player.get_damaged(creature.damage)
