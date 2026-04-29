@@ -110,14 +110,14 @@ class PlayerHud:
     HEALTH_LOW_RATIO = 0.25
     OXYGEN_LOW_RATIO = 0.15
 
-    def __init__(self, pos: tuple[int, int] | None = None, size: tuple[int, int] = (300, 30)) -> None:
+    def __init__(self, pos: tuple[int, int] | None = None, size: tuple[int, int] = (400, 50)) -> None:
         screen_w, screen_h = g_config["SCREEN_SIZE"]
-        self.pos = pos if pos is not None else (24, screen_h - 112)
+        self.pos = pos if pos is not None else (24, screen_h - 130)
         self.size = size
         self.gap = 16
         self.border = 4
         self.font = pygame.font.Font(None, 28)
-        self.small_font = pygame.font.Font(None, 22)
+        self.medium_font = pygame.font.Font(None, 30)
         self._last_health: float | None = None
         # timer for the health bar growth and glow after taking damage.
         self._hit_pulse_timer = 0.0
@@ -137,17 +137,12 @@ class PlayerHud:
 
     def draw(self, screen: pygame.Surface, player) -> None:
         x, y = self.pos
-        # health bar glows when damaged
-        self._draw_bar(screen, pygame.Rect(x, y, *self.size), "HEALTH", player.health, player.max_health,
-                       (210, 35, 35), (70, 15, 20), self.HEALTH_LOW_RATIO,
-                       pulse_timer=self._hit_pulse_timer, pulse_duration=self._hit_pulse_duration)
         # oxygen bar blinks when low
-        self._draw_bar(screen, pygame.Rect(x, y + self.size[1] + self.gap, *self.size), "OXYGEN", player.oxygen, player.max_oxygen,
-                       (40, 145, 235), (10, 35, 80), self.OXYGEN_LOW_RATIO, blink_when_low=True)
+        self._draw_bar(screen, pygame.Rect(x, y + self.size[1] + self.gap, *self.size), "OXYGEN", player.oxygen, player.max_oxygen, (40, 145, 235), (10, 35, 80), self.OXYGEN_LOW_RATIO, blink_when_low=True)
+        # health bar glows when damaged
+        self._draw_bar(screen, pygame.Rect(x, y, *self.size), "HEALTH", player.health, player.max_health, (210, 35, 35), (70, 15, 20), self.HEALTH_LOW_RATIO, pulse_timer=self._hit_pulse_timer, pulse_duration=self._hit_pulse_duration)
 
-    def _draw_bar(self, screen: pygame.Surface, rect: pygame.Rect, label: str, value: float, maximum: float,
-                  fill_color: tuple[int, int, int], dark_color: tuple[int, int, int], low_ratio: float,
-                  pulse_timer: float = 0.0, pulse_duration: float = 1.0, blink_when_low: bool = False) -> None:
+    def _draw_bar(self, screen: pygame.Surface, rect: pygame.Rect, label: str, value: float, maximum: float, fill_color: tuple[int, int, int], dark_color: tuple[int, int, int], low_ratio: float, pulse_timer: float = 0.0, pulse_duration: float = 1.0, blink_when_low: bool = False) -> None:
         
         ratio = 0 if maximum <= 0 else max(0.0, min(1.0, value / maximum))
         is_low = ratio <= low_ratio
@@ -185,7 +180,7 @@ class PlayerHud:
             pass
 
         label_surf = self.font.render(label, False, (245, 245, 230))
-        value_surf = self.small_font.render(f"{max(0, value):.0f}/{maximum:.0f}", False, (245, 245, 230))
+        value_surf = self.medium_font.render(f"{max(0, value):.0f}/{maximum:.0f}", False, (245, 245, 230))
 
         label_y = draw_rect.centery - label_surf.get_height() // 2 # centers the text in the middle of the bars
         screen.blit(label_surf, (draw_rect.x + 10, label_y))
