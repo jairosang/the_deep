@@ -1,7 +1,8 @@
 from .components.button import Button
-from .hud import HeldInventory
+from .hud import HeldInventory, PlayerHud
 
 __all__ = [
 	"Button",
-	"HeldInventory"
+	"HeldInventory",
+    "PlayerHud"
 ]

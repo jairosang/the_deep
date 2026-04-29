@@ -175,7 +175,7 @@ class Player(MovingThing):
         self.current_holdable = None
 
     def get_damaged(self, ammt):
-        self.health -= ammt
+        self.health = max(0, self.health - ammt)  # changed so it doesnt display 0 and then die. it dies when it reaches 0
         self.animations["hurt"].reset()
         self._current_anim = self.animations["hurt"]
 

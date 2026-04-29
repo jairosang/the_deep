@@ -1,7 +1,7 @@
 from things import Player, Creature, PassiveCreature, AggressiveCreature
 from world import TileMap, Camera, Interactable, Exit, OxygenTank
 from things import Weapon, ResearchGun, Harpoon, Ray
-from ui import Button, HeldInventory
+from ui import Button, HeldInventory, PlayerHud
 from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
@@ -32,7 +32,8 @@ class UnderwaterState(BaseState):
         # Create inventory with research database reference
         research_gun = ResearchGun(self.research_database)
         self.held_inventory = HeldInventory([Weapon(), research_gun])
-        
+        self.player_hud = PlayerHud()
+
         # Store reference to research gun for scanning
         self.research_gun = research_gun
         
@@ -72,6 +73,8 @@ class UnderwaterState(BaseState):
         player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.player.update(dt, self.world_rect, player_area_tiles)
         self.player.update_animation_underwater(dt)
+        self.player_hud.update(self.player, dt)
+
         if self.player.current_holdable is not None:
             self.player.current_holdable._last_mouse_pos = self._screen_to_world_pos(pygame.mouse.get_pos())
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 100)
@@ -157,11 +160,8 @@ class UnderwaterState(BaseState):
         
         self.camera.draw(self.world_surface, screen)
 
-        # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
-        oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))
-        health_text = pygame.font.Font(None, 36).render(f"Health: {self.player.health:.0f}", True, (255, 255, 255))
-        screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 70))
-        screen.blit(health_text, (10, g_config["SCREEN_SIZE"][1] - 40))
+        self.player_hud.draw(screen, self.player)
+        
         self.held_inventory.draw(screen)
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed AFTER camera is drawn !!!!

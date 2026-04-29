@@ -102,3 +102,91 @@ class HeldInventory:
         scaled = pygame.transform.smoothscale(image, new_size) # final resizing of the image with smooth scaling to avoid pixelation
         self._scaled_icons[index] = scaled # Save the scaled image for the next return
         return scaled
+    
+
+class PlayerHud:
+    # Pixel style health/oxygen HUD 
+
+    HEALTH_LOW_RATIO = 0.25
+    OXYGEN_LOW_RATIO = 0.15
+
+    def __init__(self, pos: tuple[int, int] | None = None, size: tuple[int, int] = (300, 30)) -> None:
+        screen_w, screen_h = g_config["SCREEN_SIZE"]
+        self.pos = pos if pos is not None else (24, screen_h - 112)
+        self.size = size
+        self.gap = 16
+        self.border = 4
+        self.font = pygame.font.Font(None, 28)
+        self.small_font = pygame.font.Font(None, 22)
+        self._last_health: float | None = None
+        # timer for the health bar growth and glow after taking damage.
+        self._hit_pulse_timer = 0.0
+        self._hit_pulse_duration = 0.22
+        self._time = 0.0
+
+    def update(self, player, dt: float) -> None:
+        self._time += dt
+        if self._last_health is None:
+            self._last_health = player.health
+
+        # If health dropped since last frame, trigger the hit pulse.
+        if player.health < self._last_health:
+            self._hit_pulse_timer = self._hit_pulse_duration
+        self._last_health = player.health
+        self._hit_pulse_timer = max(0.0, self._hit_pulse_timer - dt)
+
+    def draw(self, screen: pygame.Surface, player) -> None:
+        x, y = self.pos
+        # health bar glows when damaged
+        self._draw_bar(screen, pygame.Rect(x, y, *self.size), "HEALTH", player.health, player.max_health,
+                       (210, 35, 35), (70, 15, 20), self.HEALTH_LOW_RATIO,
+                       pulse_timer=self._hit_pulse_timer, pulse_duration=self._hit_pulse_duration)
+        # oxygen bar blinks when low
+        self._draw_bar(screen, pygame.Rect(x, y + self.size[1] + self.gap, *self.size), "OXYGEN", player.oxygen, player.max_oxygen,
+                       (40, 145, 235), (10, 35, 80), self.OXYGEN_LOW_RATIO, blink_when_low=True)
+
+    def _draw_bar(self, screen: pygame.Surface, rect: pygame.Rect, label: str, value: float, maximum: float,
+                  fill_color: tuple[int, int, int], dark_color: tuple[int, int, int], low_ratio: float,
+                  pulse_timer: float = 0.0, pulse_duration: float = 1.0, blink_when_low: bool = False) -> None:
+        
+        ratio = 0 if maximum <= 0 else max(0.0, min(1.0, value / maximum))
+        is_low = ratio <= low_ratio
+        blink_on = True
+        if blink_when_low and is_low:
+            blink_on = int(self._time * 8) % 2 == 0
+
+        pulse = 0.0 if pulse_duration <= 0 else pulse_timer / pulse_duration
+        scale = 1.0 + 0.10 * pulse
+        draw_rect = pygame.Rect(0, 0, int(rect.width * scale), int(rect.height * scale))
+        draw_rect.midleft = rect.midleft
+        shadow = draw_rect.move(5, 5)
+        pygame.draw.rect(screen, (6, 8, 15), shadow)
+        pygame.draw.rect(screen, (18, 20, 30), draw_rect)
+        pygame.draw.rect(screen, (225, 225, 210), draw_rect, self.border)
+        pygame.draw.rect(screen, dark_color, draw_rect.inflate(-self.border * 2, -self.border * 2))
+        inner = draw_rect.inflate(-self.border * 4, -self.border * 4)
+        inner.width = max(0, int(inner.width * ratio))
+
+        if blink_on and inner.width > 0:
+            pygame.draw.rect(screen, fill_color, inner)
+            highlight = inner.copy()
+            highlight.height = max(3, inner.height // 4)
+            pygame.draw.rect(screen, tuple(min(255, c + 45) for c in fill_color), highlight)
+
+        if pulse > 0:
+            glow_alpha = int(130 * pulse)
+            glow_rect = draw_rect.inflate(14, 14)
+            glow = pygame.Surface(glow_rect.size, pygame.SRCALPHA)
+            pygame.draw.rect(glow, (*fill_color, glow_alpha), glow.get_rect(), 4)
+            screen.blit(glow, glow_rect)
+
+        if is_low:
+            # maybe add something like screen tint or flashing idk
+            pass
+
+        label_surf = self.font.render(label, False, (245, 245, 230))
+        value_surf = self.small_font.render(f"{max(0, value):.0f}/{maximum:.0f}", False, (245, 245, 230))
+
+        label_y = draw_rect.centery - label_surf.get_height() // 2 # centers the text in the middle of the bars
+        screen.blit(label_surf, (draw_rect.x + 10, label_y))
+        screen.blit(value_surf, (draw_rect.right + 12, draw_rect.centery - value_surf.get_height() // 2))
