@@ -36,6 +36,7 @@ top to bottom direction
 package core <<core>> {
 class GameManager {
     - is_running: bool
+    - is_debug_on: bool
     - screen: pygame.Surface
     - clock: pygame.time.Clock
     - fps: int
@@ -50,13 +51,12 @@ class GameManager {
 
 package states <<states>> {
     abstract class BaseState {
-        - screen_size: tuple[int, int]
         - is_done: tuple[bool, None|str]
         - is_quitting: bool
         + {abstract} enter(data: dict = {}): void
         + {abstract} handle_event(event: Event): void
         + {abstract} update(dt: float): void
-        + {abstract} draw(surface: Surface): void
+        + {abstract} draw(screen: Surface, is_debug_on: bool): void
         + {abstract} exit(): void
     }
 
@@ -65,7 +65,7 @@ package states <<states>> {
         + enter(data: dict = {}): void
         + handle_event(event: Event): void
         + update(dt: float): void
-        + draw(surface: Surface): void
+        + draw(screen: Surface, is_debug_on: bool): void
         + exit(): void
         + quit_game(): void
     }
@@ -73,27 +73,38 @@ package states <<states>> {
     class UnderwaterState {
         - player: Player
         - camera: Camera
-        - map: TileMap
+        - tile_map: TileMap
+        - world_surface: Surface
+        - world_rect: Rect
+        - oxygen_tanks: list[OxygenTank]
+        - closest_interactable: Interactable
+        - research_database: ResearchDatabase
+        - held_inventory: HeldInventory
         - button: Button
         - creatures: list[Creature]
         + enter(data: dict = {}): void
         + handle_event(event: Event): void
         + update(dt: float): void
-        + draw(surface: Surface): void
+        + draw(screen: Surface, is_debug_on: bool): void
         + exit(): void
-        + spawn_creatures(): void
-        + check_return_point(): bool
-        + update_depth(): void
+        + _spawn_creatures(): void
+        + _spawn_oxygen_tanks(): void
+        + _update_shootables(dt: float): void
         + _trigger_game_over(): void
     }
 
     class HomebaseState {
         - player: Player
-        - map: TileMap
+        - tile_map: TileMap
+        - world_surface: Surface
+        - world_rect: Rect
+        - camera: Camera
+        - closest_interactable: Interactable
+        - research_database: ResearchDatabase
         + enter(data: dict = {}): void
         + handle_event(event: Event): void
         + update(dt: float): void
-        + draw(surface: Surface): void
+        + draw(screen: Surface, is_debug_on: bool): void
         + exit(): void
     }
 
@@ -102,8 +113,9 @@ package states <<states>> {
         + enter(data: dict = {}): void
         + handle_event(event: Event): void
         + update(dt: float): void
-        + draw(surface: Surface): void
+        + draw(screen: Surface, is_debug_on: bool): void
         + exit(): void
+        + quit_game(): void
     }
 }
 
@@ -112,48 +124,47 @@ package things <<things>> {
         - image: pygame.Surface
         - pos: pygame.math.Vector2
         - rect: pygame.Rect
-        + update(dt: float): void
+        + update(dt: float, bound_rect: pygame.Rect): void
         + draw(surface: Surface): void
     }
 
     abstract class MovingThing {
         - thrust: float
         - velocity: pygame.math.Vector2
-        - movement_axis: pygame.math.Vector2
-        - is_sprinting: bool
-        - sprint_multiplier: float
-        + handle_inputs(keys): void
-        + update(dt: float): void
+        - input_direction: pygame.math.Vector2
+        - mass: float
+        - damage: int
+        + update(dt: float, bound_rect: pygame.Rect, area_tiles: list[Rect]): void
     }
-    
 
-    package moving_things <<things>> {
+    package moving_things {
         class Player {
             - health: int
             - max_health: int
             - oxygen: float
             - max_oxygen: float
             - oxygen_depletion_rate: float
-            - depth: float
-            - max_depth_limit: float
-            - buffer_inventory: List[Item]
-            - buffer_inventory_capacity: int
-            - holdables: List[Holdable]
-            - active_holdable: Holdable
-            + update(dt: float): void
+            - inventory: dict[str, int]
+            - current_holdable: Holdable
+            - _left_click_pressed: bool
+            + update(dt: float, bound_rect: pygame.Rect, area_tiles: list[Rect]): void
             + draw(surface: Surface): void
-            + update_oxygen(): void
-            + update_depth_damage(): void
-            + heal(): void
-            + interact(): void
+            + handle_event(event: Event): void
+            + set_holdable(holdable: Holdable | None): void
+            + update_animation_underwater(dt: float): void
+            + update_animation_homebase(dt: float): void
             + revert(): void
         }
 
         abstract class Creature {
             - health: int
             - max_health: int
+            - flash_timer: float
+            - flash_duration: float
+            - death_anim: Animation
+            - is_dying: bool
             + think(dt: float, player_pos: Vec2): Vec2
-            + update(dt: float): void
+            + update(dt: float, bound_rect: pygame.Rect, area_tiles: list[Rect], player_pos: Vec2): void
             + draw(surface: Surface): void
             + get_damaged(amount: int): void
             + is_dead(): bool
@@ -168,56 +179,103 @@ package things <<things>> {
             - chase_radius: float
             + think(dt: float, player_pos: Vec2): Vec2
         }
+
+        class Projectile {
+            - max_range: float
+            - spawn_pos: pygame.math.Vector2
+            - is_destroyed: bool
+            + update(dt: float, bound_rect: pygame.Rect, area_tiles: list[Rect]): void
+            + destroy(): void
+        }
+
+        class Ray {
+            - origin: pygame.math.Vector2
+            - end_pos: pygame.math.Vector2
+            - range: float
+            - beam_color: tuple[int, int, int]
+            + update(origin, target_pos): void
+            + get_creatures_in_beam(creatures: list): list
+            + draw(surface: Surface): void
+        }
     }
 
-    package items <<things>> {
+    package items {
         class Item {
             + interact(): void
+            + draw(screen: Surface): void
         }
 
         abstract class Holdable {
+            - continuous: bool
+            - is_available: bool
+            - name: str
+            - description: str
+            - color: tuple[int, int, int]
+            - image_path: Path | None
             - range: float
             - cooldown_s: float
-            - is_available: bool
+            - shoot_recoil: int
+            - shootables: list
+            - aim_direction: pygame.math.Vector2
+            - player_center: pygame.math.Vector2
             + {abstract} shoot(pos: tuple[int, int]): void
+            + update(dt: float, bound_rect: pygame.Rect, player_pos): void
+            + update_shootables(dt: float, creatures: list, world_rect=None, get_tiles=None): tuple[list, list]
+            + draw(surface: Surface): void
         }
 
         class Weapon {
             - damage: int
             - ammo: int
-            + shoot(pos: tuple[int,int]): void
+            - shot_dt: float
+            - thrust: float
+            + shoot(pos: tuple[int, int]): bool
+            + update_shootables(dt: float, creatures: list, world_rect=None, get_tiles=None): tuple[list, list]
+            + draw_things_on_screen(surface): void
         }
 
         class Harpoon {
             - projectile_speed: float
-            + shoot(pos: tuple[int,int]): void
+            + shoot(pos: tuple[int, int]): void
         }
 
         class ResearchGun {
             - scan_rate: float
-            + shoot(pos: tuple[int,int]): void
+            - research_database: ResearchDatabase
+            - scan_timers: dict
+            - beam_creatures: set
+            + shoot(pos: tuple[int, int]): bool
+            + update_shootables(dt: float, creatures: list, world_rect=None, get_tiles=None): tuple[list, list]
+            + draw_things_on_screen(surface): void
         }
     }
 }
 
 package world <<world>> {
     class TileMap {
-        - path: Path
-        - visual_layer: pygame.Surface
-        - collision_layer: List[List[int]]
+        - visual_surface: pygame.Surface
         - tile_size: tuple[int, int]
         - map_size: tuple[int, int]
+        - tile_layers: dict[str, Any]
+        - mid_layer: Any
+        - interactables: list[Interactable]
+        - tilesets: list[tuple[int, pygame.Surface | dict, int]]
         + parse_from_path(path: Path): void
         + draw(surface: Surface, camera_rect: Rect): void
         + is_tile_solid(x: int, y: int): bool
+        + get_tiles_at_area(x: float, y: float, size: tuple[int, int]): list[Rect]
         + get_tile_at_position(x: float, y: float): tuple
         + get_closest_interactable(x: float, y: float, max_distance: int): Interactable
     }
 
     class Camera {
-        - offset: pygame.math.Vector2
-        - world_size: pygame.Rect
-        - map_boundaries: pygame.Rect
+        - pos: pygame.math.Vector2
+        - target: pygame.math.Vector2
+        - size: tuple[int, int]
+        - map_rect: pygame.Rect
+        - rect: pygame.Rect
+        - zoom: float
+        - camera_surface: pygame.Surface
         + update(dt: float, target_rect: pygame.Rect): void
         + draw(world_surface: Surface, screen: Surface): void
     }
@@ -241,6 +299,12 @@ package world <<world>> {
     class Research {
         + interact(): void
     }
+
+    class OxygenTank {
+        - oxygen_refill: float
+        + interact(): void
+        + draw(surface: Surface): void
+    }
 }
 
 package utils <<utilities>> {
@@ -248,6 +312,27 @@ package utils <<utilities>> {
         + resolve_map_collision_on_x_axis(entity: MovingThing, tiles: list[Rect]): void
         + resolve_map_collision_on_y_axis(entity: MovingThing, tiles: list[Rect]): void
         + resolve_player_creature_collisions(player: Player, creatures: list[Creature], tiles: list[Rect]): list[Item]
+        + resolve_player_item_pickups(player: Player, items: list[Item], dt: float): list[Item]
+        + resolve_projectile_creature_collisions(projectiles: list[Projectile], creatures: list[Creature]): tuple[list, list]
+    }
+
+    class Animation {
+        - frames: list
+        - fps: int
+        - loop: bool
+        - timer: float
+        - index: int
+        - finished: bool
+        + get_image(): Surface
+        + update(dt: float): void
+        + reset(): void
+    }
+
+    class ResearchDatabase {
+        - research_data: dict[str, dict[str, float]]
+        + get_scan_progress(creature_species: str, is_alive: bool): float
+        + update_scan_progress(creature_species: str, is_alive: bool, progress: float): void
+        + get_total_species_progress(creature_species: str): float
     }
 
     class DataManager {
@@ -260,44 +345,40 @@ package utils <<utilities>> {
 }
 
 package ui <<UI>> {
+    class HeldInventory {
+        - slot_size: tuple[int, int]
+        - padding: int
+        - selected_index: int
+        - holdables: list[Holdable]
+        - slot_count: int
+        - pos: tuple[int, int]
+        - label_font: pygame.font.Font
+        - _scaled_icons: dict[int, pygame.Surface]
+        + remove_holdable(index): void
+        + append_holdables(new_holdables: list[Holdable]): void
+        + select(index: int): void
+        + handle_event(event: Event): void
+        + selected_holdable(): Holdable
+        + draw(screen: Surface): void
+    }
 
-abstract class BaseMenu {
-    - is_open: bool
-    + {abstract} open(): void
-    + {abstract} close(): void
-    + {abstract} handle_event(event: Event): void
-    + {abstract} update(dt: float): void
-    + {abstract} draw(surface: Surface): void
-}
-
-class HUD {
-    - font: pygame.font.Font
-    - debug_mode: bool
-    + draw(screen: Surface, player: Player): void
-    + draw_health(screen: Surface, health: int): void
-    + draw_oxygen(screen: Surface, oxygen: float): void
-    + draw_depth(screen: Surface, depth: float): void
-    + draw_debug_info(screen: Surface, fps: int, coords: tuple): void
-}
-
-class Button {
-    - color: tuple[int, int, int]
-    - hover_color: tuple[int, int, int]
-    - size: tuple[int, int]
-    - func: callable
-    - surface: pygame.Surface
-    - rect: pygame.Rect
-    - font: pygame.font.Font
-    - txt: str
-    - font_color: tuple[int, int, int]
-    - txt_surf: pygame.Surface
-    - txt_rect: pygame.Rect
-    - curcolor: tuple[int, int, int]
-    + draw(screen: Surface): void
-    + mouseover(): void
-    + call_back(*args): Any
-}
-
+    class Button {
+        - color: tuple[int, int, int]
+        - hover_color: tuple[int, int, int]
+        - size: tuple[int, int]
+        - func: callable
+        - surface: pygame.Surface
+        - rect: pygame.Rect
+        - font: pygame.font.Font
+        - txt: str
+        - font_color: tuple[int, int, int]
+        - txt_surf: pygame.Surface
+        - txt_rect: pygame.Rect
+        - curcolor: tuple[int, int, int]
+        + draw(screen: Surface): void
+        + check_mouseover(mouse_pos: tuple[int, int]): void
+        + call_back(*args): Any
+    }
 }
 
 ' === Relationships ===
@@ -312,7 +393,7 @@ BaseState <|-- GameOverState
 Thing <|-- MovingThing
 MovingThing <|-- Player
 MovingThing <|-- Creature
-Thing <|-- Item
+MovingThing <|-- Projectile
 
 Creature <|-- PassiveCreature
 Creature <|-- AggressiveCreature
@@ -325,6 +406,7 @@ Holdable <|-- ResearchGun
 Interactable <|-- Exit
 Interactable <|-- Upgrades
 Interactable <|-- Research
+Interactable <|-- OxygenTank
 
 ' --- State Relations ---
 UnderwaterState o-- Player
@@ -332,20 +414,28 @@ HomebaseState o-- Player
 StartScreen o-- "*" Button
 UnderwaterState o-- Button
 GameOverState o-- "*" Button
-Player o-- "*" Holdable
+UnderwaterState o-- HeldInventory
+HeldInventory o-- "*" Holdable
+Player o-- "0..1" Holdable : current_holdable
 
 UnderwaterState o-- "*" Creature
 UnderwaterState o-- TileMap
 UnderwaterState o-- Camera
+UnderwaterState o-- "*" OxygenTank
+UnderwaterState o-- ResearchDatabase
 UnderwaterState ..> PhysicsService
 UnderwaterState o-- "0..1" Interactable : closest
 HomebaseState o-- TileMap
 HomebaseState o-- "0..1" Interactable : closest
-HomebaseState ..> BaseMenu
+HomebaseState o-- Camera
+HomebaseState o-- ResearchDatabase
 HomebaseState ..> DataManager
 
+Weapon ..> Projectile
+ResearchGun ..> Ray
 PhysicsService ..> TileMap : checks
 PhysicsService ..> MovingThing : checks
+PhysicsService ..> Projectile : checks
 TileMap o-- "*" Interactable
 
 core -[hidden]down-> states
@@ -357,6 +447,4 @@ states -[hidden]down-> ui
 things -[hidden]left-> world
 utils -[hidden]right-> world
 ui -[hidden]right-> world
-
-Button -[hidden]up-> HUD
 @enduml
