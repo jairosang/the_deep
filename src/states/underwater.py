@@ -267,10 +267,11 @@ class UnderwaterState(BaseState):
                 spawned += 1
     
     def _refill_oxygen(self, tank: OxygenTank) -> None:
-        """Refill player oxygen from a tank."""
+        # refill player oxygen from a tank 
         self.player.oxygen = min(self.player.oxygen + tank.oxygen_refill, self.player.max_oxygen)
-    
+        self.oxygen_tanks.remove(tank)
+
     def _get_interactable_distance(self, interactable: Interactable) -> float:
-        """Calculate distance from player to an interactable."""
+        # calculate distance from player to an interactable
         return ((interactable.rect.centerx - self.player.rect.centerx)**2 + 
                 (interactable.rect.centery - self.player.rect.centery)**2)**0.5
