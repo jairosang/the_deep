@@ -4,7 +4,7 @@ from config import aggresive_creatures as ac_config
 
 # This is to avoid circular imports
 if TYPE_CHECKING:
-    from things import MovingThing, Creature, Player
+    from things import MovingThing, Creature, Player, Item, Projectile
 
 def get_colliding_tiles(tiles: list[Rect], rect: Rect) -> list[Rect]:
     hits = []
@@ -40,6 +40,12 @@ def resolve_overlap_on_y_axis(moving_thing: 'MovingThing', rect_b: Rect):
     elif moving_thing.velocity.y > 0: 
         moving_thing.rect.bottom = rect_b.top
         moving_thing.pos.y = moving_thing.rect.y
+
+def _apply_elastic_collision(a: 'MovingThing', b: 'MovingThing'):
+    a_vel = ((a.mass - b.mass) / (a.mass + b.mass)) * a.velocity + ((2 * b.mass) / (a.mass + b.mass)) * b.velocity
+    b_vel = ((2 * a.mass) / (a.mass + b.mass)) * a.velocity + ((b.mass - a.mass) / (a.mass + b.mass)) * b.velocity
+    a.velocity = a_vel
+    b.velocity = b_vel
 
 def _resolve_player_creature_contact(player: 'Player', creature: 'Creature', tiles: list[Rect] | None = None):
     overlap = player.rect.clip(creature.rect)
@@ -96,27 +102,76 @@ def resolve_player_creature_collisions(player: 'Player', creatures: list['Creatu
     dropped_items = []
 
     for creature in creatures:
+
+        if creature.is_dying:
+            if creature.is_dead():
+                dead_creatures.append(creature)
+                dropped_items.append(Item(creature.rect.topleft, image=creature.image))
+            continue
+        
         if player.rect.colliderect(creature.rect):
             _resolve_player_creature_contact(player, creature, tiles)
-            creature.get_damaged(1)  # The creatures should have a damage attribute that is the one taken here to damage the player
 
             if isinstance(creature, AggressiveCreature):
-                player.get_damaged(ac_config["CONTACT_DAMAGE"])
+                player.get_damaged(creature.damage)
 
-            player_vel_x = ((player.mass - creature.mass)/(player.mass + creature.mass)) * player.velocity
-            player_vel_y = ((2 * creature.mass)/(player.mass + creature.mass)) * creature.velocity
-
-            creature_vel_x = ((2 * player.mass)/(player.mass + creature.mass)) * player.velocity
-            creature_vel_y = ((creature.mass - player.mass)/(player.mass + creature.mass)) * creature.velocity
-
-            creature.velocity = creature_vel_x + creature_vel_y
-            player.velocity = player_vel_x + player_vel_y
+            _apply_elastic_collision(player, creature)
 
             if creature.is_dead():
                 dead_creatures.append(creature)
-                dropped_items.append(Item(creature.rect.topleft))
+                dropped_items.append(Item(creature.rect.topleft, image=creature.image))
 
     for creature in dead_creatures:
         creatures.remove(creature)
 
     return dropped_items
+
+def resolve_player_item_pickups(player: 'Player', items: list['Item'], dt: float) -> list['Item']:
+    picked_items = []
+
+    for item in items:
+        if item.pickup_timer > 0:
+            item.pickup_timer = max(0, item.pickup_timer - dt)
+            continue
+
+        if player.rect.colliderect(item.rect):
+            player.inventory[item.name] = player.inventory.get(item.name, 0) + 1
+            picked_items.append(item)
+
+    for item in picked_items:
+        items.remove(item)
+
+    return picked_items
+
+def resolve_projectile_creature_collisions(projectiles: list['Projectile'], creatures: list['Creature']):
+    from things import Item
+
+    dead_creatures = []
+    dropped_items = []
+    spent_projectiles = []
+
+    for projectile in projectiles:
+        if projectile.is_destroyed:
+            spent_projectiles.append(projectile)
+            continue
+
+        for creature in creatures:
+            if creature.is_dying:
+                continue
+
+            if projectile.rect.colliderect(creature.rect):
+                creature.get_damaged(projectile.damage)
+                _apply_elastic_collision(projectile, creature)
+                projectile.destroy()
+                spent_projectiles.append(projectile)
+
+                if creature.is_dead():
+                    dead_creatures.append(creature)
+                    dropped_items.append(Item(creature.rect.topleft, image=creature.image))
+                break
+
+    for creature in dead_creatures:
+        if creature in creatures:
+            creatures.remove(creature)
+
+    return dropped_items, spent_projectiles

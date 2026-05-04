@@ -1,37 +1,85 @@
 from things import Player, Creature, PassiveCreature, AggressiveCreature
-from world import TileMap, Camera, Interactable, Exit
-from ui import Button, InventoryMenu
+from things import Weapon, ResearchGun, Harpoon, Ray
+from world import TileMap, Camera, Interactable, Exit, OxygenTank
+from ui import Button, InventoryMenu, PauseMenu, HeldInventory, PlayerHud
 from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
 import utils as phy
+from utils.research_database import ResearchDatabase
 import pygame
 import random
 
 
 class UnderwaterState(BaseState):
-    def __init__(self, player: Player) -> None:
+    def __init__(self, player: Player, research_database: ResearchDatabase | None = None) -> None:
         super().__init__()
         self.player = player
         self.creatures: list[Creature] = []
         self.items = []
+        self.oxygen_tanks: list[OxygenTank] = []
         self.tile_map = TileMap(g_config["UNDERWATER_TILEMAP_PATH"])
         self.world_surface = pygame.Surface(self.tile_map.map_size, pygame.SRCALPHA)
         self.closest_interactable: Interactable | None = None
         
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
-        self.camera = Camera(self.world_rect)
+        self.camera = Camera(self.world_rect, 3)
         self._load_interactable_call_backs()
+        
+        # Store research database reference
+        self.research_database = research_database 
+        
+        # Create inventory with research database reference
+        research_gun = ResearchGun(self.research_database)
+        self.held_inventory = HeldInventory([Weapon(), research_gun])
+        self.player_hud = PlayerHud()
+
+        # Store reference to research gun for scanning
+        self.research_gun = research_gun
+        
+        # Research gun input tracking
+        self.left_mouse_held = False
+        self.f_key_held = False
+        
+        # Research gun state tracking
+        self.player_last_health = self.player.health
+        self.previous_holdable = None
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
+        g_config["DRAG"] = 0.9
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
+        self.player.set_holdable(self.held_inventory.selected_holdable)
+        self.player.movement_axis.update(1,1)
         # Inventory menu you can open it with E key
         self.inventory_menu = InventoryMenu()
-        self.spawn_creatures()
+        # Pause popup with resume and title options
+        self.pause_menu = PauseMenu(self._resume_game, self._go_to_start)
+        self._spawn_creatures()
+        self._spawn_oxygen_tanks()
 
     def handle_event(self, e: pygame.event.Event):
+        # Escape toggles pause
+        if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+            if self.pause_menu.is_open:
+                self.pause_menu.close()
+            else:
+                if self.inventory_menu.is_open:
+                    self.inventory_menu.close()
+                self.pause_menu.open()
+            return
+
+        # While paused only the pause menu handles events
+        if self.pause_menu.is_open:
+            self.pause_menu.handle_event(e)
+            return
+
+        prev_index = self.held_inventory.selected_index
+        self.held_inventory.handle_event(e)
+        if self.held_inventory.selected_index != prev_index:
+            self.player.set_holdable(self.held_inventory.selected_holdable)
+
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e:
@@ -46,22 +94,31 @@ class UnderwaterState(BaseState):
         # Forward other events to the menu so it can hook the material later
         self.inventory_menu.handle_event(e)
 
-    def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
-        self.player.handle_inputs(keys)
+        self.player.handle_event(e)
 
     def update(self, dt):
+        # Freeze gameplay while paused
+        if self.pause_menu.is_open:
+            self.pause_menu.update(dt)
+            return
+
         # Get rects of tiles surrounding player for calculating collisions with environment 
         player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
         self.player.update(dt, self.world_rect, player_area_tiles)
-        player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
+        self.player.update_animation_underwater(dt)
+        self.player_hud.update(self.player, dt)
+
+        if self.player.current_holdable is not None:
+            self.player.current_holdable._last_mouse_pos = self._screen_to_world_pos(pygame.mouse.get_pos())
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 100)
+        
+        # Check for closest oxygen tank
+        for tank in self.oxygen_tanks:
+            dist_to_tank = ((tank.rect.centerx - self.player.rect.centerx)**2 + (tank.rect.centery - self.player.rect.centery)**2)**0.5
+            if self.closest_interactable is None or dist_to_tank < self._get_interactable_distance(self.closest_interactable):
+                if dist_to_tank < 100:
+                    self.closest_interactable = tank
         self.camera.update(dt, self.player.rect)
-        bounds = pygame.Rect(
-            0,
-            0,
-            int(g_config["SCREEN_SIZE"][0]),
-            int(g_config["SCREEN_SIZE"][1]) # make creatures stay within bounds
-        )
         player_pos = pygame.math.Vector2(self.player.rect.center)
         for c in self.creatures:
             area_tiles = self.tile_map.get_tiles_at_area(c.rect.centerx, c.rect.centery, (7,7))
@@ -73,18 +130,8 @@ class UnderwaterState(BaseState):
         dropped_items = phy.resolve_player_creature_collisions(self.player, self.creatures, player_area_tiles)
         self.items.extend(dropped_items)
 
-        items_to_remove = []
-        for item in self.items:
-            if item.pickup_timer > 0:
-                item.pickup_timer = max(0, item.pickup_timer - 0.015) #could use dt i've seen online, not sure how it works though
-            elif self.player.rect.colliderect(item.rect):
-                if item.name in self.player.inventory:
-                    self.player.inventory[item.name] += 1
-                else:
-                    self.player.inventory[item.name] = 1
-                items_to_remove.append(item)
-        for item in items_to_remove:
-            self.items.remove(item)
+        phy.resolve_player_item_pickups(self.player, self.items, dt)
+        self._update_shootables(dt)
 
 
     def draw(self, screen: pygame.Surface, is_debug_on):
@@ -93,19 +140,45 @@ class UnderwaterState(BaseState):
         self.tile_map.draw(self.world_surface, self.camera.rect)
         if self.closest_interactable is not None:
             self.closest_interactable.draw_prompt(self.world_surface)
-        self.player.draw(self.world_surface)
-
-        # Just telling the guys to draw themselves
+        
+        # Collect all drawable entities with their Y positions for depth sorting
+        drawable_entities = []
+        
+        # Add player
+        drawable_entities.append(('player', self.player, self.player.rect.centery))
+        
+        # Add oxygen tanks
+        for tank in self.oxygen_tanks:
+            drawable_entities.append(('tank', tank, tank.rect.centery))
+        
+        # Add creatures
         for c in self.creatures:
-            c.draw(self.world_surface)
-
+            drawable_entities.append(('creature', c, c.rect.centery))
+        
+        # Add items
         for item in self.items:
-            item.draw(self.world_surface)
+            drawable_entities.append(('item', item, item.rect.centery))
+        
+        # Sort by Y position (smaller Y = further away, drawn first)
+        drawable_entities.sort(key=lambda x: x[2])
+        
+        for holdable in self.held_inventory.holdables:
+            holdable.draw_things_on_screen(self.world_surface)     # Stuff like the research gun ray area nd stuff
+
+        # Draw all entities in sorted order
+        for entity_type, entity, _ in drawable_entities:
+            entity.draw(self.world_surface)
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed BEFORE camera is drawn !!!!
         if is_debug_on:
             for c in self.creatures:
                 pygame.draw.line(self.world_surface, (0,0,255), c.rect.center, c.rect.center + c.velocity)
+                pygame.draw.rect(self.world_surface, (255, 0, 255), c.rect, 2)
+            for holdable in self.held_inventory.holdables:
+                for shootable in holdable.get_shootables():
+                    if not isinstance(shootable, Ray):
+                        pygame.draw.line(self.world_surface, (0,0,255), shootable.rect.center, shootable.rect.center + shootable.velocity)
+                        pygame.draw.rect(self.world_surface, (255, 0, 255), shootable.rect, 2)
             
             # Grid with tile separation
             for row_i in range(self.tile_map.map_size[0] - 1):
@@ -116,30 +189,31 @@ class UnderwaterState(BaseState):
             # Player velocity (with direction)
             pygame.draw.line(self.world_surface, (255,0,0), self.player.rect.center, self.player.rect.center + self.player.velocity)
             pygame.draw.circle(self.world_surface, (0,255,0), self.player.pos, 1)
+            pygame.draw.rect(self.world_surface, (255, 255, 0), self.player.rect, 2)
         
         self.camera.draw(self.world_surface, screen)
-        self.button.draw(screen)
 
-        # This thing is a temporary thing for displaying the oxygen thing in the bottom left corner of the screen thing
-        oxygen_text = pygame.font.Font(None, 36).render(f"O2: {self.player.oxygen:.0f}", True, (255, 255, 255))
-        health_text = pygame.font.Font(None, 36).render(f"Health: {self.player.health:.0f}", True, (255, 255, 255))
-        screen.blit(oxygen_text, (10, g_config["SCREEN_SIZE"][1] - 70))
-        screen.blit(health_text, (10, g_config["SCREEN_SIZE"][1] - 40))
+        self.player_hud.draw(screen, self.player)
+        
+        self.held_inventory.draw(screen)
 
         # IMPORTANT, DONT MOVE IT: Debug stuff that must be printed AFTER camera is drawn !!!!
         if is_debug_on:
             player_pos_text = pygame.font.Font(None, 36).render(f"Player_pos: {self.player.pos}", True, (255,255,255), (50,50,50))
             screen.blit(player_pos_text, (10, 5))
+            self.button.draw(screen)
 
         # Inventory menu drawn last so it stays on top of everything
         self.inventory_menu.draw(screen)
+        self.pause_menu.draw(screen)
 
     def exit(self):
         self.player.revert()
+        self.player.movement_axis[1] = 0
 
 
     # ==== Own Methods ====
-    def spawn_creatures(self):
+    def _spawn_creatures(self):
         self.creatures.clear()
         w, h = self.tile_map.map_size
 
@@ -157,18 +231,34 @@ class UnderwaterState(BaseState):
                 self.creatures.append(c)
 
 
-        for _ in range(15):
+        for i in range(15):
             x = random.randint(100, int(w) - 100)
             y = random.randint(100, int(h) - 100)
 
             creature_size = random.randint(20,30)
-            c = AggressiveCreature((x, y), size=creature_size, chase_radius=200)
+
+            sprite = "fish-dart" if i % 2 == 0 else "fish-big"
+            c = AggressiveCreature((x, y), size=creature_size, chase_radius=200, sprite = sprite)
             c.thrust = c.thrust - round((creature_size % 20) * 8)
             c.mass = c.mass + round((creature_size % 20) * 1.5)
             self.creatures.append(c)
 
-    def check_return_point(self):
+    def _update_shootables(self, dt: float) -> None:
+        for holdable in self.held_inventory.holdables:
+            # The return value is for the projectiles, this is such bad design and will crash if return something we shouldn't but we dont have tiiiiiiiiiiime
+            dropped_items, spent_shootables = holdable.update_shootables(dt, self.creatures, self.world_rect, self.tile_map.get_tiles_at_area)
+            holdable.remove_shootables(spent_shootables)
+            self.items.extend(dropped_items)
+
+    def _check_return_point(self):
         pass
+
+    def _screen_to_world_pos(self, screen_pos: tuple[int, int]) -> tuple[int, int]:
+        zoom_x = g_config["SCREEN_SIZE"][0] / self.camera.rect.width
+        zoom_y = g_config["SCREEN_SIZE"][1] / self.camera.rect.height
+        world_x = self.camera.rect.left + (screen_pos[0] / zoom_x)
+        world_y = self.camera.rect.top + (screen_pos[1] / zoom_y)
+        return (int(world_x), int(world_y))
 
     def update_depth(self):
         pass
@@ -185,9 +275,43 @@ class UnderwaterState(BaseState):
         self.is_done = (True, "HOMEBASE")
         self.exit()
 
+    def _resume_game(self):
+        self.pause_menu.close()
+
     # Interactable objects that load an external callback function
     def _load_interactable_call_backs(self) -> None:
         for interactable in self.tile_map.interactables:
             if isinstance(interactable, Exit):
                 interactable.on_interact = self._go_to_homebase
                 interactable.prompt_text = "Press E to go back to Homebase"
+
+    def _spawn_oxygen_tanks(self) -> None:
+        """Spawn oxygen tanks randomly across the underwater map, avoiding walls."""
+        self.oxygen_tanks.clear()
+        w, h = self.tile_map.map_size
+        num_tanks = 8  # Number of oxygen tanks to spawn
+        spawned = 0
+        max_attempts = 500  # Prevent infinite loops
+        attempts = 0
+        
+        while spawned < num_tanks and attempts < max_attempts:
+            attempts += 1
+            x = random.randint(100, int(w) - 100)
+            y = random.randint(100, int(h) - 100)
+            
+            # Check if position is not solid (not a wall)
+            if not self.tile_map.is_tile_solid(x, y):
+                tank = OxygenTank(x, y, oxygen_refill=30.0)
+                tank.on_interact = lambda t=tank: self._refill_oxygen(t)
+                self.oxygen_tanks.append(tank)
+                spawned += 1
+    
+    def _refill_oxygen(self, tank: OxygenTank) -> None:
+        # refill player oxygen from a tank 
+        self.player.oxygen = min(self.player.oxygen + tank.oxygen_refill, self.player.max_oxygen)
+        self.oxygen_tanks.remove(tank)
+
+    def _get_interactable_distance(self, interactable: Interactable) -> float:
+        # calculate distance from player to an interactable
+        return ((interactable.rect.centerx - self.player.rect.centerx)**2 + 
+                (interactable.rect.centery - self.player.rect.centery)**2)**0.5

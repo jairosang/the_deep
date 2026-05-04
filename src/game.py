@@ -22,11 +22,6 @@ class GameManager():
                 
             self.current_state.handle_event(event)
 
-        # Getting the state of the keys and passing em along, idk it seems kinda very bad to poll it every time from everything that will use a key
-        keys = pygame.key.get_pressed()
-        mouse_pos = pygame.mouse.get_pos()
-        self.current_state.handle_inputs(keys, mouse_pos)
-
     # Checks if state done or game quit signals are sent by states to handle them. Then delegates updating to state.
     def update(self,dt):
         if self.current_state.is_quitting:

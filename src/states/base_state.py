@@ -13,10 +13,6 @@ class BaseState(ABC):
     @abstractmethod
     def handle_event(self, e: pygame.event.Event):
         pass
-        
-    @abstractmethod
-    def handle_inputs(self, keys: pygame.key.ScancodeWrapper, mouse_pos: tuple[int, int]):
-        pass
 
     @abstractmethod
     def update(self, dt):

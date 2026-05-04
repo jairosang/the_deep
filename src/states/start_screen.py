@@ -1,6 +1,5 @@
 import pygame
 from pathlib import Path
-from pygame.key import ScancodeWrapper
 from ui import Button
 from .base_state import BaseState
 from config import game as g_config
@@ -47,10 +46,9 @@ class StartScreen(BaseState):
             for button in self.buttons:
                 if button.rect.collidepoint(click_pos):
                     button.call_back()
-
-    def handle_inputs(self, keys: ScancodeWrapper, mouse_pos: tuple[int, int]):
-        for button in self.buttons:
-            button.check_mouseover(mouse_pos)
+        elif e.type == pygame.MOUSEMOTION:
+            for button in self.buttons:
+                button.check_mouseover(e.pos)
 
     def update(self, dt):
         pass

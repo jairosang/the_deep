@@ -15,7 +15,7 @@ game = {
 player = {
     "SIZE": (32, 64),
     "UNDERWATER_START_POS": (70, 70),
-    "HOMEBASE_START_POS": (300, 384),
+    "HOMEBASE_START_POS": (300, 400),
     "SPRINT_MULTIPLIER": 1.5,
     "THRUST": 180,
     "MASS": 100,

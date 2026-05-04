@@ -11,6 +11,7 @@ if str(SRC_PATH) not in sys.path:
 from game import GameManager
 from states import GameOverState, HomebaseState, StartScreen, UnderwaterState
 from things import Player
+from utils.research_database import ResearchDatabase
 
 def initialize():
     pygame.init()
@@ -21,10 +22,11 @@ def initialize():
     pygame.display.set_caption(g_config["GAME_TITLE"])
 
     player = Player()
+    research_database = ResearchDatabase()
     states = {
         "START_SCREEN": StartScreen(),
-        "UNDERWATER": UnderwaterState(player),
-        "HOMEBASE": HomebaseState(player),
+        "UNDERWATER": UnderwaterState(player, research_database),
+        "HOMEBASE": HomebaseState(player, research_database),
         "GAME_OVER": GameOverState()
     }
 

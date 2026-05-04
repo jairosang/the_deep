@@ -5,7 +5,11 @@ from .physics_service import (
 	resolve_overlap_on_x_axis,
 	resolve_overlap_on_y_axis,
 	resolve_player_creature_collisions,
+	resolve_player_item_pickups,
+	resolve_projectile_creature_collisions,
 )
+
+from .research_database import ResearchDatabase
 
 __all__ = [
 	"get_colliding_tiles",
@@ -14,4 +18,7 @@ __all__ = [
 	"resolve_overlap_on_x_axis",
 	"resolve_overlap_on_y_axis",
 	"resolve_player_creature_collisions",
+	"resolve_player_item_pickups",
+	"resolve_projectile_creature_collisions",
+    "ResearchDatabase"
 ]
