@@ -1,75 +1,66 @@
-from .base_creature import Creature, Vec2
-from config import aggresive_creatures as ac_config
-import pygame
-from utils.sprite_sheet import load_frames
-from utils.animation import Animation
+from abc import ABC, abstractmethod
 from pathlib import Path
+import pygame
+from .base_creature import Creature, Vec2
+from utils.animation import Animation
+from utils.sprite_sheet import load_frames
 
-FISH_BIG_FRAMES = None
-FISH_DART_FRAMES = None
-ANGLERFISH_FRAMES = None
-
-def get_fish_big_frames():
-    global FISH_BIG_FRAMES
-    if FISH_BIG_FRAMES is None:
-        FISH_BIG_FRAMES = load_frames(Path("assets/sprites/fish-big.png"), 54, 49, 4)
-    return FISH_BIG_FRAMES
- 
-def get_fish_dart_frames():
-    global FISH_DART_FRAMES
-    if FISH_DART_FRAMES is None:
-        FISH_DART_FRAMES = load_frames(Path("assets/sprites/fish-dart.png"), 39, 20, 4)
-    return FISH_DART_FRAMES
-
-def get_anglerfish_frames():
-    global ANGLERFISH_FRAMES
-    if ANGLERFISH_FRAMES is None:
-        path = Path("assets/sprites/anglerfish.png")
-        if path.exists():
-            ANGLERFISH_FRAMES = load_frames(path, 350, 350, 4)
-        else:
-            ANGLERFISH_FRAMES = get_fish_big_frames()
-    return ANGLERFISH_FRAMES
-
-class AggressiveCreature(Creature):
-    def __init__(self, pos: tuple[float, float], chase_radius: float = 260.0, size: int = 18, sprite: str = "fish-big") -> None: #also removed kwargs
+class AggressiveCreature(Creature, ABC):
+    def __init__(
+        self,
+        pos: tuple[float, float],
+        frames: list[pygame.Surface],
+        *,
+        species: str,
+        health: int,
+        damage: int,
+        thrust: float,
+        mass: float,
+        chase_radius: float,
+        size: int,
+        scan_duration: float,
+        sprint_multiplier: float = 1.3,
+        flip_sprite: bool = False,
+    ) -> None: #also removed kwargs
     
-        if sprite == "fish-dart":
-            frames = get_fish_dart_frames()
-        elif sprite == "anglerfish":
-            frames = get_anglerfish_frames()
-        else:
-            frames = get_fish_big_frames()
-            
-        if sprite == "anglerfish":
-            frames = [pygame.transform.flip(f, True, False) for f in frames]
+        if flip_sprite:
+            frames = [pygame.transform.flip(frame, True, False) for frame in frames]
 
         base = pygame.transform.scale(frames[0], (size, size))
         super().__init__(base, pos)
-        self.color = (255, 0, 0)   # THIS IS   no longer    TEMPORARY  
 
-        scaled_frames = [pygame.transform.scale(f, (size, size)) for f in frames]
+        self.color = (255, 0, 0)
+
+        scaled_frames = [
+            pygame.transform.scale(frame, (size, size))
+            for frame in frames
+        ]
+        
         self.anim = Animation(scaled_frames, fps=8)
- 
+
         white = pygame.Surface((size, size))
         white.fill((250, 250, 250))
         white.set_colorkey(None)
         self._white_flash_image = white
 
-
         self._base_image = self.anim.get_image()
         self.image = self._base_image
 
-
         self.chase_radius = chase_radius
-        self.mass = ac_config["MASS"]
-        self.thrust = ac_config["THRUST"]
+        self.mass = mass
+        self.thrust = thrust
+        self.damage = damage
         self.is_sprinting = False
-        self.sprint_multiplier = 1.3
-        self.health = ac_config["HEALTH"]
-        self.max_health = ac_config["HEALTH"]
-        self.species = sprite
-        self.scan_duration = 6.0
+        self.sprint_multiplier = sprint_multiplier
+        self.health = health
+        self.max_health = health
+        self.species = species
+        self.scan_duration = scan_duration
+
+    @abstractmethod
+    def _species_marker(self) -> None:
+        # keeps AggressiveCreature abstract so only real species are spawned
+        pass
 
     def think(self, dt: float, player_pos) -> Vec2:                             #is now only passing player_pos
         dist = self.pos.distance_to(player_pos)
