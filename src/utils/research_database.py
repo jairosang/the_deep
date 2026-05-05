@@ -28,3 +28,22 @@ class ResearchDatabase:
         if data['alive'] == 0.0:
             progress = min(progress, 50.0)
         return progress
+
+    def get_all_species(self) -> list[str]:
+        return list(self.research_data.keys())
+
+
+    def is_species_complete(self, species: str) -> bool:
+        return self.get_total_species_progress(species) >= 100.0
+
+
+    def get_completion_percentage(self, required_species: list[str]) -> float:
+        if not required_species:
+            return 0.0
+
+        completed = 0
+        for s in required_species:
+            if self.is_species_complete(s):
+                completed += 1
+
+        return (completed / len(required_species)) * 100.0
