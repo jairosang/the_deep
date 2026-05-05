@@ -193,7 +193,7 @@ class UnderwaterState(BaseState):
         
         self.camera.draw(self.world_surface, screen)
 
-        self.player_hud.draw(screen, self.player)
+        self.player_hud.draw(screen, self.player, self.world_rect.height)
         
         self.held_inventory.draw(screen)
 
@@ -216,32 +216,61 @@ class UnderwaterState(BaseState):
     def _spawn_creatures(self):
         self.creatures.clear()
         w, h = self.tile_map.map_size
+        playable_sizeof_map = 4720
+        zone_height = playable_sizeof_map // 3
 
-        for _ in range(10):
-            cluster_x = random.randint(200, int(w) - 200)
-            cluster_y = random.randint(200, int(h) - 200)
-            for _ in range(random.randint(5, 12)):
-                x = random.randint(cluster_x - 40, cluster_x + 40)
-                y = random.randint(cluster_y - 40, cluster_y + 40)
+        passive_fish_by_zone = [
+            ["fish"],
+            ["fish", "blue-fish"],
+            ["fish", "blue-fish"]
+        ]
 
-                creature_size = random.randint(10,20)
-                c = PassiveCreature((x, y), size=creature_size, fear_radius=200)
-                c.thrust = c.thrust - round((creature_size % 10) * 8)
-                c.mass = c.mass + round((creature_size % 10) * 1.5)
+        aggressive_fish_by_zone = [
+            ["fish-dart"],
+            ["fish-dart", "fish-big"],
+            ["fish-dart", "fish-big", "anglerfish"]
+        ]
+
+        for zone in range(3):
+            zone_top = 100 + zone * zone_height
+            zone_bottom = min(int(h) - 100, (zone + 1) * zone_height)
+        
+            for i in range(4):
+                cluster_x = random.randint(200, int(w) - 200)
+                cluster_y = random.randint(zone_top, zone_bottom)
+
+                for _ in range(random.randint(5, 8)):
+                    x = random.randint(cluster_x - 40, cluster_x + 40)
+                    y = random.randint(cluster_y - 40, cluster_y + 40)
+
+                    creature_size = random.randint(10, 20)
+                    sprite = random.choice(passive_fish_by_zone[zone])
+                    if sprite == "blue-fish":
+                        creature_size = random.randint(22, 30)
+
+                    c = PassiveCreature((x, y), size=creature_size, fear_radius=200, sprite=sprite)
+                    c.thrust = c.thrust - round((creature_size % 10) * 8)
+                    c.mass = c.mass + round((creature_size % 10) * 1.5)
+                    self.creatures.append(c)
+
+            for i in range(5):
+                x = random.randint(100, int(w) - 100)
+                y = random.randint(zone_top, zone_bottom)
+
+                creature_size = random.randint(20, 30)
+                sprite = random.choice(aggressive_fish_by_zone[zone])
+
+                c = AggressiveCreature((x, y), size=creature_size, chase_radius=200, sprite=sprite)
+                if sprite == "fish-dart":
+                    c.damage = 5
+                elif sprite == "fish-big":
+                    c.damage = 10
+                elif sprite == "anglerfish":
+                    c.damage = 15
+
+                c.thrust = c.thrust - round((creature_size % 20) * 8)
+                c.mass = c.mass + round((creature_size % 20) * 1.5)
                 self.creatures.append(c)
-
-
-        for i in range(15):
-            x = random.randint(100, int(w) - 100)
-            y = random.randint(100, int(h) - 100)
-
-            creature_size = random.randint(20,30)
-
-            sprite = "fish-dart" if i % 2 == 0 else "fish-big"
-            c = AggressiveCreature((x, y), size=creature_size, chase_radius=200, sprite = sprite)
-            c.thrust = c.thrust - round((creature_size % 20) * 8)
-            c.mass = c.mass + round((creature_size % 20) * 1.5)
-            self.creatures.append(c)
 
     def _update_shootables(self, dt: float) -> None:
         for holdable in self.held_inventory.holdables:

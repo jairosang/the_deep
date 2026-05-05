@@ -135,12 +135,20 @@ class PlayerHud:
         self._last_health = player.health
         self._hit_pulse_timer = max(0.0, self._hit_pulse_timer - dt)
 
-    def draw(self, screen: pygame.Surface, player) -> None:
+    def draw(self, screen: pygame.Surface, player, map_height: int | None = None) -> None:
         x, y = self.pos
+        if map_height is not None:
+            self._draw_depth(screen, player, map_height, x, y - 35)
         # oxygen bar blinks when low
         self._draw_bar(screen, pygame.Rect(x, y + self.size[1] + self.gap, *self.size), "OXYGEN", player.oxygen, player.max_oxygen, (40, 145, 235), (10, 35, 80), self.OXYGEN_LOW_RATIO, blink_when_low=True)
         # health bar glows when damaged
         self._draw_bar(screen, pygame.Rect(x, y, *self.size), "HEALTH", player.health, player.max_health, (210, 35, 35), (70, 15, 20), self.HEALTH_LOW_RATIO, pulse_timer=self._hit_pulse_timer, pulse_duration=self._hit_pulse_duration)
+
+    def _draw_depth(self, screen: pygame.Surface, player, map_height: int, x: int, y: int) -> None:
+        depth = max(0, int(player.rect.centery))
+        text = self.medium_font.render(f"DEPTH: {depth} m", False, (245, 245, 230))
+        screen.blit(text, (x, y))
+
 
     def _draw_bar(self, screen: pygame.Surface, rect: pygame.Rect, label: str, value: float, maximum: float, fill_color: tuple[int, int, int], dark_color: tuple[int, int, int], low_ratio: float, pulse_timer: float = 0.0, pulse_duration: float = 1.0, blink_when_low: bool = False) -> None:
         

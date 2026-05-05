@@ -6,6 +6,8 @@ from utils.animation import Animation
 from pathlib import Path
 
 FISH_FRAMES = None
+BLUE_FISH_FRAMES = None
+
 
 def get_fish_frames():
     global FISH_FRAMES
@@ -13,10 +15,43 @@ def get_fish_frames():
         FISH_FRAMES = load_frames(Path("assets/sprites/fish.png"), 32, 32, 4)
     return FISH_FRAMES
 
-class PassiveCreature(Creature):
-    def __init__(self, pos: tuple[float, float], fear_radius: float = 150.0, size: int = 18) -> None:  #removed kwargs 
 
-        frames = get_fish_frames()
+def get_blue_fish_frames():
+    global BLUE_FISH_FRAMES
+
+    if BLUE_FISH_FRAMES is None:
+        path = Path("assets/sprites/blue-fish.png")
+
+        if path.exists():
+            first_frame = pygame.image.load(path).convert_alpha()
+            first_frame = first_frame.subsurface((0, 0, 512, 512))
+            frames = [first_frame, first_frame, first_frame, first_frame]
+
+            new_frames = []
+            for frame in frames:
+                frame = frame.convert_alpha()
+    
+                # remove near-white pixels
+                for x in range(frame.get_width()):
+                    for y in range(frame.get_height()):
+                        r, g, b, a = frame.get_at((x, y))
+                        if r > 240 and g > 240 and b > 240:
+                            frame.set_at((x, y), (0, 0, 0, 0))
+    
+                new_frames.append(frame)
+
+            BLUE_FISH_FRAMES = new_frames
+        else:
+            BLUE_FISH_FRAMES = get_fish_frames()
+    return BLUE_FISH_FRAMES
+
+class PassiveCreature(Creature):
+    def __init__(self, pos: tuple[float, float], fear_radius: float = 150.0, size: int = 18, sprite: str = "fish") -> None:  #removed kwargs 
+
+        if sprite == "blue-fish":
+            frames = get_blue_fish_frames()
+        else:
+            frames = get_fish_frames()
 
         base = pygame.transform.scale(frames[0], (size, size))
         super().__init__(base, pos)
@@ -29,7 +64,7 @@ class PassiveCreature(Creature):
 
         white = pygame.Surface((size, size))
         white.fill((250, 250, 250))
-        white.set_colorkey(None)
+        white.set_alpha(120)
         self._white_flash_image = white
 
         self._base_image = self.anim.get_image()  # updated each frame
@@ -42,7 +77,7 @@ class PassiveCreature(Creature):
         self.sprint_multiplier = 1.4
         self.health = pc_config["HEALTH"]
         self.max_health = pc_config["HEALTH"]
-        self.species = "passive"
+        self.species = sprite
         self.scan_duration = 4.0
 
     def think(self, dt: float, player_pos: Vec2) -> Vec2:      #only passing player pos

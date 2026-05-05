@@ -7,6 +7,7 @@ from pathlib import Path
 
 FISH_BIG_FRAMES = None
 FISH_DART_FRAMES = None
+ANGLERFISH_FRAMES = None
 
 def get_fish_big_frames():
     global FISH_BIG_FRAMES
@@ -20,13 +21,29 @@ def get_fish_dart_frames():
         FISH_DART_FRAMES = load_frames(Path("assets/sprites/fish-dart.png"), 39, 20, 4)
     return FISH_DART_FRAMES
 
+def get_anglerfish_frames():
+    global ANGLERFISH_FRAMES
+    if ANGLERFISH_FRAMES is None:
+        path = Path("assets/sprites/anglerfish.png")
+        if path.exists():
+            ANGLERFISH_FRAMES = load_frames(path, 350, 350, 4)
+        else:
+            ANGLERFISH_FRAMES = get_fish_big_frames()
+    return ANGLERFISH_FRAMES
+
 class AggressiveCreature(Creature):
     def __init__(self, pos: tuple[float, float], chase_radius: float = 260.0, size: int = 18, sprite: str = "fish-big") -> None: #also removed kwargs
     
         if sprite == "fish-dart":
             frames = get_fish_dart_frames()
+        elif sprite == "anglerfish":
+            frames = get_anglerfish_frames()
         else:
             frames = get_fish_big_frames()
+            
+        if sprite == "anglerfish":
+            frames = [pygame.transform.flip(f, True, False) for f in frames]
+
         base = pygame.transform.scale(frames[0], (size, size))
         super().__init__(base, pos)
         self.color = (255, 0, 0)   # THIS IS   no longer    TEMPORARY  
@@ -51,7 +68,7 @@ class AggressiveCreature(Creature):
         self.sprint_multiplier = 1.3
         self.health = ac_config["HEALTH"]
         self.max_health = ac_config["HEALTH"]
-        self.species = "aggressive"
+        self.species = sprite
         self.scan_duration = 6.0
 
     def think(self, dt: float, player_pos) -> Vec2:                             #is now only passing player_pos
