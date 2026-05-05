@@ -4,7 +4,7 @@
 [X]-[C1] Define creature species (David)
 [X]-[C2] Define depth progression difficulty (David)
 [X]-[C3] Define upgrade progression (Jairo)
-[ ]-[C4] Define economy and upgrade costs (Daniel)
+[X]-[C4] Define economy and upgrade costs (Daniel)
 [X]-[P1] Underwater state and game loop (Jairo)
 [X]-[P2] Core player functionality {
         [X] - Player can move (Jairo)
@@ -35,14 +35,14 @@
 [X]-[P3] Camera system (Jairo)
 [X]-[P4] Oxygen system (Jairo)
 [ ]-[P6] Depth tracking system
-[ ]-[P14] Inventory system
-[]-[G3] Passive creature sprites {
+[]-[P14] Inventory system (David)
+[X]-[G3] Passive creature sprites {
         [X] - Standstill image (David)
-        [] - Animations
+        [X] - Animations (David)
 }
-[]-[G4] Hostile creature sprites {
+[X]-[G4] Hostile creature sprites {
         [X] - Standstill image (David)
-        [] - Animations
+        [X] - Animations (David)
 }
 [X]-[P7] General creature functionality {
         [X] - All creatures can move (David)
@@ -51,7 +51,7 @@
         [] - Fix: Implement the factory in code.
         [X] - Fix: Update the creature's movement to have thrust and acceleration, using the general drag flag from settings. (David)
 }
-[ ]-[G2] Player sprite & animations
+[X]-[G2] Player sprite & animations (David)
 
 [X]-Fix: Current code does not reflect class diagram, please update the current entities to use Thing and MovingThing. (Jairo)
 []-Fix: It's kind of wrong that the player is handling his own physics when moving, would be nice that if calculated in the PhysicsService instead of there so the player has no need to access it's drag, this will also applies to all things that move. (I mean its fine we can forget about this - Jairo)
@@ -79,11 +79,11 @@
 
 [v0.4.0] - M4: Creatures & Research Complete 
 [X]-[P8] Hostile creature functionality (David)
-[ ]-[P9] Creature health and elimination
-[ ]-[P10] Research scanning functionality
-[ ]-[P11] Research persistence
+[X]-[P9] Creature health and elimination (Jairo)
+[X]-[P10] Research scanning functionality (David & Jairo)
+[X]-[P11] Research persistence (David)
 [ ]-[P17] Upgrade system
-[ ]-[P20] Integrate UI functionality
+[ ]-[P20] Integrate UI functionality (Daniel)
 
 
 
@@ -91,7 +91,7 @@
 
 [v0.5.0] - M5: Combat Complete 
 [ ]-[P12] Harpoon functionality
-[ ]-[P13] Combat weapon functionality
+[X]-[P13] Combat weapon functionality (Jairo)
 [ ]-[P19] Save/load functionality
 [ ]-[S1] Underwater ambient soundtrack
 [ ]-[S2] Tool sound effects
