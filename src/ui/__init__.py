@@ -1,5 +1,5 @@
 from .components.button import Button
-from .menus import BaseMenu, InventoryMenu, PauseMenu
+from .menus import BaseMenu, InventoryMenu, PauseMenu, UpgradeMenu
 from .hud import HeldInventory, PlayerHud
 
 __all__ = [
@@ -7,6 +7,7 @@ __all__ = [
 	"BaseMenu",
 	"InventoryMenu",
 	"PauseMenu",
+	"UpgradeMenu",
 	"HeldInventory",
 	"PlayerHud",
 ]

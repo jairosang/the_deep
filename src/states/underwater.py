@@ -53,6 +53,7 @@ class UnderwaterState(BaseState):
         self.player.health = self.player.max_health
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
         self.player.set_holdable(self.held_inventory.selected_holdable)
+        self._apply_player_upgrades_to_holdables()
         self.player.movement_axis.update(1,1)
         # Inventory menu you can open it with E key
         self.inventory_menu = InventoryMenu(self.player.buffer_inventory)
@@ -85,7 +86,7 @@ class UnderwaterState(BaseState):
         if e.type == pygame.MOUSEBUTTONDOWN and self.button.rect.collidepoint(pygame.mouse.get_pos()):
             self.button.call_back()
         elif e.type == pygame.KEYDOWN and e.key == pygame.K_e:
-            # # E priority: close menu > interact > open menu
+            # E priority: close menu > interact > open menu
             if self.inventory_menu.is_open:
                 self.inventory_menu.close()
             elif self.closest_interactable:
@@ -99,7 +100,7 @@ class UnderwaterState(BaseState):
         self.player.handle_event(e)
 
     def update(self, dt):
-        # Freeze gameplay while paused
+        # Freeze game during the pause being active
         if self.pause_menu.is_open:
             self.pause_menu.update(dt)
             return
@@ -353,3 +354,13 @@ class UnderwaterState(BaseState):
         # calculate distance from player to an interactable
         return ((interactable.rect.centerx - self.player.rect.centerx)**2 + 
                 (interactable.rect.centery - self.player.rect.centery)**2)**0.5
+
+    def _apply_player_upgrades_to_holdables(self) -> None:
+        weapon_damage = getattr(self.player, "weapon_upgrade_damage", 10)
+        scanner_rate = getattr(self.player, "scanner_upgrade_rate", 1.0)
+
+        for holdable in self.held_inventory.holdables:
+            if isinstance(holdable, Weapon):
+                holdable.damage = weapon_damage
+            elif isinstance(holdable, ResearchGun):
+                holdable.scan_rate = scanner_rate

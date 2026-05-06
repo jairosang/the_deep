@@ -72,7 +72,7 @@ class ResearchGun(Holdable):
         for c in beam_set:
             if c not in self.scan_timers:
                 self.scan_timers[c] = self._get_saved_time(c)
-            self.scan_timers[c] += dt
+            self.scan_timers[c] += dt * self.scan_rate
             self._check_scan_done(c)
 
         return [], []

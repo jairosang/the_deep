@@ -1,6 +1,6 @@
 from world import TileMap, Camera, Interactable, Exit, Upgrades, Research
 from things import Player
-from ui import Button, PauseMenu
+from ui import Button, PauseMenu, UpgradeMenu
 from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
@@ -19,6 +19,13 @@ class HomebaseState(BaseState):
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
         self.camera = Camera(self.world_rect,3)
 
+        # Upgrade data
+        self.upgrade_order = ["weapon", "scanner", "suit"]
+        self.upgrade_labels = {"weapon": "WEAPON", "scanner": "SCANNER", "suit": "SUIT"}
+        self.upgrade_costs = {"weapon": [200, 350, 550, 800, 1100], "scanner": [200, 350, 550, 800, 1100], "suit": [200, 350, 550, 800, 1100]}
+        self.max_upgrade_level = 5
+        self._ensure_upgrade_state()
+        self._apply_upgrade_effects()
 
     def enter(self, data: dict = {}):
         g_config["DRAG"] = 2
@@ -26,20 +33,29 @@ class HomebaseState(BaseState):
         self.player.movement_axis.y = 0  # Horizontal movement only
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
         self.pause_menu = PauseMenu(self._resume_game, self._go_to_start)
+        self.upgrade_menu = UpgradeMenu(self._get_upgrade_preview, self._buy_upgrade, self._close_upgrade_menu)
         self._load_interactable_call_backs()
         self.player._current_anim = self.player.animations["walk"]
 
 
     def handle_event(self, e):
-        # Escape toggles pause
+        # Escape closes upgrade first
         if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
-            if self.pause_menu.is_open:
+            if self.upgrade_menu.is_open:
+                self.upgrade_menu.close()
+            elif self.pause_menu.is_open:
                 self.pause_menu.close()
             else:
                 self.pause_menu.open()
             return
 
-        # While paused only the pause menu handles events
+        # While upgrade menu is open only it handles events, other menus should not be interacted with
+        if self.upgrade_menu.is_open:
+            self.upgrade_menu.handle_event(e)
+            return
+
+        # Escape toggles pause
+        # While paused only pause menu handles events
         if self.pause_menu.is_open:
             self.pause_menu.handle_event(e)
             return
@@ -51,7 +67,12 @@ class HomebaseState(BaseState):
         self.player.handle_event(e)
         
     def update(self, dt):
-        # Freeze gameplay while paused
+        # Freeze game while upgrade menu is active
+        if self.upgrade_menu.is_open:
+            self.upgrade_menu.update(dt)
+            return
+
+        # Freeze game while pause menu is active
         if self.pause_menu.is_open:
             self.pause_menu.update(dt)
             return
@@ -96,7 +117,8 @@ class HomebaseState(BaseState):
             player_pos_text = pygame.font.Font(None, 36).render(f"Player_pos: {self.player.pos}", True, (255,255,255), (50,50,50))
             screen.blit(player_pos_text, (10, 5))
             self.button.draw(screen)
-        
+
+        self.upgrade_menu.draw(screen)
         self.pause_menu.draw(screen)
 
     def exit(self):
@@ -113,9 +135,79 @@ class HomebaseState(BaseState):
     def _resume_game(self):
         self.pause_menu.close()
 
+    def _open_upgrade_menu(self):
+        self.upgrade_menu.open()
+
+    def _close_upgrade_menu(self):
+        self.upgrade_menu.close()
+
     # Interactable objects that load an external callback function
     def _load_interactable_call_backs(self) -> None:
         for interactable in self.tile_map.interactables:
             if isinstance(interactable, Exit):
                 interactable.on_interact = self.go_underwater
                 interactable.prompt_text = "Press E to go underwater ~"
+            elif isinstance(interactable, Upgrades):
+                interactable.on_interact = self._open_upgrade_menu
+                interactable.prompt_text = "Press E to open upgrades"
+
+    # === Upgrade Methods ===
+    def _ensure_upgrade_state(self) -> None:
+        if not hasattr(self.player, "upgrade_levels"):
+            self.player.upgrade_levels = {key: 0 for key in self.upgrade_order}
+        if "pesos" not in self.player.inventory:
+            self.player.inventory["pesos"] = 0
+
+    def _weapon_damage_for_level(self, level: int) -> int:
+        return 10 + level * 4
+
+    def _scanner_rate_for_level(self, level: int) -> float:
+        return 1.0 + level * 0.20
+
+    def _suit_depth_for_level(self, level: int) -> int:
+        return 100 + level * 30
+
+    def _apply_upgrade_effects(self) -> None:
+        weapon_level = self.player.upgrade_levels.get("weapon", 0)
+        scanner_level = self.player.upgrade_levels.get("scanner", 0)
+        suit_level = self.player.upgrade_levels.get("suit", 0)
+
+        # Stored on the player so underwater can apply these values to holdables on enter
+        self.player.weapon_upgrade_damage = self._weapon_damage_for_level(weapon_level)
+        self.player.scanner_upgrade_rate = self._scanner_rate_for_level(scanner_level)
+        self.player.max_depth_limit = self._suit_depth_for_level(suit_level)
+
+    def _get_upgrade_preview(self, key: str) -> dict:
+        level = self.player.upgrade_levels.get(key, 0)
+        capped_level = min(level, self.max_upgrade_level)
+        can_upgrade = capped_level < self.max_upgrade_level
+        next_level = capped_level + 1 if can_upgrade else capped_level
+        cost = self.upgrade_costs[key][capped_level] if can_upgrade else 0
+        money = self.player.inventory.get("pesos", 0)
+
+        if key == "weapon":
+            current_value = self._weapon_damage_for_level(capped_level)
+            next_value = self._weapon_damage_for_level(next_level)
+            description = f"Damage: {current_value} -> {next_value}" if can_upgrade else f"Damage: {current_value} (MAX)"
+        elif key == "scanner":
+            current_value = self._scanner_rate_for_level(capped_level)
+            next_value = self._scanner_rate_for_level(next_level)
+            description = f"Scan speed: x{current_value:.2f} -> x{next_value:.2f}" if can_upgrade else f"Scan speed: x{current_value:.2f} (MAX)"
+        else:
+            current_value = self._suit_depth_for_level(capped_level)
+            next_value = self._suit_depth_for_level(next_level)
+            description = f"Depth limit: {current_value} -> {next_value}" if can_upgrade else f"Depth limit: {current_value} (MAX)"
+
+        return {"key": key, "label": self.upgrade_labels[key], "level": capped_level, "next_level": next_level, "cost": cost, "pesos": money, "can_upgrade": can_upgrade, "description": description}
+
+    def _buy_upgrade(self, key: str) -> str:
+        preview = self._get_upgrade_preview(key)
+        if not preview["can_upgrade"]:
+            return "Already max level."
+        if preview["pesos"] < preview["cost"]:
+            return "Not enough $."
+
+        self.player.inventory["pesos"] -= preview["cost"]
+        self.player.upgrade_levels[key] += 1
+        self._apply_upgrade_effects()
+        return f"{self.upgrade_labels[key]} upgraded!"
