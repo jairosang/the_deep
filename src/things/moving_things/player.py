@@ -62,13 +62,21 @@ class Player(MovingThing):
 
         # for the colour change efffect:
         self.flash_timer = 0.0
-        self.flash_duration = 0.4
+        self.flash_duration = 0.5
+        self.invincibily_timer = 0.0
+        self.invincibily_duration = 1
 
     def update(self, dt, bound_rect: pygame.Rect, area_tiles):
         if self.flash_timer > 0:
             self.flash_timer -= dt
         if self.flash_timer <= 0:
             self.image = self._base_image  # Return to original color/state (For now color until there is an img)
+        
+        if self.invincibily_timer > 0:
+            self.invincibily_timer -= dt
+        if self.rect.centery >= self.max_depth_limit:
+            depth_damage = max(1, round((self.rect.centery - self.max_depth_limit) / 300))
+            self.get_damaged(depth_damage)
 
         super().update(dt, bound_rect, area_tiles)
         if self.current_holdable is not None:
@@ -175,13 +183,16 @@ class Player(MovingThing):
         self.current_holdable = None
 
     def get_damaged(self, ammt):
-        self.health = max(0, self.health - ammt)  # changed so it doesnt display 0 and then die. it dies when it reaches 0
-        self.animations["hurt"].reset()
-        self._current_anim = self.animations["hurt"]
+        if self.invincibily_timer < 0.01:
+            self.health = max(0, self.health - ammt)  # changed so it doesnt display 0 and then die. it dies when it reaches 0
+            self.animations["hurt"].reset()
+            self._current_anim = self.animations["hurt"]
 
-        tinted = self._base_image.copy()
-        tinted.fill((180, 0, 0, 0), special_flags=pygame.BLEND_RGB_ADD)
-        self.image = tinted    # red tint on hit
+            tinted = self._base_image.copy()
+            tinted.fill((180, 0, 0, 0), special_flags=pygame.BLEND_RGB_ADD)
+            self.image = tinted    # red tint on hit
+            self.invincibily_timer = self.invincibily_duration
+        
 
     # ====== The caves of functions ======
 

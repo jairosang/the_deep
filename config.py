@@ -25,7 +25,7 @@ player = {
         "MAX_HEALTH": 50,
         "MAX_OXYGEN": 50,
         "OXYGEN_DEPLETION_RATE": 0.5,
-        "MAX_DEPTH_LIMIT": 100,
+        "MAX_DEPTH_LIMIT": 100 * 16,    # Every 16 pixels is one meter
         "INVENTORY_CAPACITY": 5,
     },
 }
