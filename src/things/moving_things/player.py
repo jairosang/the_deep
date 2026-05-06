@@ -12,7 +12,6 @@ SPRITES = Path("assets/sprites")
 class Player(MovingThing):
     def __init__(self) -> None:
         super().__init__(pygame.Surface(p_config["SIZE"]))
-        # THIS IS    no longer    TEMPORARY
 
         self.animations = {
             "idle": Animation(load_frames(SPRITES / "player-idle.png", 80, 80, 6), fps=6),
@@ -251,7 +250,6 @@ class Player(MovingThing):
         # If the current held is NOT continuous and the animation is not finished we let if finish
         elif self._current_anim is shoot_anim and not shoot_anim.finished:
             pass
-        # Priority 4: movement — clean up shoot state if we just finished
         else:
             # Clean the shooting if it's done
             if self._current_anim is shoot_anim and holdable is not None:
@@ -309,10 +307,6 @@ class Player(MovingThing):
         self._update_hitbox(snapped)
 
     def _update_oxygen(self):
-        # This thing will have implemented the game over thing when the oxygen is 0
-        if self.oxygen <= 0:
-            pass
-
         # This is the thing that checks how to update the oxygen thing if you are sprinting or not
         if self.oxygen > 0:
             if self.is_sprinting == False:

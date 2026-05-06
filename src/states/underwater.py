@@ -49,6 +49,8 @@ class UnderwaterState(BaseState):
     def enter(self, data: dict = {}):
         g_config["DRAG"] = 0.9
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
+        self.player.oxygen = self.player.max_oxygen
+        self.player.health = self.player.max_health
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
         self.player.set_holdable(self.held_inventory.selected_holdable)
         self.player.movement_axis.update(1,1)
@@ -210,6 +212,7 @@ class UnderwaterState(BaseState):
     def exit(self):
         self.player.revert()
         self.player.movement_axis[1] = 0
+        self._despawn_creatures()
 
 
     # ==== Own Methods ====
@@ -271,6 +274,8 @@ class UnderwaterState(BaseState):
 
                 self.creatures.append(creature)
 
+    def _despawn_creatures(self):
+        self.creatures.clear()
 
     def _update_shootables(self, dt: float) -> None:
         for holdable in self.held_inventory.holdables:
