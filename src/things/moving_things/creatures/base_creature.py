@@ -74,8 +74,8 @@ class Creature(MovingThing, ABC):
         # Handle the flashing and stuff ig idk it wasnt my job but I refactored it
         if self.flash_timer > 0:
             self.flash_timer -= dt
-        if self.flash_timer <= 0:
-            self.image = self._base_image  # Return to original color/state (For now color until there is an img)
+        else:
+            self.image = transformed
 
         super().update(dt, bound_rect, area_tiles)
 
