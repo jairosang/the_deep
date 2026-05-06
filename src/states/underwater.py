@@ -217,12 +217,11 @@ class UnderwaterState(BaseState):
         self.creatures.clear()
 
         w, h = self.tile_map.map_size
-        playable_sizeof_map = 4720
-        zone_height = playable_sizeof_map // 3
+        zone_height = h // 3
 
-        passive_creatures_by_zone = [[Fish], [Fish, BlueFish], [Fish, BlueFish],]
+        passive_creatures_by_zone = [[Fish], [Fish, BlueFish], [BlueFish],]
 
-        aggressive_creatures_by_zone = [[FishDart],[FishDart, FishBig],[FishDart, FishBig, Anglerfish],]
+        aggressive_creatures_by_zone = [[FishDart],[FishBig],[Anglerfish],]
 
         for zone in range(3):
             zone_top = 100 + zone * zone_height
