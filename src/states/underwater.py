@@ -23,7 +23,7 @@ class UnderwaterState(BaseState):
         self.closest_interactable: Interactable | None = None
         
         self.world_rect = pygame.Rect(0, 0, self.tile_map.map_size[0], self.tile_map.map_size[1])
-        self.camera = Camera(self.world_rect, 3)
+        self.camera = Camera(self.world_rect, 2)
         self._load_interactable_call_backs()
         
         # Store research database reference
@@ -32,7 +32,7 @@ class UnderwaterState(BaseState):
         # Create inventory with research database reference
         research_gun = ResearchGun(self.research_database)
         self.held_inventory = HeldInventory([Weapon(), research_gun])
-        self.player_hud = PlayerHud()
+        self.player_hud = PlayerHud(self.tile_map.map_size[1])
 
         # Store reference to research gun for scanning
         self.research_gun = research_gun
