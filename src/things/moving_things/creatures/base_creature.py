@@ -18,12 +18,23 @@ def get_death_frames():
 
 
 class Creature(MovingThing, ABC):
-    def __init__(self, image: pygame.Surface, pos, thrust=90.0):
+    def __init__(self, image: pygame.Surface, frames: list[pygame.Surface], pos, size, thrust=90.0):
         super().__init__(image, pos)
         self.color: tuple[int, int, int]
 
         self.health = 0
         self.max_health = 0
+
+        scaled_frames = [pygame.transform.scale(frame, (size, size)) for frame in frames]
+        self.anim = Animation(scaled_frames, fps=8)
+
+        # White animation flashing on damage
+        white = pygame.Surface((size, size))
+        white.fill((250, 250, 250))
+        white.set_alpha(120)
+        self._white_flash_image = white
+
+        self._base_image = self.anim.get_image()  # updated each frame
 
         # for the colour change efffect:
         self.flash_timer = 0.0
@@ -41,16 +52,26 @@ class Creature(MovingThing, ABC):
         self.scan_duration: float
 
     def update(self, dt, bound_rect: pygame.Rect, area_tiles, player_pos):
-
         if self.is_dying:
             self.death_anim.update(dt)
             return
         
         self.input_direction.x = 0
         self.input_direction.y = 0
-        
+
         self.input_direction = self.think(dt, player_pos)
 
+        self.anim.update(dt)
+        self._base_image = self.anim.get_image()
+
+        facing_vector = self.velocity
+        if facing_vector.length_squared() == 0:
+            facing_vector = self.input_direction
+
+        # produce a new image facing the velocity vector
+        transformed = self._apply_facing_rotation(facing_vector)
+
+        # Handle the flashing and stuff ig idk it wasnt my job but I refactored it
         if self.flash_timer > 0:
             self.flash_timer -= dt
         if self.flash_timer <= 0:
@@ -108,3 +129,18 @@ class Creature(MovingThing, ABC):
             self.is_dying = True
             self.death_anim.reset()
         return self.is_dying and self.death_anim.finished
+    
+
+    def _apply_facing_rotation(self, facing_vector: pygame.math.Vector2) -> pygame.Surface:
+        if facing_vector.length_squared() == 0:
+            facing_vector = pygame.math.Vector2(1, 0)
+
+        is_going_left = facing_vector.x < 0
+        angle = facing_vector.angle_to(pygame.math.Vector2(1, 0))
+        # Flip sign so rotation matches direction when going left
+        angle = angle * -1 if is_going_left else angle
+        snapped = round(angle / 15) * 15
+        transformed_image = pygame.transform.rotate(self._base_image.convert_alpha(), snapped)
+        if is_going_left:
+            transformed_image = pygame.transform.flip(transformed_image, False, True)
+        return transformed_image

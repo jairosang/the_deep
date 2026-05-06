@@ -6,39 +6,13 @@ from utils.animation import Animation
 from utils.sprite_sheet import load_frames
 
 class PassiveCreature(Creature, ABC):
-    def __init__(
-        self,
-        pos: tuple[float, float],
-        frames: list[pygame.Surface],
-        *,
-        species: str,
-        health: int,
-        thrust: float,
-        mass: float,
-        fear_radius: float,
-        size: int,
-        scan_duration: float,
-        sprint_multiplier: float = 1.4,
-    ) -> None:
+    def __init__(self, pos: tuple[float, float], frames: list[pygame.Surface], *, species: str, health: int, thrust: float, mass: float, fear_radius: float, size: int, scan_duration: float, sprint_multiplier: float = 1.4) -> None:
 
         base = pygame.transform.scale(frames[0], (size, size))
-        super().__init__(base, pos)
 
         self.color = (0, 50, 255)
 
-        scaled_frames = [
-            pygame.transform.scale(frame, (size, size))
-            for frame in frames
-        ]
-        self.anim = Animation(scaled_frames, fps=8)
-
-        white = pygame.Surface((size, size))
-        white.fill((250, 250, 250))
-        white.set_alpha(120)
-        self._white_flash_image = white
-
-        self._base_image = self.anim.get_image()  # updated each frame
-        self.image = self._base_image
+        super().__init__(base, frames, pos, size)
 
         self.fear_radius = fear_radius
         self.mass = mass
@@ -67,11 +41,4 @@ class PassiveCreature(Creature, ABC):
             # wander at reduced speed (looks natural)
             self.is_sprinting = False
             return self.wander_dir(dt)
-        
-    def update(self, dt, bound_rect, area_tiles, player_pos):
-        if not self.is_dying:
-            self.anim.update(dt)
-            self._base_image = self.anim.get_image()
-            if self.velocity.x < 0:
-                self._base_image = pygame.transform.flip(self._base_image, True, False)
-        super().update(dt, bound_rect, area_tiles, player_pos)
+
