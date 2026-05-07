@@ -55,7 +55,7 @@ class UnderwaterState(BaseState):
         self.player.set_holdable(self.held_inventory.selected_holdable)
         self.player.movement_axis.update(1,1)
         # Inventory menu you can open it with E key
-        self.inventory_menu = InventoryMenu()
+        self.inventory_menu = InventoryMenu(self.player.buffer_inventory)
         # Pause popup with resume and title options
         self.pause_menu = PauseMenu(self._resume_game, self._go_to_start)
         self._spawn_creatures()

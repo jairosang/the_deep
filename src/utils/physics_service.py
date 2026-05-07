@@ -106,7 +106,7 @@ def resolve_player_creature_collisions(player: 'Player', creatures: list['Creatu
         if creature.is_dying:
             if creature.is_dead():
                 dead_creatures.append(creature)
-                dropped_items.append(Item(creature.rect.topleft, image=creature.image))
+                dropped_items.append(Item(creature.rect.topleft, image=creature.image, inventory_image=creature._base_image))
             continue
         
         if player.rect.colliderect(creature.rect):
@@ -119,7 +119,7 @@ def resolve_player_creature_collisions(player: 'Player', creatures: list['Creatu
 
             if creature.is_dead():
                 dead_creatures.append(creature)
-                dropped_items.append(Item(creature.rect.topleft, image=creature.image))
+                dropped_items.append(Item(creature.rect.topleft, image=creature.image, inventory_image=creature._base_image))
 
     for creature in dead_creatures:
         creatures.remove(creature)
@@ -135,7 +135,7 @@ def resolve_player_item_pickups(player: 'Player', items: list['Item'], dt: float
             continue
 
         if player.rect.colliderect(item.rect):
-            player.inventory[item.name] = player.inventory.get(item.name, 0) + 1
+            player.buffer_inventory.append(item) # each item in its place, no stacking
             picked_items.append(item)
 
     for item in picked_items:
@@ -167,7 +167,7 @@ def resolve_projectile_creature_collisions(projectiles: list['Projectile'], crea
 
                 if creature.is_dead():
                     dead_creatures.append(creature)
-                    dropped_items.append(Item(creature.rect.topleft, image=creature.image))
+                    dropped_items.append(Item(creature.rect.topleft, image=creature.image, inventory_image=creature._base_image))
                 break
 
     for creature in dead_creatures:

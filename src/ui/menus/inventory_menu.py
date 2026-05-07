@@ -5,13 +5,14 @@ from config import game as g_config
 
 class InventoryMenu(BaseMenu):
     # inventory grid, empty squares for now
-    def __init__(self, rows: int = 4, cols: int = 8, slot_size: tuple[int, int] = (60, 60), padding: int = 8) -> None:
+    def __init__(self, items: list | None = None, rows: int = 4, cols: int = 8, slot_size: tuple[int, int] = (60, 60), padding: int = 8) -> None:
         super().__init__()
         self.rows = rows
         self.cols = cols
         self.slot_size = slot_size
         self.padding = padding
         self.title_font = pygame.font.SysFont("Segoe Print", 28)
+        self.items = items if items is not None else []
 
     def open(self) -> None:
         self.is_open = True
@@ -80,3 +81,11 @@ class InventoryMenu(BaseMenu):
                 slot_rect = pygame.Rect(x, y, self.slot_size[0], self.slot_size[1])
                 pygame.draw.rect(surface, (50, 65, 85), slot_rect, border_radius=6)
                 pygame.draw.rect(surface, (110, 140, 170), slot_rect, width=1, border_radius=6)
+
+                item_index = row * self.cols + col
+                if item_index < len(self.items):
+                    icon = pygame.transform.smoothscale(
+                        self.items[item_index].inventory_image or self.items[item_index].image,
+                        (self.slot_size[0] - 10, self.slot_size[1] - 10)
+                    )
+                    surface.blit(icon, icon.get_rect(center=slot_rect.center))

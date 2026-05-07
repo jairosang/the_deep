@@ -1,8 +1,9 @@
 import pygame
 
 class Item():
-    def __init__(self, pos, name = "creature_loot", image = None) -> None:
+    def __init__(self, pos, name = "creature_loot", image = None, inventory_image = None) -> None:
         self.name = name
+        self.inventory_image = inventory_image.copy() if inventory_image is not None else None
         self.pos = pygame.math.Vector2(pos)
         self.pickup_timer = 2.0 # time before being able to pick up item
 
