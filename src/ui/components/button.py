@@ -18,7 +18,7 @@ class Button:
             self.surface = pygame.Surface(size)
 
         self.rect = self.surface.get_rect(center=position)
-        self.font = get_font(font_size) if font is None else pygame.font.SysFont(font, font_size)
+        self.font = get_font(font_size) if font is None else get_font(font_size, font)
         self.txt = text
         self.font_color = font_color
         self.txt_surf = self.font.render(self.txt, 1, self.font_color)

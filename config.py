@@ -9,6 +9,8 @@ game = {
     "UNDERWATER_TILEMAP_PATH" : Path("assets/underwater/tilemap/dark_underwater_map.tmj"),
     "HOMEBASE_TILEMAP_PATH" : Path("assets/homebase/tilemap/homebase_map.tmj"),
     "DRAG": 0.9,
+    "PRIMARY_FONT": Path("assets/fonts/Exo_2/Exo2-VariableFont_wght.ttf"),
+    "SECONDARY_FONT": Path("assets/fonts/Michroma/Michroma-Regular.ttf"),
 }
 
 # Player initialization constants

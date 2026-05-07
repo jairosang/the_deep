@@ -132,7 +132,8 @@ class HomebaseState(BaseState):
         self.camera.draw(self.world_surface, screen)
 
         if is_debug_on:
-            player_pos_text = pygame.font.Font(None, 36).render(f"Player_pos: {self.player.pos}", True, (255, 255, 255), (50, 50, 50))
+            from ui import get_font
+            player_pos_text = get_font(36).render(f"Player_pos: {self.player.pos}", True, (255, 255, 255), (50, 50, 50))
             screen.blit(player_pos_text, (10, 5))
             self.button.draw(screen)
 
@@ -178,13 +179,9 @@ class HomebaseState(BaseState):
         for interactable in self.tile_map.interactables:
             if isinstance(interactable, Exit):
                 interactable.on_interact = self.go_underwater
-                interactable.prompt_text = "Press E to go underwater ~"
             elif isinstance(interactable, Upgrades):
                 interactable.on_interact = self._open_upgrade_menu
-                interactable.prompt_text = "Press E to open upgrades"
             elif isinstance(interactable, Research):
                 interactable.on_interact = self._open_research_menu
-                interactable.prompt_text = "Press E to open database"
             elif isinstance(interactable, Shop):
                 interactable.on_interact = self._open_shop_menu
-                interactable.prompt_text = "Press E to sell loot"

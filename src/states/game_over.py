@@ -1,6 +1,6 @@
 import pygame
 from .base_state import BaseState
-from ui import Button
+from ui import Button, get_font
 from config import game as g_config
 
 class GameOverState(BaseState):
@@ -28,7 +28,7 @@ class GameOverState(BaseState):
     def draw(self, screen, is_debug_on):
         screen.fill((20, 20, 30))   #fill with 1 color
 
-        font = pygame.font.Font(None, 72)
+        font = get_font(72)
         text = font.render("GAME OVER", True, (255, 80, 80))   # red text
         text_rect = text.get_rect(center=(g_config["SCREEN_SIZE"][0] / 2, g_config["SCREEN_SIZE"][1] / 2)) #centered on screen
         screen.blit(text, text_rect)

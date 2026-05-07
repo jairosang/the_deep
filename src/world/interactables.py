@@ -9,14 +9,14 @@ class Interactable:
         self.y = y
         self.width = width
         self.height = height
-        self.prompt_text = "Press E to interact"
+        self.prompt_text = "'E' to interact"
 
     @abstractmethod
     def interact(self) -> None:
         pass
 
     def draw_prompt(self, world_surface: pygame.Surface, player_pos) -> None:
-        prompt_surface = pygame.font.SysFont("Arial", 11, bold=True).render(self.prompt_text, True, (255,255,255))
+        prompt_surface = get_font(10, "secondary").render(self.prompt_text, True, (255,255,255))
         
         # getting the position between the interactable and the player
         player_prompt_x = player_pos[0] - self.rect.centerx
@@ -47,6 +47,7 @@ class Exit(Interactable):
     def __init__(self, x: float, y: float, width: float, height: float, on_interact=None) -> None:
         super().__init__(x, y, width, height)
         self.on_interact = on_interact
+        self.prompt_text = "'E' to go underwater"
 
 
     def interact(self) -> None:
@@ -57,6 +58,7 @@ class Upgrades(Interactable):
     def __init__(self, x: float, y: float, width: float, height: float, on_interact=None) -> None:
         super().__init__(x, y, width, height)
         self.on_interact = on_interact
+        self.prompt_text = "'E' to open upgrades"
 
     def interact(self) -> None:
         if self.on_interact is not None:
@@ -66,6 +68,7 @@ class Research(Interactable):
     def __init__(self, x: float, y: float, width: float, height: float, on_interact=None) -> None:
         super().__init__(x, y, width, height)
         self.on_interact = on_interact
+        self.prompt_text = "'E' to open database"
 
     def interact(self) -> None:
         if self.on_interact is not None:
@@ -75,6 +78,7 @@ class Shop(Interactable):
     def __init__(self, x: float, y: float, width: float, height: float, on_interact=None) -> None:
         super().__init__(x, y, width, height)
         self.on_interact = on_interact
+        self.prompt_text = "'E' to sell loot"
 
     def interact(self) -> None:
         if self.on_interact is not None:

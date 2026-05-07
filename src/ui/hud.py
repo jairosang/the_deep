@@ -120,8 +120,8 @@ class PlayerHud:
         self.pos = pos if pos is not None else (self.gap, screen_h - (self.size[1] + self.gap) * 2)
         self.map_height = map_height
         self.border = 4
-        self.font = pygame.font.Font(None, 28)
-        self.medium_font = pygame.font.Font(None, 30)
+        self.font = get_font(28)
+        self.medium_font = get_font(30)
         self._last_health: float | None = None
         # timer for the health bar growth and glow after taking damage.
         self._hit_pulse_timer = 0.0

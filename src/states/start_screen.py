@@ -1,6 +1,6 @@
 import pygame
 from pathlib import Path
-from ui import Button
+from ui import Button, get_font
 from .base_state import BaseState
 from config import game as g_config
 
@@ -23,8 +23,7 @@ class StartScreen(BaseState):
         self.overlay.fill((0, 10, 25, 70))
 
         # Title
-        title_font_name = self._pick_title_font()
-        title_font = pygame.font.SysFont(title_font_name, 128, bold=True)
+        title_font = get_font(128, "primary", bold=True)
         self.title_surf = title_font.render("THE DEEP", True, (216, 232, 252))
         self.title_outline = title_font.render("THE DEEP", True, (22, 34, 52))
 
@@ -84,19 +83,3 @@ class StartScreen(BaseState):
 
     def _go_to_homebase(self):
         self.is_done = (True, "HOMEBASE")
-
-    def _pick_title_font(self) -> str:
-        # Serif chain to mimic the reference logo style on every OS.
-        candidates = [
-            "Trajan Pro",
-            "Copperplate Gothic Bold",
-            "Cambria",
-            "Georgia",
-            "Times New Roman",
-            "Liberation Serif",
-            "DejaVu Serif",
-        ]
-        for name in candidates:
-            if pygame.font.match_font(name) is not None:
-                return name
-        return "serif"
