@@ -141,7 +141,7 @@ class UnderwaterState(BaseState):
         self.world_surface.fill((80, 128, 173), self.camera.rect)
         self.tile_map.draw(self.world_surface, self.camera.rect, has_shading= True)
         if self.closest_interactable is not None:
-            self.closest_interactable.draw_prompt(self.world_surface)
+            self.closest_interactable.draw_prompt(self.world_surface, self.player.rect.center)
         
         # Collect all drawable entities with their Y positions for depth sorting
         drawable_entities = []
