@@ -10,6 +10,8 @@ from .physics_service import (
 )
 
 from .research_database import ResearchDatabase
+from .research_catalog import ResearchCatalog
+from .upgrade_system import UpgradeSystem
 
 __all__ = [
 	"get_colliding_tiles",
@@ -20,5 +22,7 @@ __all__ = [
 	"resolve_player_creature_collisions",
 	"resolve_player_item_pickups",
 	"resolve_projectile_creature_collisions",
-    "ResearchDatabase"
+    "ResearchDatabase",
+    "ResearchCatalog",
+    "UpgradeSystem",
 ]

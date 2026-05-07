@@ -62,6 +62,11 @@ class Upgrades(Interactable):
             self.on_interact()
 
 class Research(Interactable):
+    def __init__(self, x: float, y: float, width: float, height: float, on_interact=None) -> None:
+        super().__init__(x, y, width, height)
+        self.on_interact = on_interact
+
     def interact(self) -> None:
-        pass
+        if self.on_interact is not None:
+            self.on_interact()
 
