@@ -7,6 +7,7 @@ from config import player as p_config
 from utils import ResearchDatabase, ResearchCatalog, UpgradeSystem
 import pygame
 
+
 class HomebaseState(BaseState):
     def __init__(self, player: Player, research_database: ResearchDatabase | None = None) -> None:
         super().__init__()
@@ -27,13 +28,12 @@ class HomebaseState(BaseState):
         g_config["DRAG"] = 2
         self.player.pos.xy = p_config["HOMEBASE_START_POS"]
         self.player.movement_axis.y = 0  # Horizontal movement only
-        self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16, 20), (g_config["SCREEN_SIZE"][0]/8, 40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
+        self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0] / 16, 20), (g_config["SCREEN_SIZE"][0] / 8, 40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
         self.pause_menu = PauseMenu(self._resume_game, self._go_to_start)
         self.upgrade_menu = UpgradeMenu(self.upgrade_system.get_preview, self.upgrade_system.buy, self._close_upgrade_menu)
         self.research_menu = ResearchMenu(self.research_catalog, self._close_research_menu)
         self._load_interactable_call_backs()
         self.player._current_anim = self.player.animations["walk"]
-
 
     def handle_event(self, e):
         # Esc closes overlays first
@@ -48,11 +48,12 @@ class HomebaseState(BaseState):
                 self.pause_menu.open()
             return
 
-        # While upgrade menu is open only it handles events, other menus should not be interacted with
+        # While upgrade menu is open only it handles events
         if self.upgrade_menu.is_open:
             self.upgrade_menu.handle_event(e)
             return
 
+        # While research menu is open only it handles events
         if self.research_menu.is_open:
             self.research_menu.handle_event(e)
             return
@@ -87,7 +88,7 @@ class HomebaseState(BaseState):
         # Get rects of tiles surrounding player for calculating collisions with environment
         area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (4, 0))
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 30)
-        if self.player.velocity.length() >= 5 or self.player._current_anim.finished == False:
+        if self.player.velocity.length() >= 5 or self.player._current_anim.finished is False:
             self.player.update_animation_homebase(dt)
 
         self.player.update(dt, self.world_rect, area_tiles)
