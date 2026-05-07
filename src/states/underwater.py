@@ -139,7 +139,7 @@ class UnderwaterState(BaseState):
     def draw(self, screen: pygame.Surface, is_debug_on):
         # Wiping the world surface, but only the camera area! This really improved the performance.
         self.world_surface.fill((80, 128, 173), self.camera.rect)
-        self.tile_map.draw(self.world_surface, self.camera.rect)
+        self.tile_map.draw(self.world_surface, self.camera.rect, has_shading= True)
         if self.closest_interactable is not None:
             self.closest_interactable.draw_prompt(self.world_surface)
         
@@ -187,7 +187,11 @@ class UnderwaterState(BaseState):
                 pygame.draw.line(self.world_surface, (0,150,0), (row_i * self.tile_map.tile_size[0], 0),  (row_i * self.tile_map.tile_size[0], self.tile_map.map_size[1] * self.tile_map.tile_size[1]))
             for col_j in range(self.tile_map.map_size[1] - 1):
                 pygame.draw.line(self.world_surface, (0,150,0), (0, col_j * self.tile_map.tile_size[1]),  (self.tile_map.map_size[0] * self.tile_map.tile_size[0], col_j * self.tile_map.tile_size[1]))
-            
+            for rect_row in self.tile_map.mid_layer.collisions_grid:
+                for rect in rect_row:
+                    if rect:
+                        pygame.draw.rect(self.world_surface, (255,0,0), rect, 2)
+                    
             # Player velocity (with direction)
             pygame.draw.line(self.world_surface, (255,0,0), self.player.rect.center, self.player.rect.center + self.player.velocity)
             pygame.draw.circle(self.world_surface, (0,255,0), self.player.pos, 1)

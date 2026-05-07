@@ -111,6 +111,7 @@ class InfiniteImageLayer(InfiniteLayer):
 class TileMap:
     def __init__(self, path: Path) -> None:
         self.visual_layer: pygame.Surface | None = None
+        self.shading_layer: pygame.Surface | None = None
         self.tile_size: tuple[int, int] = (0, 0)
         self.map_size: tuple[int, int] = (0, 0)
         self.tile_layers: dict[str,TileLayer | InfiniteTileLayer] = {}
@@ -169,6 +170,8 @@ class TileMap:
                 self.tile_layers["Midground"].width * self.tile_size[0],
                 self.tile_layers["Midground"].height * self.tile_size[1],
             )
+        
+        self.shading_layer = self._build_shading_layer()
 
         for tileset_data in tile_map["tilesets"]:
             firstgid = int(tileset_data["firstgid"])
@@ -181,10 +184,12 @@ class TileMap:
         self.interactables = self._load_interactables(interactable_layer)
 
 
-    def draw(self, world_surface: pygame.Surface, camera_rect: pygame.Rect, position: tuple[int, int] = (0, 0)) -> None:
+    def draw(self, world_surface: pygame.Surface, camera_rect: pygame.Rect, position: tuple[int, int] = (0, 0), has_shading: bool = False) -> None:
         if self.visual_surface is not None:
             # Blit the map into the world, but only the things inside the camera
             world_surface.blit(self.visual_surface, camera_rect.topleft, camera_rect)
+        if self.shading_layer is not None and has_shading:
+            world_surface.blit(self.shading_layer, camera_rect.topleft, camera_rect)
 
 
     def is_tile_solid(self, x, y) -> bool:
@@ -331,6 +336,23 @@ class TileMap:
         for layer in self.tile_layers.values():
             visual_surface = self._add_tile_layer_to_surface(layer, visual_surface)
         return visual_surface
+
+    # Creating increasing opacity as the map goes deeper
+    def _build_shading_layer(self) -> pygame.Surface:
+        shading_surface = pygame.Surface(self.map_size, pygame.SRCALPHA)
+
+        row_count = max(1, self.map_size[1] // self.tile_size[1])
+        for row_index in range(row_count):
+            top = row_index * self.tile_size[1]
+            row_height = self.tile_size[1]
+            if row_index == row_count - 1:
+                row_height = self.map_size[1] - top
+
+            shade_strength = row_index / max(1, row_count - 1)
+            alpha = round(180 * shade_strength)
+            shading_surface.fill((0, 0, 0, alpha), pygame.Rect(0, top, self.map_size[0], row_height))
+
+        return shading_surface
 
         
     
