@@ -23,15 +23,17 @@ class StartScreen(BaseState):
         self.overlay.fill((0, 10, 25, 70))
 
         # Title
-        title_font = pygame.font.Font(None, 140)
-        self.title_surf = title_font.render("The Deep", True, (200, 230, 255))
+        title_font_name = self._pick_title_font()
+        title_font = pygame.font.SysFont(title_font_name, 128, bold=True)
+        self.title_surf = title_font.render("THE DEEP", True, (216, 232, 252))
+        self.title_outline = title_font.render("THE DEEP", True, (22, 34, 52))
 
-        # Buttons are vertical now
+        # Buttons
         cx = screen_w / 2
         btn_w = screen_w / 4
         btn_h = 70
         gap = 22
-        first_btn_y = screen_h * 0.58
+        first_btn_y = screen_h * 0.72
 
         # Free lists on each entery
         self.buttons = [
@@ -60,8 +62,10 @@ class StartScreen(BaseState):
         screen.blit(self.background, (0, 0))
         screen.blit(self.overlay, (0, 0))
 
-        # Title
+        # Title and outline
         title_rect = self.title_surf.get_rect(center=(screen_w / 2, screen_h * 0.30))
+        for dx, dy in [(-2, 0), (2, 0), (0, -2), (0, 2)]:
+            screen.blit(self.title_outline, title_rect.move(dx, dy))
         screen.blit(self.title_surf, title_rect)
 
         for button in self.buttons:
@@ -80,3 +84,17 @@ class StartScreen(BaseState):
 
     def _go_to_homebase(self):
         self.is_done = (True, "HOMEBASE")
+
+    def _pick_title_font(self) -> str:
+        # looks of the reference logo style
+        candidates = [
+            "Trajan Pro",
+            "Copperplate Gothic Bold",
+            "Cambria",
+            "Georgia",
+            "Times New Roman",
+        ]
+        for name in candidates:
+            if pygame.font.match_font(name) is not None:
+                return name
+        return "Segoe Print"

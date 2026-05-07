@@ -139,6 +139,17 @@
                  "width":14.4048976652061,
                  "x":801.053031746063,
                  "y":414.544141467406
+                }, 
+                {
+                 "height":62.4212232158934,
+                 "id":7,
+                 "name":"shop",
+                 "rotation":0,
+                 "type":"menu",
+                 "visible":true,
+                 "width":54.0183662445231,
+                 "x":336.0,
+                 "y":385.192140641317
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -147,7 +158,7 @@
          "y":0
         }],
  "nextlayerid":6,
- "nextobjectid":7,
+ "nextobjectid":8,
  "orientation":"orthogonal",
  "renderorder":"left-up",
  "tiledversion":"1.11.2",

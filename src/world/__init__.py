@@ -1,4 +1,4 @@
-from .interactables import Exit, Interactable, Research, Upgrades
+from .interactables import Exit, Interactable, Research, Shop, Upgrades
 from .camera import Camera
 from .tile_map import TileMap
 from .oxygen_tank import OxygenTank
@@ -10,5 +10,6 @@ __all__ = [
 	"Upgrades",
 	"Exit",
 	"Research",
+	"Shop",
 	"OxygenTank",
 ]

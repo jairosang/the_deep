@@ -1,4 +1,4 @@
-from .interactables import Interactable, Exit, Upgrades, Research
+from .interactables import Interactable, Exit, Upgrades, Research, Shop
 import xml.etree.ElementTree as ET
 from pathlib import Path
 import json
@@ -299,6 +299,8 @@ class TileMap:
                 interactables.append(Upgrades(x, y, width, height))
             elif name == "research":
                 interactables.append(Research(x, y, width, height))
+            elif name == "shop":
+                interactables.append(Shop(x, y, width, height))
 
         return interactables
 

@@ -1,10 +1,10 @@
-from world import TileMap, Camera, Interactable, Exit, Upgrades, Research
+from world import TileMap, Camera, Interactable, Exit, Upgrades, Research, Shop
 from things import Player
-from ui import Button, PauseMenu, ResearchMenu, UpgradeMenu
+from ui import Button, PauseMenu, ResearchMenu, ShopMenu, UpgradeMenu
 from .base_state import BaseState
 from config import game as g_config
 from config import player as p_config
-from utils import ResearchDatabase, ResearchCatalog, UpgradeSystem
+from utils import ResearchDatabase, ResearchCatalog, ShopSystem, UpgradeSystem
 import pygame
 
 
@@ -23,6 +23,7 @@ class HomebaseState(BaseState):
         # Game systems used by the menus
         self.upgrade_system = UpgradeSystem(self.player)
         self.research_catalog = ResearchCatalog(self.research_database)
+        self.shop_system = ShopSystem(self.player)
 
     def enter(self, data: dict = {}):
         g_config["DRAG"] = 2
@@ -32,6 +33,7 @@ class HomebaseState(BaseState):
         self.pause_menu = PauseMenu(self._resume_game, self._go_to_start)
         self.upgrade_menu = UpgradeMenu(self.upgrade_system.get_preview, self.upgrade_system.buy, self._close_upgrade_menu)
         self.research_menu = ResearchMenu(self.research_catalog, self._close_research_menu)
+        self.shop_menu = ShopMenu(self.shop_system.get_listings, self.shop_system.get_total_value, self.shop_system.get_wallet, self.shop_system.sell_all, self._close_shop_menu)
         self._load_interactable_call_backs()
         self.player._current_anim = self.player.animations["walk"]
 
@@ -42,23 +44,28 @@ class HomebaseState(BaseState):
                 self.research_menu.close()
             elif self.upgrade_menu.is_open:
                 self.upgrade_menu.close()
+            elif self.shop_menu.is_open:
+                self.shop_menu.close()
             elif self.pause_menu.is_open:
                 self.pause_menu.close()
             else:
                 self.pause_menu.open()
             return
 
-        # While upgrade menu is open only it handles events
+        # While upgrade menu is open only it handles events, works for other events below as well
         if self.upgrade_menu.is_open:
             self.upgrade_menu.handle_event(e)
             return
 
-        # While research menu is open only it handles events
+
         if self.research_menu.is_open:
             self.research_menu.handle_event(e)
             return
 
-        # While paused only pause menu handles events
+        if self.shop_menu.is_open:
+            self.shop_menu.handle_event(e)
+            return
+
         if self.pause_menu.is_open:
             self.pause_menu.handle_event(e)
             return
@@ -70,17 +77,20 @@ class HomebaseState(BaseState):
         self.player.handle_event(e)
 
     def update(self, dt):
-        # Freeze game while research menu is active
+        # Freezes game while menus are active
         if self.research_menu.is_open:
             self.research_menu.update(dt)
             return
 
-        # Freeze game while upgrade menu is active
         if self.upgrade_menu.is_open:
             self.upgrade_menu.update(dt)
             return
 
-        # Freeze game while pause menu is active
+
+        if self.shop_menu.is_open:
+            self.shop_menu.update(dt)
+            return
+
         if self.pause_menu.is_open:
             self.pause_menu.update(dt)
             return
@@ -128,6 +138,7 @@ class HomebaseState(BaseState):
 
         self.research_menu.draw(screen)
         self.upgrade_menu.draw(screen)
+        self.shop_menu.draw(screen)
         self.pause_menu.draw(screen)
 
     def exit(self):
@@ -156,6 +167,12 @@ class HomebaseState(BaseState):
     def _close_research_menu(self):
         self.research_menu.close()
 
+    def _open_shop_menu(self):
+        self.shop_menu.open()
+
+    def _close_shop_menu(self):
+        self.shop_menu.close()
+
     # Interactable objects that load an external callback function
     def _load_interactable_call_backs(self) -> None:
         for interactable in self.tile_map.interactables:
@@ -168,3 +185,6 @@ class HomebaseState(BaseState):
             elif isinstance(interactable, Research):
                 interactable.on_interact = self._open_research_menu
                 interactable.prompt_text = "Press E to open database"
+            elif isinstance(interactable, Shop):
+                interactable.on_interact = self._open_shop_menu
+                interactable.prompt_text = "Press E to sell loot"

@@ -12,6 +12,7 @@ from .physics_service import (
 from .research_database import ResearchDatabase
 from .research_catalog import ResearchCatalog
 from .upgrade_system import UpgradeSystem
+from .shop_system import ShopSystem
 
 __all__ = [
 	"get_colliding_tiles",
@@ -25,4 +26,5 @@ __all__ = [
     "ResearchDatabase",
     "ResearchCatalog",
     "UpgradeSystem",
+    "ShopSystem",
 ]
