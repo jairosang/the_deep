@@ -2,6 +2,7 @@ import pygame
 from .base_menu import BaseMenu
 from ..components.button import Button
 from config import game as g_config
+from ..font import get_font
 
 
 class PauseMenu(BaseMenu):
@@ -10,7 +11,7 @@ class PauseMenu(BaseMenu):
         super().__init__()
         self.on_resume = on_resume
         self.on_main_menu = on_main_menu
-        self.title_font = pygame.font.SysFont("Segoe Print", 42)
+        self.title_font = get_font(42)
         self._build_buttons()
 
     def _build_buttons(self) -> None:

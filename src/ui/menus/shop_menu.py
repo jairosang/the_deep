@@ -2,6 +2,7 @@ import pygame
 from .base_menu import BaseMenu
 from ..components.button import Button
 from config import game as g_config
+from ..font import get_font
 
 
 class ShopMenu(BaseMenu):
@@ -15,10 +16,11 @@ class ShopMenu(BaseMenu):
         self.on_close = on_close
         self.status_text = ""
 
-        self.title_font = pygame.font.SysFont("Segoe Print", 44)
-        self.row_font = pygame.font.SysFont("Segoe Print", 26)
-        self.body_font = pygame.font.SysFont("Segoe Print", 24)
-        self.small_font = pygame.font.SysFont("Segoe Print", 22)
+        self.title_font = get_font(44)
+        self.row_font = get_font(26)
+        self.body_font = get_font(24)
+        self.small_font = get_font(22)
+        self.empty_font = get_font(30)
 
         self._build_buttons()
 
@@ -92,13 +94,17 @@ class ShopMenu(BaseMenu):
         surface.blit(title, title_rect)
 
         list_top = cy - 130
-        list_bottom = cy + 100
+        list_bottom = cy + 80
         row_height = 34
 
         if not listings:
-            empty = self.body_font.render("Inventory is empty.", True, (200, 210, 225))
-            empty_rect = empty.get_rect(center=(cx, (list_top + list_bottom) / 2))
+            empty = self.empty_font.render("Inventory is empty.", True, (220, 230, 245))
+            empty_rect = empty.get_rect(center=(cx, cy - 70))
             surface.blit(empty, empty_rect)
+
+            wallet_label = self.small_font.render(f"You have: ${wallet}", True, (180, 200, 220))
+            wallet_rect = wallet_label.get_rect(center=(cx, cy - 20))
+            surface.blit(wallet_label, wallet_rect)
         else:
             max_rows = int((list_bottom - list_top) // row_height)
             visible = listings[:max_rows]
@@ -123,17 +129,18 @@ class ShopMenu(BaseMenu):
                 more_rect = more.get_rect(center=(cx, list_bottom - 8))
                 surface.blit(more, more_rect)
 
-        total_label = self.body_font.render(f"Total: ${total_value}", True, (255, 220, 130))
-        total_rect = total_label.get_rect(center=(cx, cy + 130))
-        surface.blit(total_label, total_rect)
+            total_label = self.body_font.render(f"Total: ${total_value}", True, (255, 220, 130))
+            total_rect = total_label.get_rect(center=(cx, cy + 110))
+            surface.blit(total_label, total_rect)
 
-        wallet_label = self.small_font.render(f"You have: ${wallet}", True, (180, 200, 220))
-        wallet_rect = wallet_label.get_rect(center=(cx, cy + 158))
-        surface.blit(wallet_label, wallet_rect)
+            wallet_label = self.small_font.render(f"You have: ${wallet}", True, (180, 200, 220))
+            wallet_rect = wallet_label.get_rect(center=(cx, cy + 138))
+            surface.blit(wallet_label, wallet_rect)
 
         if self.status_text:
+            status_y = cy + 15 if not listings else cy + 168
             status = self.small_font.render(self.status_text, True, (255, 220, 120))
-            status_rect = status.get_rect(center=(cx, cy + 180))
+            status_rect = status.get_rect(center=(cx, status_y))
             surface.blit(status, status_rect)
 
         for button in self._all_buttons:

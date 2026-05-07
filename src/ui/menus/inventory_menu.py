@@ -1,6 +1,7 @@
 import pygame
 from .base_menu import BaseMenu
 from config import game as g_config
+from ..font import get_font
 
 
 class InventoryMenu(BaseMenu):
@@ -11,7 +12,7 @@ class InventoryMenu(BaseMenu):
         self.cols = cols
         self.slot_size = slot_size
         self.padding = padding
-        self.title_font = pygame.font.SysFont("Segoe Print", 28)
+        self.title_font = get_font(28)
         self.items = items if items is not None else []
 
     def open(self) -> None:

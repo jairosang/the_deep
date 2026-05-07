@@ -86,15 +86,17 @@ class StartScreen(BaseState):
         self.is_done = (True, "HOMEBASE")
 
     def _pick_title_font(self) -> str:
-        # looks of the reference logo style
+        # Serif chain to mimic the reference logo style on every OS.
         candidates = [
             "Trajan Pro",
             "Copperplate Gothic Bold",
             "Cambria",
             "Georgia",
             "Times New Roman",
+            "Liberation Serif",
+            "DejaVu Serif",
         ]
         for name in candidates:
             if pygame.font.match_font(name) is not None:
                 return name
-        return "Segoe Print"
+        return "serif"

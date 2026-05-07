@@ -1,5 +1,5 @@
 class UpgradeSystem:
-    # Owns all upgrade data and logic so HomebaseState stays clean
+    # Owns all upgrade data and logic
     def __init__(self, player) -> None:
         self.player = player
         self.order = ["weapon", "scanner", "suit"]
@@ -30,9 +30,9 @@ class UpgradeSystem:
             next_value = self._scanner_rate_for_level(next_level)
             description = f"Scan speed: x{current_value:.2f} -> x{next_value:.2f}" if can_upgrade else f"Scan speed: x{current_value:.2f} (MAX)"
         else:
-            current_value = self._suit_depth_for_level(capped_level)
-            next_value = self._suit_depth_for_level(next_level)
-            description = f"Depth limit: {current_value} -> {next_value}" if can_upgrade else f"Depth limit: {current_value} (MAX)"
+            current_value = self._suit_depth_for_level(capped_level) // 16
+            next_value = self._suit_depth_for_level(next_level) // 16
+            description = f"Depth limit: {current_value}m -> {next_value}m" if can_upgrade else f"Depth limit: {current_value}m (MAX)"
 
         return {
             "key": key,
@@ -48,9 +48,9 @@ class UpgradeSystem:
     def buy(self, key: str) -> str:
         preview = self.get_preview(key)
         if not preview["can_upgrade"]:
-            return "Already max level."
+            return "Already max level"
         if preview["pesos"] < preview["cost"]:
-            return "Not enough $."
+            return "Not enough $"
 
         self.player.inventory["pesos"] -= preview["cost"]
         self.player.upgrade_levels[key] += 1
@@ -80,4 +80,5 @@ class UpgradeSystem:
         return 1.0 + level * 0.20
 
     def _suit_depth_for_level(self, level: int) -> int:
-        return 100 + level * 30
+        # 16 pixels = 1 meter, Level 0 = 100m, +30m per level
+        return (100 + level * 30) * 16

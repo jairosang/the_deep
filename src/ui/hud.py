@@ -1,6 +1,7 @@
 import math
 from things import Holdable, Player
 from config import game as g_config
+from .font import get_font
 import pygame
 
 # BTW: Must be noted this was Daniel's contribution even if git blame says otherwise. I just had to adjust it a bit 
@@ -20,7 +21,7 @@ class HeldInventory:
         toolbar_y = g_config["SCREEN_SIZE"][1] - self.slot_size[1] - 30
         self.pos = (toolbar_x, toolbar_y)
 
-        self.label_font = pygame.font.SysFont("Segoe Print", 14)
+        self.label_font = get_font(14)
 
         # The icons are scaled to size to fit the slot
         self._scaled_icons: dict[int, pygame.Surface] = {}

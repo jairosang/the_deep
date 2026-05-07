@@ -1,6 +1,7 @@
 import pygame
 from config import game as g_config
 from utils import ResearchCatalog
+from ..font import get_font
 from .base_menu import BaseMenu
 from ..components.button import Button
 
@@ -13,10 +14,10 @@ class ResearchMenu(BaseMenu):
         self.on_close = on_close
         self.selected_index = 0
 
-        self.title_font = pygame.font.SysFont("Segoe Print", 40)
-        self.heading_font = pygame.font.SysFont("Segoe Print", 30)
-        self.body_font = pygame.font.SysFont("Segoe Print", 24)
-        self.small_font = pygame.font.SysFont("Segoe Print", 20)
+        self.title_font = get_font(40)
+        self.heading_font = get_font(30)
+        self.body_font = get_font(24)
+        self.small_font = get_font(20)
 
         self.icons = self._load_icons()
         self._build_buttons()

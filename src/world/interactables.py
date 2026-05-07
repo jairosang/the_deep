@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import pygame
+from ui import get_font
 
 class Interactable:
     def __init__(self, x: float, y: float, width: float, height: float) -> None:

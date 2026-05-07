@@ -3,6 +3,7 @@ from pathlib import Path
 from .base_menu import BaseMenu
 from ..components.button import Button
 from config import game as g_config
+from ..font import get_font
 
 
 class UpgradeMenu(BaseMenu):
@@ -16,12 +17,12 @@ class UpgradeMenu(BaseMenu):
         self.selected_index = 0
         self.status_text = ""
 
-        self.title_font = pygame.font.SysFont("Segoe Print", 44)
-        self.section_font = pygame.font.SysFont("Segoe Print", 34)
-        self.level_font = pygame.font.SysFont("Segoe Print", 48)
-        self.cost_font = pygame.font.SysFont("Segoe Print", 44)
-        self.body_font = pygame.font.SysFont("Segoe Print", 24)
-        self.small_font = pygame.font.SysFont("Segoe Print", 22)
+        self.title_font = get_font(44)
+        self.section_font = get_font(34)
+        self.level_font = get_font(48)
+        self.cost_font = get_font(36)
+        self.body_font = get_font(24)
+        self.small_font = get_font(22)
 
         self._icons = self._load_icons()
         self._build_buttons()
@@ -53,8 +54,8 @@ class UpgradeMenu(BaseMenu):
         self.prev_btn = Button((cx - 190, cy - 110), (70, 48), (85, 95, 110), (115, 130, 150), text="<", font_size=36, font_color=(230, 235, 245), border_radius=8, border_color=(180, 190, 210), border_width=2, func=self._prev_upgrade,)
         self.next_btn = Button((cx + 190, cy - 110), (70, 48), (85, 95, 110), (115, 130, 150), text=">", font_size=36, font_color=(230, 235, 245), border_radius=8, border_color=(180, 190, 210), border_width=2, func=self._next_upgrade,)
 
-        self.close_btn = Button((cx - 120, cy + 210), (190, 58), (110, 110, 110), (145, 145, 145), text="Close", font_size=30, font_color=(35, 35, 35), border_radius=8, border_color=(210, 210, 210), border_width=2, func=self.on_close,)
-        self.buy_btn = Button((cx + 120, cy + 210), (190, 58), (243, 186, 72), (255, 206, 92), text="Buy", font_size=33, font_color=(30, 30, 30), border_radius=8, border_color=(255, 228, 145), border_width=2, func=self._buy_selected,)
+        self.close_btn = Button((cx - 120, cy + 285), (190, 58), (110, 110, 110), (145, 145, 145), text="Close", font_size=30, font_color=(35, 35, 35), border_radius=8, border_color=(210, 210, 210), border_width=2, func=self.on_close,)
+        self.buy_btn = Button((cx + 120, cy + 285), (190, 58), (243, 186, 72), (255, 206, 92), text="Buy", font_size=33, font_color=(30, 30, 30), border_radius=8, border_color=(255, 228, 145), border_width=2, func=self._buy_selected,)
 
         self._all_buttons = [self.prev_btn, self.next_btn, self.close_btn, self.buy_btn]
 
@@ -134,45 +135,45 @@ class UpgradeMenu(BaseMenu):
         overlay.fill((0, 0, 0, 120))
         surface.blit(overlay, (0, 0))
 
-        panel_rect = pygame.Rect(cx - 280, cy - 180, 560, 360)
+        panel_rect = pygame.Rect(cx - 380, cy - 275, 760, 640)
         inner_rect = panel_rect.inflate(-22, -22)
         pygame.draw.rect(surface, (20, 24, 32), panel_rect, border_radius=8)
         pygame.draw.rect(surface, (255, 195, 86), panel_rect, width=3, border_radius=8)
         pygame.draw.rect(surface, (12, 15, 21), inner_rect, border_radius=8)
 
         title = self.title_font.render("UPGRADE?", True, (255, 195, 86))
-        title_rect = title.get_rect(center=(cx, cy - 142))
+        title_rect = title.get_rect(center=(cx, cy - 200))
         surface.blit(title, title_rect)
 
         page_text = self.small_font.render(f"{self.selected_index + 1}/{len(self.upgrade_order)}", True, (185, 200, 220))
-        page_rect = page_text.get_rect(center=(cx, cy - 110))
+        page_rect = page_text.get_rect(center=(cx, cy - 160))
         surface.blit(page_text, page_rect)
 
-        self._draw_icon(surface, info["key"], (cx, cy - 42))
+        self._draw_icon(surface, info["key"], (cx, cy - 85))
 
         name = self.section_font.render(info["label"], True, (245, 245, 245))
-        name_rect = name.get_rect(center=(cx, cy + 8))
+        name_rect = name.get_rect(center=(cx, cy - 20))
         surface.blit(name, name_rect)
 
         level_text = self.level_font.render(f"LVL{info['level']} -> LVL{info['next_level']}", True, (245, 245, 245))
-        level_rect = level_text.get_rect(center=(cx, cy + 52))
+        level_rect = level_text.get_rect(center=(cx, cy + 40))
         surface.blit(level_text, level_rect)
 
         cost_text = self.cost_font.render(f"${info['cost']}", True, (245, 245, 245))
-        cost_rect = cost_text.get_rect(center=(cx - 28, cy + 95))
+        cost_rect = cost_text.get_rect(center=(cx, cy + 105))
         surface.blit(cost_text, cost_rect)
 
         desc = self.body_font.render(info["description"], True, (230, 230, 230))
-        desc_rect = desc.get_rect(center=(cx, cy + 126))
+        desc_rect = desc.get_rect(center=(cx, cy + 165))
         surface.blit(desc, desc_rect)
 
         wallet = self.small_font.render(f"You have: ${info['pesos']}", True, (180, 200, 220))
-        wallet_rect = wallet.get_rect(center=(cx, cy + 154))
+        wallet_rect = wallet.get_rect(center=(cx, cy + 205))
         surface.blit(wallet, wallet_rect)
 
         if self.status_text:
             status = self.small_font.render(self.status_text, True, (255, 220, 120))
-            status_rect = status.get_rect(center=(cx, cy + 176))
+            status_rect = status.get_rect(center=(cx, cy + 232))
             surface.blit(status, status_rect)
         
         # those are the upgrade stats notifications that appear when players interact with upgrades

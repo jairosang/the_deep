@@ -1,7 +1,8 @@
 import pygame
+from ..font import get_font
 
 class Button:
-    def __init__(self, position, size, color=[100, 100, 100], hover_color=None, func=None, text='', font="Segoe Print", font_size=16, font_color=[0, 0, 0], border_radius=8, border_color=None, border_width=2):
+    def __init__(self, position, size, color=[100, 100, 100], hover_color=None, func=None, text='', font=None, font_size=16, font_color=[0, 0, 0], border_radius=8, border_color=None, border_width=2):
         self.color = color
         self.curcolor = color
         self.size = size
@@ -17,7 +18,7 @@ class Button:
             self.surface = pygame.Surface(size)
 
         self.rect = self.surface.get_rect(center=position)
-        self.font = pygame.font.SysFont(font, font_size)
+        self.font = get_font(font_size) if font is None else pygame.font.SysFont(font, font_size)
         self.txt = text
         self.font_color = font_color
         self.txt_surf = self.font.render(self.txt, 1, self.font_color)
