@@ -70,7 +70,7 @@ class HomebaseState(BaseState):
         self.tile_map.draw(self.world_surface, self.camera.rect)
 
         if self.closest_interactable is not None:
-            self.closest_interactable.draw_prompt(self.world_surface)
+            self.closest_interactable.draw_prompt(self.world_surface, self.player.rect.center)
 
         self.player.draw(self.world_surface)
         if is_debug_on:

@@ -14,10 +14,29 @@ class Interactable:
     def interact(self) -> None:
         pass
 
-    def draw_prompt(self, world_surface: pygame.Surface) -> None:
-        prompt_surface = pygame.font.SysFont("Segoe Print", 14).render(self.prompt_text, True, (255,255,255))
-        prompt_rect = prompt_surface.get_rect(midbottom=(self.rect.centerx, self.rect.top - 6))
-        background_rect = prompt_rect.inflate(24, 12)
+    def draw_prompt(self, world_surface: pygame.Surface, player_pos) -> None:
+        prompt_surface = pygame.font.SysFont("Arial", 11, bold=True).render(self.prompt_text, True, (255,255,255))
+        
+        # getting the position between the interactable and the player
+        player_prompt_x = player_pos[0] - self.rect.centerx
+        player_prompt_y = player_pos[1] - self.rect.centery
+        distance = (player_prompt_x**2 + player_prompt_y**2) ** 0.5
+        
+        min_distance_from_player = 20
+        
+        if distance > min_distance_from_player:
+            # putting the 
+            the_inbetween_location_x = player_prompt_x / distance
+            the_inbetween_location_y = player_prompt_y / distance
+            prompt_x = player_pos[0] - the_inbetween_location_x * min_distance_from_player
+            prompt_y = player_pos[1] - the_inbetween_location_y * min_distance_from_player - 30
+        else:
+            # if the player is very close the prompt should stay in the interactable
+            prompt_x = self.rect.centerx
+            prompt_y = self.rect.centery - 30
+        
+        prompt_rect = prompt_surface.get_rect(center=(prompt_x, prompt_y))
+        background_rect = prompt_rect.inflate(12, 6)
 
         pygame.draw.rect(world_surface, (0, 0, 0), background_rect, border_radius=6)
         pygame.draw.rect(world_surface, (255, 255, 255), background_rect, 2, border_radius=6)

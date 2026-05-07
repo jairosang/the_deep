@@ -101,7 +101,7 @@ class HeldInventory:
         target_w, target_h = target_size
         scale = min(target_w / img_w, target_h / img_h) # 50/1024 = 0.049 and 50/570 = 0.088 width and height scale
         new_size = (max(1, int(img_w * scale)), max(1, int(img_h * scale))) # multiplies the original width and height by the scale to get the new size
-        scaled = pygame.transform.smoothscale(image, new_size) # final resizing of the image with smooth scaling to avoid pixelation
+        scaled = pygame.transform.scale(image, new_size) # final resizing of the image with smooth scaling to avoid pixelation
         self._scaled_icons[index] = scaled # Save the scaled image for the next return
         return scaled
     
