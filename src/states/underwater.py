@@ -40,6 +40,11 @@ class UnderwaterState(BaseState):
         # Research gun input tracking
         self.left_mouse_held = False
         self.f_key_held = False
+        self._low_health_flash_time = 0.0
+        self._low_health_flash_red_duration = 0.5
+        self._low_health_flash_clear_duration = 1
+        self._low_health_flash_cycle_duration = self._low_health_flash_red_duration + self._low_health_flash_clear_duration
+        self._low_health_flash_overlay = pygame.Surface(g_config["SCREEN_SIZE"], pygame.SRCALPHA)
         
         # Research gun state tracking
         self.player_last_health = self.player.health
@@ -51,6 +56,7 @@ class UnderwaterState(BaseState):
         self.player.pos.xy = p_config["UNDERWATER_START_POS"]
         self.player.oxygen = self.player.max_oxygen
         self.player.health = self.player.max_health
+        self._low_health_flash_time = 0.0
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
         self.player.set_holdable(self.held_inventory.selected_holdable)
         self._apply_player_upgrades_to_holdables()
@@ -104,6 +110,17 @@ class UnderwaterState(BaseState):
         if self.pause_menu.is_open:
             self.pause_menu.update(dt)
             return
+
+        # If the health is low, oxygen is low, or player goes below max_depth
+        crossed_limit = self.player.rect.centery >= self.player.max_depth_limit
+        oxygen_low = (self.player.max_oxygen > 0 and (self.player.oxygen / self.player.max_oxygen) <= self.player_hud.OXYGEN_LOW_RATIO)
+        health_low = (self.player.max_health > 0 and (self.player.health / self.player.max_health) <= self.player_hud.HEALTH_LOW_RATIO)
+        is_warning = crossed_limit or oxygen_low or health_low
+
+        if is_warning:
+            self._low_health_flash_time += dt
+        else:
+            self._low_health_flash_time = 0.0
 
         # Get rects of tiles surrounding player for calculating collisions with environment 
         player_area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (7,7))
@@ -215,6 +232,10 @@ class UnderwaterState(BaseState):
         self.inventory_menu.draw(screen)
         self.pause_menu.draw(screen)
 
+        is_warning = ((self.player.max_health > 0 and (self.player.health / self.player.max_health) <= self.player_hud.HEALTH_LOW_RATIO)or (self.player.max_oxygen > 0 and (self.player.oxygen / self.player.max_oxygen) <= self.player_hud.OXYGEN_LOW_RATIO)or self.player.rect.centery >= self.player.max_depth_limit)
+        if is_warning and (self._low_health_flash_time % self._low_health_flash_cycle_duration) < self._low_health_flash_red_duration:
+            self._draw_low_health_flash(screen)
+
     def exit(self):
         self.player.revert()
         self.player.movement_axis[1] = 0
@@ -301,6 +322,10 @@ class UnderwaterState(BaseState):
     def _despawn_things(self):
         self.creatures.clear()
         self.items.clear()
+
+    def _draw_low_health_flash(self, screen: pygame.Surface) -> None:
+        self._low_health_flash_overlay.fill((255, 0, 0, 90))
+        screen.blit(self._low_health_flash_overlay, (0, 0))
 
     def _update_shootables(self, dt: float) -> None:
         for holdable in self.held_inventory.holdables:
