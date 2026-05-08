@@ -58,17 +58,23 @@ class Player(MovingThing):
         self.current_holdable: Holdable | None = None
         self._left_click_pressed: bool = False
 
-        # for the colour change efffect:
+        # timers
         self.invincibily_timer = 0.0
         self.invincibily_duration = 2
+        self.depth_damage_timer = 0.0
+        self.depth_damage_duration = 1
 
     def update(self, dt, bound_rect: pygame.Rect, area_tiles):
         if self.invincibily_timer > 0:
             self.invincibily_timer -= dt
         
-        if self.rect.centery >= self.max_depth_limit:
+        if self.depth_damage_timer > 0:
+            self.depth_damage_timer -= dt
+
+        if self.rect.centery >= self.max_depth_limit and self.depth_damage_timer <= 0:
             depth_damage = max(1, round((self.rect.centery - self.max_depth_limit) / 300))
-            self.get_damaged(depth_damage)
+            self.get_damaged(depth_damage, False)
+            self.depth_damage_timer = self.depth_damage_duration
 
         super().update(dt, bound_rect, area_tiles)
         if self.current_holdable is not None:
@@ -174,12 +180,14 @@ class Player(MovingThing):
             self.current_holdable.reset_input_state()
         self.current_holdable = None
 
-    def get_damaged(self, ammt):
+    def get_damaged(self, ammt, apply_invincibility = True):
         if self.invincibily_timer < 0.01:
             self.health = max(0, self.health - ammt)  # changed so it doesnt display 0 and then die. it dies when it reaches 0
             self.animations["hurt"].reset()
             self._current_anim = self.animations["hurt"]
-            self.invincibily_timer = self.invincibily_duration
+
+            if apply_invincibility:
+                self.invincibily_timer = self.invincibily_duration
         
 
     # ====== The caves of functions ======
