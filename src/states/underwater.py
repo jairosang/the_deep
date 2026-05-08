@@ -229,20 +229,27 @@ class UnderwaterState(BaseState):
         zone_height = h // 3
 
         passive_creatures_by_zone = [[Fish], [Fish, BlueFish], [BlueFish],]
-
         aggressive_creatures_by_zone = [[FishDart],[FishBig],[Anglerfish],]
 
         for zone in range(3):
             zone_top = 100 + zone * zone_height
             zone_bottom = min(int(h) - 100, (zone + 1) * zone_height)
 
-            for i in range(4):
-                cluster_x = random.randint(200, int(w) - 200)
-                cluster_y = random.randint(zone_top, zone_bottom)
+            # Ammount of clusters per zone
+            for i in range(6):
+                # keep retrying if the zone is solid
+                while True:
+                    cluster_x = random.randint(200, int(w) - 200)
+                    cluster_y = random.randint(zone_top, zone_bottom)
+                    if not self.tile_map.is_tile_solid(cluster_x, cluster_y):
+                        break
 
-                for _ in range(random.randint(5, 8)):
-                    x = random.randint(cluster_x - 40, cluster_x + 40)
-                    y = random.randint(cluster_y - 40, cluster_y + 40)
+                for _ in range(random.randint(8, 15)):
+                    while True:
+                        x = random.randint(cluster_x - 40, cluster_x + 40)
+                        y = random.randint(cluster_y - 40, cluster_y + 40)
+                        if not self.tile_map.is_tile_solid(x, y):
+                            break
 
                     creature_class = random.choice(passive_creatures_by_zone[zone])
 
@@ -253,32 +260,43 @@ class UnderwaterState(BaseState):
 
                     creature = creature_class((x, y), size=creature_size)
 
-                    creature.thrust = creature.thrust - round(
-                        (creature_size % 10) * 8
-                    )
-                    creature.mass = creature.mass + round(
-                        (creature_size % 10) * 1.5
-                    )
+                    creature.thrust = creature.thrust - round((creature_size % 10) * 8)
+                    creature.mass = creature.mass + round((creature_size % 10) * 1.5)
 
                     self.creatures.append(creature)
 
+            # Ammount of aggressive creatures per biome
+            aggro_creatures = []
             for i in range(5):
-                x = random.randint(100, int(w) - 100)
-                y = random.randint(zone_top, zone_bottom)
+                # min distance between aggressive_creatures (pixels)
+                min_separation = 250
+                while True:
+                    x = random.randint(100, int(w) - 100)
+                    y = random.randint(zone_top, zone_bottom)
+
+                    # make sure the new spawn is not too close to other aggressive spawns
+                    too_close = False
+                    for c in aggro_creatures + [self.player]:   # Make sure it doesnt spawn too close to the player either
+                        dx = c.rect.centerx - x
+                        dy = c.rect.centery - y
+                        if dx * dx + dy * dy < (min_separation * min_separation):
+                            too_close = True
+                            break
+
+                    if not self.tile_map.is_tile_solid(x, y) or not too_close:
+                        break
 
                 creature_class = random.choice(aggressive_creatures_by_zone[zone])
                 creature_size = random.randint(20, 30)
 
                 creature = creature_class((x, y), size=creature_size)
 
-                creature.thrust = creature.thrust - round(
-                    (creature_size % 20) * 8
-                )
-                creature.mass = creature.mass + round(
-                    (creature_size % 20) * 1.5
-                )
+                creature.thrust = creature.thrust - round((creature_size % 20) * 8)
+                creature.mass = creature.mass + round((creature_size % 20) * 1.5)
 
-                self.creatures.append(creature)
+                aggro_creatures.append(creature)
+
+            self.creatures += aggro_creatures
 
     def _despawn_things(self):
         self.creatures.clear()
