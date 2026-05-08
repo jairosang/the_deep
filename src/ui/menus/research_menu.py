@@ -170,7 +170,7 @@ class ResearchMenu(BaseMenu):
             if icon is None:
                 continue
 
-            draw_icon = pygame.transform.smoothscale(icon, (92, 92))
+            draw_icon = pygame.transform.scale(icon, (92, 92))
             if not is_complete:
                 draw_icon = self._make_silhouette(draw_icon)
             surface.blit(draw_icon, draw_icon.get_rect(center=(slot_rect.centerx, slot_rect.centery - 12)))
@@ -188,7 +188,7 @@ class ResearchMenu(BaseMenu):
 
         big_icon = self.icons.get(species)
         if big_icon is not None:
-            draw_big_icon = pygame.transform.smoothscale(big_icon, (170, 170))
+            draw_big_icon = pygame.transform.scale(big_icon, (170, 170))
             if not selected_complete:
                 draw_big_icon = self._make_silhouette(draw_big_icon)
             surface.blit(draw_big_icon, draw_big_icon.get_rect(center=(cx, details_rect.top + 190)))

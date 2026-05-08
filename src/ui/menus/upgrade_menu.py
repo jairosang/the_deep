@@ -118,7 +118,7 @@ class UpgradeMenu(BaseMenu):
         iw, ih = icon.get_size()
         scale = min(max_size[0] / iw, max_size[1] / ih)
         new_size = (max(1, int(iw * scale)), max(1, int(ih * scale)))
-        scaled = pygame.transform.smoothscale(icon, new_size)
+        scaled = pygame.transform.scale(icon, new_size)
         rect = scaled.get_rect(center=center)
         surface.blit(scaled, rect)
 

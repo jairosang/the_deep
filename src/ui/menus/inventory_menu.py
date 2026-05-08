@@ -85,7 +85,7 @@ class InventoryMenu(BaseMenu):
 
                 item_index = row * self.cols + col
                 if item_index < len(self.items):
-                    icon = pygame.transform.smoothscale(
+                    icon = pygame.transform.scale(
                         self.items[item_index].inventory_image or self.items[item_index].image,
                         (self.slot_size[0] - 10, self.slot_size[1] - 10)
                     )
