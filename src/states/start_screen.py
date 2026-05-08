@@ -3,12 +3,14 @@ from pathlib import Path
 from ui import Button, get_font
 from .base_state import BaseState
 from config import game as g_config
+from utils import Animation, load_frames_from_folder
 
 
 class StartScreen(BaseState):
     def __init__(self) -> None:
         super().__init__()
         self.buttons: list[Button] = []
+        self.anim = Animation(load_frames_from_folder("./assets/background/animated_test/", True), 15)
 
     #==== Abstract Methods from base class =====
     def enter(self):
@@ -16,8 +18,8 @@ class StartScreen(BaseState):
 
         # Background
         bg_path = Path("assets/background/menu_background.png")
-        raw_bg = pygame.image.load(str(bg_path)).convert()
-        self.background = pygame.transform.smoothscale(raw_bg, (int(screen_w), int(screen_h)))
+        # raw_bg = pygame.image.load(str(bg_path)).convert()
+        # self.background = pygame.transform.smoothscale(raw_bg, (int(screen_w), int(screen_h)))
 
         self.overlay = pygame.Surface((int(screen_w), int(screen_h)), pygame.SRCALPHA)
         self.overlay.fill((0, 10, 25, 70))
@@ -52,13 +54,13 @@ class StartScreen(BaseState):
                 button.check_mouseover(e.pos)
 
     def update(self, dt):
-        pass
+        self.anim.update(dt)
 
     def draw(self, screen: pygame.Surface, is_debug_on):
         screen_w, screen_h = g_config["SCREEN_SIZE"]
 
         # Background
-        screen.blit(self.background, (0, 0))
+        screen.blit(self.anim.get_image(), (0, 0))
         screen.blit(self.overlay, (0, 0))
 
         # Title and outline
