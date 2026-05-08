@@ -98,8 +98,7 @@ class HomebaseState(BaseState):
         # Get rects of tiles surrounding player for calculating collisions with environment
         area_tiles = self.tile_map.get_tiles_at_area(self.player.rect.centerx, self.player.rect.centery, (4, 0))
         self.closest_interactable = self.tile_map.get_closest_interactable(self.player.rect.centerx, self.player.rect.centery, 30)
-        if self.player.velocity.length() >= 5 or self.player._current_anim.finished is False:
-            self.player.update_animation_homebase(dt)
+        self.player.update_animation_homebase(dt)
 
         self.player.update(dt, self.world_rect, area_tiles)
         self.camera.update(dt, self.player.rect)

@@ -13,6 +13,8 @@ from .research_database import ResearchDatabase
 from .research_catalog import ResearchCatalog
 from .upgrade_system import UpgradeSystem
 from .shop_system import ShopSystem
+from .animation import Animation
+from .sprite_sheet import load_frames, load_frames_from_folder
 
 __all__ = [
 	"get_colliding_tiles",
@@ -27,4 +29,7 @@ __all__ = [
     "ResearchCatalog",
     "UpgradeSystem",
     "ShopSystem",
+    "Animation",
+    "load_frames",
+    "load_frames_from_folder"
 ]

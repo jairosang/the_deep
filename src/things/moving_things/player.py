@@ -4,8 +4,7 @@ from ..holdables.base_holdable import Holdable
 from config import game as g_config, player as p_config
 import pygame
 from pathlib import Path
-from utils.sprite_sheet import load_frames
-from utils.animation import Animation
+from utils import Animation,load_frames, load_frames_from_folder
 
 SPRITES = Path("assets/sprites")
 
@@ -20,7 +19,7 @@ class Player(MovingThing):
             "rush": Animation(load_frames(SPRITES / "player-rush.png", 80, 80, 7), fps=10),
             "hurt": Animation(load_frames(SPRITES / "player-hurt.png", 80, 80, 5), fps=8, loop=False),
             "shoot": Animation(load_frames(SPRITES / "player-shoot.png", 80, 80, 6), fps=8, loop=False),
-            "walk": Animation(load_frames(SPRITES / "player-walk.png", 80, 80, 4), fps=8, loop=False)
+            "walk": Animation(load_frames_from_folder(SPRITES / "player-walk-dir", False), fps=7, loop=False)
         }
  
         self._current_anim = self.animations["idle"]
@@ -270,11 +269,18 @@ class Player(MovingThing):
 
     def update_animation_homebase(self, dt):
         speed = self.velocity.length()
-        if self._current_anim.finished:
-            self._current_anim.reset()
-
-        # Clean the shooting if it's done
-        self._current_anim.update(dt)
+        walk_anim = self.animations["walk"]
+        if speed < 10:
+            if self._current_anim is not walk_anim or walk_anim.index != 0:
+                walk_anim.reset()
+            self._current_anim = walk_anim
+            self._base_image = self._current_anim.get_image()
+            self.image = self._base_image
+        else:
+            if self._current_anim is not walk_anim or walk_anim.finished:
+                walk_anim.reset()
+            self._current_anim = walk_anim
+            self._current_anim.update(dt)
 
         self._base_image = self._current_anim.get_image()
         self.image = self._base_image
