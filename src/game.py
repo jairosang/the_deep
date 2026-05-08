@@ -15,7 +15,9 @@ class GameManager():
     # Gets events and delegates how to handle them to the state
     def get_whats_going_on(self):
         for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_F5:    # Toggling debug
+            if event.type == pygame.QUIT:
+                self.is_running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_l:    # Toggling debug
                 self.is_debug_on = not self.is_debug_on
             if event.type == pygame.KEYDOWN and event.key == pygame.K_F6:    # Toggling fullscreen (Doesn't fully work, we would need to rebuild the display as not fullscreen and resizable but I got lazy)
                 pygame.display.toggle_fullscreen()
