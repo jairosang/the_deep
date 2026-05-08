@@ -37,18 +37,12 @@ class UnderwaterState(BaseState):
         # Store reference to research gun for scanning
         self.research_gun = research_gun
         
-        # Research gun input tracking
-        self.left_mouse_held = False
-        self.f_key_held = False
+        # Timers and indicators and stuff
         self._low_health_flash_time = 0.0
         self._low_health_flash_red_duration = 0.5
         self._low_health_flash_clear_duration = 1
         self._low_health_flash_cycle_duration = self._low_health_flash_red_duration + self._low_health_flash_clear_duration
         self._low_health_flash_overlay = pygame.Surface(g_config["SCREEN_SIZE"], pygame.SRCALPHA)
-        
-        # Research gun state tracking
-        self.player_last_health = self.player.health
-        self.previous_holdable = None
 
     #==== Abstract Methods from base class =====
     def enter(self, data: dict = {}):
