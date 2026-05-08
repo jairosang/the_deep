@@ -45,6 +45,11 @@ class HeldInventory:
         if e.type == pygame.KEYDOWN:
             if pygame.K_1 <= e.key <= pygame.K_9:
                 self.select(e.key - pygame.K_1)
+            elif e.key == pygame.K_TAB:
+                # cycle through holdables
+                if self.slot_count > 0:
+                    new_index = (self.selected_index + 1) % self.slot_count
+                    self.select(new_index)
 
     @property
     def selected_holdable(self) -> Holdable | None:
