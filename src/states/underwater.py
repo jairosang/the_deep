@@ -251,7 +251,7 @@ class UnderwaterState(BaseState):
             zone_bottom = min(int(h) - 100, (zone + 1) * zone_height)
 
             # Ammount of clusters per zone
-            for i in range(6):
+            for i in range(5):
                 # keep retrying if the zone is solid
                 while True:
                     cluster_x = random.randint(200, int(w) - 200)
@@ -259,10 +259,10 @@ class UnderwaterState(BaseState):
                     if not self.tile_map.is_tile_solid(cluster_x, cluster_y):
                         break
 
-                for _ in range(random.randint(8, 15)):
+                for _ in range(random.randint(6, 10)):
                     while True:
-                        x = random.randint(cluster_x - 40, cluster_x + 40)
-                        y = random.randint(cluster_y - 40, cluster_y + 40)
+                        x = random.randint(cluster_x - 20, cluster_x + 20)
+                        y = random.randint(cluster_y - 20, cluster_y + 20)
                         if not self.tile_map.is_tile_solid(x, y):
                             break
 
@@ -284,7 +284,7 @@ class UnderwaterState(BaseState):
             aggro_creatures = []
             for i in range(5):
                 # min distance between aggressive_creatures (pixels)
-                min_separation = 250
+                min_separation = 500
                 while True:
                     x = random.randint(100, int(w) - 100)
                     y = random.randint(zone_top, zone_bottom)
@@ -342,16 +342,19 @@ class UnderwaterState(BaseState):
         pass
 
     def _trigger_game_over(self):
+        self.player.inventory.clear()
+        self.player.inventory["pesos"] = 0
+        self.player.buffer_inventory.clear()
+        # Because of the last minute implementation of the upgrades it is not possible to clean them up on game over. Good luck to anyone who tries to unravel this mess.
         self.is_done = (True, "GAME_OVER")  #switch states
-        self.exit()
 
     def _go_to_start(self):
-        self.is_done = (True, "START_SCREEN")
         self.exit()
+        self.is_done = (True, "START_SCREEN")
 
     def _go_to_homebase(self):
-        self.is_done = (True, "HOMEBASE")
         self.exit()
+        self.is_done = (True, "HOMEBASE")
 
     def _resume_game(self):
         self.pause_menu.close()

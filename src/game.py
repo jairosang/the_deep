@@ -40,6 +40,7 @@ class GameManager():
         self.current_state.is_done = (False, None)
         self.current_state = self.states[next_state]
         self.current_state.enter()
+        self.clock.tick()
 
 
 
