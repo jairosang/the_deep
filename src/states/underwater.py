@@ -52,6 +52,9 @@ class UnderwaterState(BaseState):
         self.player.health = self.player.max_health
         self._low_health_flash_time = 0.0
         self.button = Button((g_config["SCREEN_SIZE"][0] - g_config["SCREEN_SIZE"][0]/16,20),(g_config["SCREEN_SIZE"][0]/8,40), (245, 96, 66), (209, 80, 54), text="Return", func=self._go_to_start)
+        research_gun = ResearchGun(self.research_database)
+        self.held_inventory = HeldInventory([Weapon(), research_gun])
+        self.research_gun = research_gun
         self.player.set_holdable(self.held_inventory.selected_holdable)
         self._apply_player_upgrades_to_holdables()
         self.player.movement_axis.update(1,1)
@@ -140,6 +143,7 @@ class UnderwaterState(BaseState):
 
         if self.player.oxygen <= 0 or self.player.health <= 0:
             self._trigger_game_over()
+            return
 
         dropped_items = phy.resolve_player_creature_collisions(self.player, self.creatures, player_area_tiles)
         self.items.extend(dropped_items)
@@ -345,8 +349,8 @@ class UnderwaterState(BaseState):
         self.player.inventory.clear()
         self.player.inventory["pesos"] = 0
         self.player.buffer_inventory.clear()
-        # Because of the last minute implementation of the upgrades it is not possible to clean them up on game over. Good luck to anyone who tries to unravel this mess.
-        self.is_done = (True, "GAME_OVER")  #switch states
+        self.exit()
+        self.is_done = (True, "GAME_OVER")
 
     def _go_to_start(self):
         self.exit()

@@ -161,8 +161,8 @@ class Player(MovingThing):
         pass
 
     def revert(self):
-        self.velocity *= 0
-        self.input_direction *= 0
+        self.velocity.update(0,0)
+        self.input_direction.update(0,0)
         for key in self._movement_keys:
             self._movement_keys[key] = False
         self.is_sprinting = False
