@@ -10,6 +10,7 @@ class StartScreen(BaseState):
     def __init__(self) -> None:
         super().__init__()
         self.buttons: list[Button] = []
+        # Animation generated using Google's Gemini and Veo ;)
         self.anim = Animation(load_frames_from_folder("./assets/background/animated_test/", True), 15)
 
     #==== Abstract Methods from base class =====
@@ -34,13 +35,12 @@ class StartScreen(BaseState):
         btn_w = screen_w / 4
         btn_h = 70
         gap = 22
-        first_btn_y = screen_h * 0.72
+        first_btn_y = screen_h * 0.65
 
         # Free lists on each entery
         self.buttons = [
-            Button((cx, first_btn_y), (btn_w, btn_h), (50, 105, 160), (85, 155, 210), text="Go Underwater", font_size=30, font_color=(240, 250, 255), border_radius=14, border_color=(130, 185, 230), border_width=2, func=self._go_to_underwater,),
-            Button((cx, first_btn_y + (btn_h + gap)), (btn_w, btn_h), (50, 105, 160), (85, 155, 210), text="Go to Homebase", font_size=30, font_color=(240, 250, 255), border_radius=14, border_color=(130, 185, 230), border_width=2, func=self._go_to_homebase,),
-            Button((cx, first_btn_y + 2 * (btn_h + gap)), (btn_w, btn_h), (200, 70, 60), (230, 95, 80), text="Quit", font_size=30, font_color=(255, 240, 235), border_radius=14, border_color=(255, 160, 140), border_width=2, func=self.quit_game,),
+            Button((cx, first_btn_y), (btn_w, btn_h), (50, 105, 160), (85, 155, 210), text="Play Game", font_size=30, font_color=(240, 250, 255), border_radius=14, border_color=(130, 185, 230), border_width=2, func=self._go_to_homebase,),
+            Button((cx, first_btn_y + (btn_h + gap)), (btn_w, btn_h), (200, 70, 60), (230, 95, 80), text="Quit", font_size=30, font_color=(255, 240, 235), border_radius=14, border_color=(255, 160, 140), border_width=2, func=self.quit_game,),
         ]
 
     def handle_event(self, e: pygame.event.Event):
@@ -62,6 +62,8 @@ class StartScreen(BaseState):
         # Background
         screen.blit(self.anim.get_image(), (0, 0))
         screen.blit(self.overlay, (0, 0))
+
+        pygame.draw.circle(screen, (3, 7, 18), (screen_w, screen_h), screen_w/13, draw_top_left=True)
 
         # Title and outline
         title_rect = self.title_surf.get_rect(center=(screen_w / 2, screen_h * 0.30))
