@@ -218,7 +218,7 @@ class UnderwaterState(BaseState):
     def exit(self):
         self.player.revert()
         self.player.movement_axis[1] = 0
-        self._despawn_creatures()
+        self._despawn_things()
 
 
     # ==== Own Methods ====
@@ -280,8 +280,9 @@ class UnderwaterState(BaseState):
 
                 self.creatures.append(creature)
 
-    def _despawn_creatures(self):
+    def _despawn_things(self):
         self.creatures.clear()
+        self.items.clear()
 
     def _update_shootables(self, dt: float) -> None:
         for holdable in self.held_inventory.holdables:

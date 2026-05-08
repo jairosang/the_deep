@@ -5,7 +5,7 @@ class Item():
         self.name = name
         self.inventory_image = inventory_image.copy() if inventory_image is not None else None
         self.pos = pygame.math.Vector2(pos)
-        self.pickup_timer = 2.0 # time before being able to pick up item
+        self.pickup_timer = 0.4 # time before being able to pick up item
 
         if image is not None:
             self.image = image.copy()
